@@ -151,6 +151,41 @@ interface DateRangeWithCurrentProps {
   currentLabel?: string;
 }
 
+// Simple date range without "currently" toggle - for Education
+interface DateRangeProps {
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (value: string) => void;
+  onEndDateChange: (value: string) => void;
+  label?: string;
+}
+
+export function DateRange({
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  label = "Start & End Date",
+}: DateRangeProps) {
+  return (
+    <div className="space-y-2">
+      <span className="text-xs text-gray-600">{label}</span>
+      <div className="grid grid-cols-2 gap-3">
+        <MonthYearPicker
+          value={startDate}
+          onChange={onStartDateChange}
+          placeholder="MM / YYYY"
+        />
+        <MonthYearPicker
+          value={endDate}
+          onChange={onEndDateChange}
+          placeholder="MM / YYYY"
+        />
+      </div>
+    </div>
+  );
+}
+
 export function DateRangeWithCurrent({
   startDate,
   endDate,

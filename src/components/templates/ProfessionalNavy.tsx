@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageDots } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -50,19 +51,24 @@ export default function ProfessionalNavy({ resume }: TemplateProps) {
             <h2 className="text-xs font-bold uppercase tracking-wider text-blue-300 mb-3 pb-1 border-b border-blue-400/30">
               Core Skills
             </h2>
-            <div className="space-y-3">
-              {skills.map((skill, index) => (
-                <div key={index}>
-                  <p className="text-sm font-medium text-white mb-1">{skill.name}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {skill.keywords?.map((kw, idx) => (
-                      <span key={idx} className="text-xs bg-white/10 px-2 py-0.5 rounded">
-                        {kw}
-                      </span>
-                    ))}
+            <div className="space-y-2">
+              {skills.filter(skill => skill.name).map((skill, index) => {
+                const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+                const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                return (
+                  <div key={index}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white">{skill.name}</span>
+                      <span className="text-[10px] text-blue-200">{skill.level || "Intermediate"}</span>
+                    </div>
+                    <div className="flex gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((dot) => (
+                        <div key={dot} className={`w-1.5 h-1.5 rounded-full ${dot <= filledDots ? "bg-blue-300" : "bg-white/20"}`} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -113,7 +119,7 @@ export default function ProfessionalNavy({ resume }: TemplateProps) {
                       <p className="text-[#1e3a5f]">{job.name}</p>
                     </div>
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {job.startDate} — {job.endDate || "Present"}
+                      {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
                     </span>
                   </div>
                   {job.highlights && (
@@ -139,8 +145,8 @@ export default function ProfessionalNavy({ resume }: TemplateProps) {
               {education.map((edu, index) => (
                 <div key={index} className="border-l-3 border-[#1e3a5f] pl-4">
                   <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
-                  <p className="text-sm text-gray-600">{edu.studyType} in {edu.area}</p>
-                  <p className="text-xs text-gray-500">{edu.startDate} — {edu.endDate}</p>
+                  <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
+                  <p className="text-xs text-gray-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
                 </div>
               ))}
             </div>

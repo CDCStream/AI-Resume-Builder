@@ -56,6 +56,7 @@ export interface Education {
   endDate?: string;
   score?: string;
   courses?: string[];
+  isCurrent?: boolean;
 }
 
 export interface Award {

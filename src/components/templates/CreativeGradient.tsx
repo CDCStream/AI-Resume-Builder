@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageDots } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -58,7 +59,7 @@ export default function CreativeGradient({ resume }: TemplateProps) {
                           <p className="text-cyan-400">{job.name}</p>
                         </div>
                         <span className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full">
-                          {job.startDate} — {job.endDate || "Present"}
+                          {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
                         </span>
                       </div>
                       {job.highlights && (
@@ -87,8 +88,8 @@ export default function CreativeGradient({ resume }: TemplateProps) {
                   {education.map((edu, index) => (
                     <div key={index} className="p-4 bg-white/5 backdrop-blur rounded-xl border border-white/10">
                       <h3 className="font-bold text-white">{edu.institution}</h3>
-                      <p className="text-sm text-slate-300">{edu.studyType} in {edu.area}</p>
-                      <p className="text-xs text-slate-400 mt-1">{edu.startDate} — {edu.endDate}</p>
+                      <p className="text-sm text-slate-300">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
+                      <p className="text-xs text-slate-400 mt-1">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
                     </div>
                   ))}
                 </div>
@@ -102,19 +103,24 @@ export default function CreativeGradient({ resume }: TemplateProps) {
             {skills && skills.length > 0 && (
               <section className="p-4 bg-white/5 backdrop-blur rounded-xl border border-white/10">
                 <h2 className="text-sm font-bold mb-3 text-cyan-400">⚡ Skills</h2>
-                <div className="space-y-3">
-                  {skills.map((skill, index) => (
-                    <div key={index}>
-                      <p className="text-xs font-medium text-white mb-1">{skill.name}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {skill.keywords?.map((kw, idx) => (
-                          <span key={idx} className="text-xs bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30">
-                            {kw}
-                          </span>
-                        ))}
+                <div className="space-y-2">
+                  {skills.filter(skill => skill.name).map((skill, index) => {
+                    const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+                    const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                    return (
+                      <div key={index}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-white">{skill.name}</span>
+                          <span className="text-[10px] text-slate-400">{skill.level || "Intermediate"}</span>
+                        </div>
+                        <div className="flex gap-0.5 mt-1">
+                          {[1, 2, 3, 4, 5].map((dot) => (
+                            <div key={dot} className={`w-1.5 h-1.5 rounded-full ${dot <= filledDots ? "bg-cyan-400" : "bg-white/20"}`} />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}

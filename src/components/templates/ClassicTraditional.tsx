@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageGrid } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -48,7 +49,7 @@ export default function ClassicTraditional({ resume }: TemplateProps) {
               <div key={index}>
                 <div className="flex justify-between items-baseline mb-1">
                   <h3 className="font-bold text-gray-900">{job.position}</h3>
-                  <span className="text-sm text-gray-600">{job.startDate} — {job.endDate || "Present"}</span>
+                  <span className="text-sm text-gray-600">{formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}</span>
                 </div>
                 <p className="text-gray-700 italic mb-1">{job.name}</p>
                 {job.highlights && (
@@ -75,9 +76,9 @@ export default function ClassicTraditional({ resume }: TemplateProps) {
               <div key={index} className="flex justify-between items-baseline">
                 <div>
                   <span className="font-bold text-gray-900">{edu.institution}</span>
-                  <span className="text-gray-700"> — {edu.studyType} in {edu.area}</span>
+                  <span className="text-gray-700"> — {edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</span>
                 </div>
-                <span className="text-sm text-gray-600">{edu.startDate} — {edu.endDate}</span>
+                <span className="text-sm text-gray-600">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</span>
               </div>
             ))}
           </div>
@@ -90,12 +91,24 @@ export default function ClassicTraditional({ resume }: TemplateProps) {
           <h2 className="text-sm font-bold text-gray-900 uppercase border-b border-gray-400 pb-1 mb-2">
             Technical Skills
           </h2>
-          <div className="text-sm text-gray-700">
-            {skills.map((skill, index) => (
-              <p key={index}>
-                <span className="font-semibold">{skill.name}:</span> {skill.keywords?.join(", ")}
-              </p>
-            ))}
+          <div className="space-y-1">
+            {skills.filter(skill => skill.name).map((skill, index) => {
+              const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+              const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+              return (
+                <div key={index}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">{skill.name}</span>
+                    <span className="text-xs text-gray-500">{skill.level || "Intermediate"}</span>
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {[1, 2, 3, 4, 5].map((dot) => (
+                      <div key={dot} className={`w-2 h-2 rounded-full ${dot <= filledDots ? "bg-gray-700" : "bg-gray-300"}`} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageDots } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -44,7 +45,7 @@ export default function MinimalistClean({ resume }: TemplateProps) {
             {work.map((job, index) => (
               <div key={index} className="grid grid-cols-4 gap-4">
                 <div className="text-sm text-gray-400">
-                  {job.startDate} — {job.endDate || "Present"}
+                  {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
                 </div>
                 <div className="col-span-3">
                   <h3 className="font-medium text-gray-900">{job.position}</h3>
@@ -73,11 +74,11 @@ export default function MinimalistClean({ resume }: TemplateProps) {
             {education.map((edu, index) => (
               <div key={index} className="grid grid-cols-4 gap-4">
                 <div className="text-sm text-gray-400">
-                  {edu.startDate} — {edu.endDate}
+                  {formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}
                 </div>
                 <div className="col-span-3">
                   <h3 className="font-medium text-gray-900">{edu.institution}</h3>
-                  <p className="text-sm text-gray-500">{edu.studyType} in {edu.area}</p>
+                  <p className="text-sm text-gray-500">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                 </div>
               </div>
             ))}
@@ -92,8 +93,24 @@ export default function MinimalistClean({ resume }: TemplateProps) {
             <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-3 pb-2 border-b border-gray-100">
               Skills
             </h2>
-            <div className="text-sm text-gray-600">
-              {skills.flatMap(s => s.keywords || []).join(", ")}
+            <div className="space-y-2">
+              {skills.filter(skill => skill.name).map((skill, index) => {
+                const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+                const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                return (
+                  <div key={index}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">{skill.name}</span>
+                      <span className="text-xs text-gray-400">{skill.level || "Intermediate"}</span>
+                    </div>
+                    <div className="flex gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((dot) => (
+                        <div key={dot} className={`w-1.5 h-1.5 rounded-full ${dot <= filledDots ? "bg-gray-500" : "bg-gray-200"}`} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}

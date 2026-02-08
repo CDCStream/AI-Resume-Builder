@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageDots } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -52,19 +53,24 @@ export default function ModernSidebar({ resume }: TemplateProps) {
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 border-b border-slate-600 pb-2">
               Skills
             </h2>
-            <div className="space-y-3">
-              {skills.map((skill, index) => (
-                <div key={index}>
-                  <p className="text-sm font-medium text-white mb-1">{skill.name}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {skill.keywords?.map((kw, idx) => (
-                      <span key={idx} className="text-xs bg-slate-700 px-2 py-0.5 rounded">
-                        {kw}
-                      </span>
-                    ))}
+            <div className="space-y-2">
+              {skills.filter(skill => skill.name).map((skill, index) => {
+                const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+                const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                return (
+                  <div key={index}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white">{skill.name}</span>
+                      <span className="text-[10px] text-slate-400">{skill.level || "Intermediate"}</span>
+                    </div>
+                    <div className="flex gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((dot) => (
+                        <div key={dot} className={`w-1.5 h-1.5 rounded-full ${dot <= filledDots ? "bg-blue-400" : "bg-slate-600"}`} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -119,7 +125,7 @@ export default function ModernSidebar({ resume }: TemplateProps) {
                   <div className="flex justify-between items-start mb-1">
                     <h3 className="font-semibold text-gray-900">{job.position}</h3>
                     <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                      {job.startDate} — {job.endDate || "Present"}
+                      {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 mb-2">{job.name}</p>
@@ -151,8 +157,8 @@ export default function ModernSidebar({ resume }: TemplateProps) {
                 <div key={index} className="relative pl-4 border-l-2 border-slate-200">
                   <div className="absolute -left-[5px] top-1 w-2 h-2 bg-slate-800 rounded-full"></div>
                   <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
-                  <p className="text-sm text-gray-600">{edu.studyType} in {edu.area}</p>
-                  <p className="text-xs text-slate-500">{edu.startDate} — {edu.endDate}</p>
+                  <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
+                  <p className="text-xs text-slate-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
                 </div>
               ))}
             </div>

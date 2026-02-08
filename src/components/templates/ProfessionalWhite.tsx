@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageGrid } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -76,7 +77,7 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
                     <p className="text-sm text-gray-600">{job.name}</p>
                   </div>
                   <span className="text-xs text-gray-500 whitespace-nowrap">
-                    {job.startDate} — {job.endDate || "Present"}
+                    {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
                   </span>
                 </div>
                 {job.summary && (
@@ -110,11 +111,13 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
                 <div>
                   <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
                   <p className="text-sm text-gray-600">
-                    {edu.studyType} in {edu.area}
+                    {edu.studyType && <span className="font-medium">{edu.studyType}</span>}
+                    {edu.studyType && edu.area && " • "}
+                    {edu.area}
                   </p>
                 </div>
                 <span className="text-xs text-gray-500 whitespace-nowrap">
-                  {edu.startDate} — {edu.endDate}
+                  {formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}
                 </span>
               </div>
             ))}
@@ -128,15 +131,35 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
             Skills
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {skills.map((skill, index) => (
-              <div key={index} className="text-sm">
-                <span className="font-medium text-gray-700">{skill.name}: </span>
-                <span className="text-gray-600">
-                  {skill.keywords?.join(", ")}
-                </span>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+            {skills.filter(skill => skill.name).map((skill, index) => {
+              const levelMap: Record<string, number> = {
+                "Expert": 5,
+                "Advanced": 4,
+                "Intermediate": 3,
+                "Beginner": 2,
+                "Basic": 1,
+              };
+              const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+              return (
+                <div key={index}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">{skill.name}</span>
+                    <span className="text-xs text-gray-500">{skill.level || "Intermediate"}</span>
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {[1, 2, 3, 4, 5].map((dot) => (
+                      <div
+                        key={dot}
+                        className={`w-2 h-2 rounded-full ${
+                          dot <= filledDots ? "bg-blue-500" : "bg-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

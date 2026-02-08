@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageDots } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -66,7 +67,7 @@ export default function ModernAccent({ resume }: TemplateProps) {
                           <h3 className="font-bold text-gray-900">{job.position}</h3>
                           <p className="text-rose-500">{job.name}</p>
                         </div>
-                        <span className="text-sm text-gray-500">{job.startDate} — {job.endDate || "Present"}</span>
+                        <span className="text-sm text-gray-500">{formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}</span>
                       </div>
                       {job.highlights && (
                         <ul className="mt-2 space-y-1">
@@ -93,8 +94,8 @@ export default function ModernAccent({ resume }: TemplateProps) {
                   {education.map((edu, index) => (
                     <div key={index}>
                       <h3 className="font-bold text-gray-900">{edu.institution}</h3>
-                      <p className="text-sm text-gray-600">{edu.studyType} in {edu.area}</p>
-                      <p className="text-xs text-gray-500">{edu.startDate} — {edu.endDate}</p>
+                      <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
+                      <p className="text-xs text-gray-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
                     </div>
                   ))}
                 </div>
@@ -110,19 +111,24 @@ export default function ModernAccent({ resume }: TemplateProps) {
                 <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b border-rose-200">
                   <span className="text-rose-500">●</span> Skills
                 </h2>
-                <div className="space-y-3">
-                  {skills.map((skill, index) => (
-                    <div key={index}>
-                      <p className="text-xs font-semibold text-gray-700 mb-1">{skill.name}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {skill.keywords?.map((kw, idx) => (
-                          <span key={idx} className="text-xs bg-white text-gray-600 px-2 py-0.5 rounded border">
-                            {kw}
-                          </span>
-                        ))}
+                <div className="space-y-2">
+                  {skills.filter(skill => skill.name).map((skill, index) => {
+                    const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+                    const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                    return (
+                      <div key={index}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-700">{skill.name}</span>
+                          <span className="text-[10px] text-gray-400">{skill.level || "Intermediate"}</span>
+                        </div>
+                        <div className="flex gap-0.5 mt-1">
+                          {[1, 2, 3, 4, 5].map((dot) => (
+                            <div key={dot} className={`w-1.5 h-1.5 rounded-full ${dot <= filledDots ? "bg-rose-500" : "bg-gray-200"}`} />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}

@@ -33,11 +33,11 @@ interface ResumeEditorProps {
 }
 
 // Collapsible section types
-type CollapsibleSection = 
-  | "personal" 
-  | "work" 
-  | "education" 
-  | "skills" 
+type CollapsibleSection =
+  | "personal"
+  | "work"
+  | "education"
+  | "skills"
   | "techProficiencies"
   | AdditionalSection;
 
@@ -80,22 +80,21 @@ export default function ResumeEditor({
 
   const isCollapsed = (section: CollapsibleSection) => collapsedSections.has(section);
 
-  // Collapse button component
+  // Collapse button component (no onClick - parent CardHeader handles it)
   const CollapseButton = ({ section }: { section: CollapsibleSection }) => (
-    <button
-      onClick={() => toggleCollapse(section)}
+    <div
       className="text-gray-400 hover:text-gray-600 transition-colors p-1"
       title={isCollapsed(section) ? "Expand" : "Collapse"}
     >
-      <svg 
-        className={`w-5 h-5 transition-transform duration-200 ${isCollapsed(section) ? "-rotate-90" : ""}`} 
-        fill="none" 
-        stroke="currentColor" 
+      <svg
+        className={`w-5 h-5 transition-transform duration-200 ${isCollapsed(section) ? "-rotate-90" : ""}`}
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
       </svg>
-    </button>
+    </div>
   );
 
   // Helper to render a section by name (for ordered rendering)
@@ -589,10 +588,14 @@ export default function ResumeEditor({
 
       {/* Basic Information */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("personal")}>
-          <CardTitle className="text-lg">Personal Information</CardTitle>
+        <button
+          type="button"
+          className="flex flex-row items-center justify-between w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors rounded-t-xl"
+          onClick={() => toggleCollapse("personal")}
+        >
+          <h3 className="text-lg font-semibold">Personal Information</h3>
           <CollapseButton section="personal" />
-        </CardHeader>
+        </button>
         {!isCollapsed("personal") && <CardContent className="space-y-4">
           {/* Profile Photo */}
           <div className="flex items-center gap-4">
@@ -801,10 +804,14 @@ export default function ResumeEditor({
 
       {/* Work Experience */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("work")}>
-          <CardTitle className="text-lg">Work Experience</CardTitle>
+        <button
+          type="button"
+          className="flex flex-row items-center justify-between w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors rounded-t-xl"
+          onClick={() => toggleCollapse("work")}
+        >
+          <h3 className="text-lg font-semibold">Work Experience</h3>
           <CollapseButton section="work" />
-        </CardHeader>
+        </button>
         {!isCollapsed("work") && <CardContent className="space-y-4">
           {resume.work?.map((job, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">
@@ -883,13 +890,32 @@ export default function ResumeEditor({
 
       {/* Education */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("education")}>
-          <CardTitle className="text-lg">Education</CardTitle>
+        <button
+          type="button"
+          className="flex flex-row items-center justify-between w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors rounded-t-xl"
+          onClick={() => toggleCollapse("education")}
+        >
+          <h3 className="text-lg font-semibold">Education</h3>
           <CollapseButton section="education" />
-        </CardHeader>
+        </button>
         {!isCollapsed("education") && <CardContent className="space-y-4">
           {resume.education?.map((edu, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-medium text-gray-900">{edu.institution || "(Not specified)"}</p>
+                <button
+                  onClick={() => {
+                    const newEducation = [...(resume.education || [])];
+                    newEducation.splice(index, 1);
+                    onResumeChange({ ...resume, education: newEducation });
+                  }}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">Institution</Label>
                 <Input
@@ -904,19 +930,7 @@ export default function ResumeEditor({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Degree</Label>
-                  <Input
-                    value={edu.studyType || ""}
-                    onChange={(e) => {
-                      const newEducation = [...(resume.education || [])];
-                      newEducation[index] = { ...newEducation[index], studyType: e.target.value };
-                      onResumeChange({ ...resume, education: newEducation });
-                    }}
-                    placeholder="Bachelor of Science"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Field of Study</Label>
+                  <Label className="text-xs">Faculty</Label>
                   <Input
                     value={edu.area || ""}
                     onChange={(e) => {
@@ -924,19 +938,57 @@ export default function ResumeEditor({
                       newEducation[index] = { ...newEducation[index], area: e.target.value };
                       onResumeChange({ ...resume, education: newEducation });
                     }}
-                    placeholder="Computer Science"
+                    placeholder="e.g. Faculty of Engineering"
                   />
                 </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Degree</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {["High School", "Associate", "Bachelor", "Master", "PhD"].map((degree) => (
+                      <button
+                        key={degree}
+                        type="button"
+                        onClick={() => {
+                          const newEducation = [...(resume.education || [])];
+                          newEducation[index] = { ...newEducation[index], studyType: degree };
+                          onResumeChange({ ...resume, education: newEducation });
+                        }}
+                        className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                          edu.studyType === degree
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {degree}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
+              <DateRangeWithCurrent
+                startDate={edu.startDate || ""}
+                endDate={edu.endDate || ""}
+                onStartDateChange={(value) => {
+                  const newEducation = [...(resume.education || [])];
+                  newEducation[index] = { ...newEducation[index], startDate: value };
+                  onResumeChange({ ...resume, education: newEducation });
+                }}
+                onEndDateChange={(value) => {
+                  const newEducation = [...(resume.education || [])];
+                  newEducation[index] = { ...newEducation[index], endDate: value };
+                  onResumeChange({ ...resume, education: newEducation });
+                }}
+                currentLabel="Currently study here"
+              />
             </div>
           ))}
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
             onClick={() => {
               onResumeChange({
                 ...resume,
-                education: [...(resume.education || []), { institution: "", studyType: "", area: "" }],
+                education: [...(resume.education || []), { institution: "", area: "", startDate: "", endDate: "" }],
               });
             }}
           >
@@ -947,10 +999,14 @@ export default function ResumeEditor({
 
       {/* Skills */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("skills")}>
-          <CardTitle className="text-lg">Skills</CardTitle>
+        <button
+          type="button"
+          className="flex flex-row items-center justify-between w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors rounded-t-xl"
+          onClick={() => toggleCollapse("skills")}
+        >
+          <h3 className="text-lg font-semibold">Skills</h3>
           <CollapseButton section="skills" />
-        </CardHeader>
+        </button>
         {!isCollapsed("skills") && <CardContent className="space-y-4">
           {resume.skills?.map((skill, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">

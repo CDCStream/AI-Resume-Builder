@@ -2,6 +2,7 @@
 
 import { Resume } from "@/lib/types/resume";
 import { LanguageDots } from "./LanguageDots";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -57,7 +58,7 @@ export default function CreativeBold({ resume }: TemplateProps) {
                           <p className="text-orange-600 font-medium">{job.name}</p>
                         </div>
                         <span className="text-sm text-white bg-orange-600 px-3 py-1 rounded-full">
-                          {job.startDate} — {job.endDate || "Present"}
+                          {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
                         </span>
                       </div>
                       {job.highlights && (
@@ -83,8 +84,8 @@ export default function CreativeBold({ resume }: TemplateProps) {
                   {education.map((edu, index) => (
                     <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
                       <h3 className="font-bold text-gray-900">{edu.institution}</h3>
-                      <p className="text-gray-600">{edu.studyType} in {edu.area}</p>
-                      <p className="text-sm text-orange-500 mt-1">{edu.startDate} — {edu.endDate}</p>
+                      <p className="text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
+                      <p className="text-sm text-orange-500 mt-1">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
                     </div>
                   ))}
                 </div>
@@ -98,19 +99,24 @@ export default function CreativeBold({ resume }: TemplateProps) {
             {skills && skills.length > 0 && (
               <section className="bg-orange-600 text-white p-4 rounded-xl">
                 <h2 className="text-lg font-black mb-3">SKILLS</h2>
-                <div className="space-y-3">
-                  {skills.map((skill, index) => (
-                    <div key={index}>
-                      <p className="text-sm font-bold text-orange-100 mb-1">{skill.name}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {skill.keywords?.map((kw, idx) => (
-                          <span key={idx} className="text-xs bg-white/20 px-2 py-0.5 rounded">
-                            {kw}
-                          </span>
-                        ))}
+                <div className="space-y-2">
+                  {skills.filter(skill => skill.name).map((skill, index) => {
+                    const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+                    const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                    return (
+                      <div key={index}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-white">{skill.name}</span>
+                          <span className="text-xs text-orange-100">{skill.level || "Intermediate"}</span>
+                        </div>
+                        <div className="flex gap-1 mt-1">
+                          {[1, 2, 3, 4, 5].map((dot) => (
+                            <div key={dot} className={`w-2 h-2 rounded-full ${dot <= filledDots ? "bg-white" : "bg-white/30"}`} />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}
