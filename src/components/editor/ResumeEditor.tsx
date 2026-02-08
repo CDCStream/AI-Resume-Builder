@@ -643,6 +643,18 @@ export default function ResumeEditor({
               <div className="space-y-2"><Label className="text-xs">Title</Label><Input value={pub.name || ""} onChange={(e) => { const newPubs = [...(resume.publications || [])]; newPubs[index] = { ...newPubs[index], name: e.target.value }; onResumeChange({ ...resume, publications: newPubs }); }} placeholder="e.g. Research Paper" /></div>
               <div className="space-y-2"><Label className="text-xs">Publisher</Label><Input value={pub.publisher || ""} onChange={(e) => { const newPubs = [...(resume.publications || [])]; newPubs[index] = { ...newPubs[index], publisher: e.target.value }; onResumeChange({ ...resume, publications: newPubs }); }} placeholder="e.g. Journal Name" /></div>
             </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Release Date</Label>
+              <MonthYearPicker
+                value={pub.releaseDate || ""}
+                onChange={(newDate) => {
+                  const newPubs = [...(resume.publications || [])];
+                  newPubs[index] = { ...newPubs[index], releaseDate: newDate };
+                  onResumeChange({ ...resume, publications: newPubs });
+                }}
+                placeholder="Select date"
+              />
+            </div>
             <div className="space-y-2"><Label className="text-xs">Summary</Label><Textarea value={pub.summary || ""} onChange={(e) => { const newPubs = [...(resume.publications || [])]; newPubs[index] = { ...newPubs[index], summary: e.target.value }; onResumeChange({ ...resume, publications: newPubs }); }} placeholder="Brief description" rows={2} /></div>
           </div>
         ))}
