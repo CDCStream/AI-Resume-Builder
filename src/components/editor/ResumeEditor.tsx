@@ -32,6 +32,15 @@ interface ResumeEditorProps {
   onSelectTemplate: (templateId: string) => void;
 }
 
+// Collapsible section types
+type CollapsibleSection = 
+  | "personal" 
+  | "work" 
+  | "education" 
+  | "skills" 
+  | "techProficiencies"
+  | AdditionalSection;
+
 export default function ResumeEditor({
   resume,
   onResumeChange,
@@ -41,6 +50,8 @@ export default function ResumeEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Using array to maintain insertion order
   const [activeSections, setActiveSections] = useState<AdditionalSection[]>([]);
+  // Track collapsed sections
+  const [collapsedSections, setCollapsedSections] = useState<Set<CollapsibleSection>>(new Set());
 
   const toggleSection = (section: AdditionalSection) => {
     setActiveSections((prev) => {
@@ -53,6 +64,39 @@ export default function ResumeEditor({
   };
 
   const isSectionActive = (section: AdditionalSection) => activeSections.includes(section);
+
+  // Toggle collapse state
+  const toggleCollapse = (section: CollapsibleSection) => {
+    setCollapsedSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
+
+  const isCollapsed = (section: CollapsibleSection) => collapsedSections.has(section);
+
+  // Collapse button component
+  const CollapseButton = ({ section }: { section: CollapsibleSection }) => (
+    <button
+      onClick={() => toggleCollapse(section)}
+      className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+      title={isCollapsed(section) ? "Expand" : "Collapse"}
+    >
+      <svg 
+        className={`w-5 h-5 transition-transform duration-200 ${isCollapsed(section) ? "-rotate-90" : ""}`} 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  );
 
   // Helper to render a section by name (for ordered rendering)
   const renderSection = (section: AdditionalSection) => {
@@ -135,14 +179,17 @@ export default function ResumeEditor({
   const renderLanguagesSection = () => (
     <Card key="languages">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Languages</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("languages")}>
+          <CollapseButton section="languages" />
+          <CardTitle className="text-lg">Languages</CardTitle>
+        </div>
         <button onClick={() => toggleSection("languages")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("languages") && <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           {resume.languages?.map((lang, index) => {
             const fluencyLevels: Record<string, number> = { "Native": 5, "Fluent": 5, "Proficient": 5, "Advanced": 4, "Intermediate": 3, "Basic": 2, "Beginner": 1 };
@@ -172,19 +219,22 @@ export default function ResumeEditor({
           })}
         </div>
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, languages: [...(resume.languages || []), { language: "", fluency: "Intermediate" }] }); }}>+ Add Language</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderCoursesSection = () => (
     <Card key="courses">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Courses</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("courses")}>
+          <CollapseButton section="courses" />
+          <CardTitle className="text-lg">Courses</CardTitle>
+        </div>
         <button onClick={() => toggleSection("courses")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("courses") && <CardContent className="space-y-4">
         {resume.courses?.map((course, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -201,19 +251,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, courses: [...(resume.courses || []), { name: "", institution: "", date: "" }] }); }}>+ Add Course</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderProjectsSection = () => (
     <Card key="projects">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Projects</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("projects")}>
+          <CollapseButton section="projects" />
+          <CardTitle className="text-lg">Projects</CardTitle>
+        </div>
         <button onClick={() => toggleSection("projects")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("projects") && <CardContent className="space-y-4">
         {resume.projects?.map((project, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -228,19 +281,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, projects: [...(resume.projects || []), { name: "", description: "", url: "" }] }); }}>+ Add Project</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderCertificationsSection = () => (
     <Card key="certifications">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Certifications</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("certifications")}>
+          <CollapseButton section="certifications" />
+          <CardTitle className="text-lg">Certifications</CardTitle>
+        </div>
         <button onClick={() => toggleSection("certifications")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("certifications") && <CardContent className="space-y-4">
         {resume.certificates?.map((cert, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -257,19 +313,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, certificates: [...(resume.certificates || []), { name: "", issuer: "", date: "" }] }); }}>+ Add Certification</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderAwardsSection = () => (
     <Card key="awards">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Awards</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("awards")}>
+          <CollapseButton section="awards" />
+          <CardTitle className="text-lg">Awards</CardTitle>
+        </div>
         <button onClick={() => toggleSection("awards")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("awards") && <CardContent className="space-y-4">
         {resume.awards?.map((award, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -286,19 +345,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, awards: [...(resume.awards || []), { title: "", awarder: "", date: "" }] }); }}>+ Add Award</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderReferencesSection = () => (
     <Card key="references">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">References</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("references")}>
+          <CollapseButton section="references" />
+          <CardTitle className="text-lg">References</CardTitle>
+        </div>
         <button onClick={() => toggleSection("references")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("references") && <CardContent className="space-y-4">
         {resume.references?.map((ref, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -312,19 +374,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, references: [...(resume.references || []), { name: "", reference: "" }] }); }}>+ Add Reference</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderVolunteeringSection = () => (
     <Card key="volunteering">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Volunteering</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("volunteering")}>
+          <CollapseButton section="volunteering" />
+          <CardTitle className="text-lg">Volunteering</CardTitle>
+        </div>
         <button onClick={() => toggleSection("volunteering")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("volunteering") && <CardContent className="space-y-4">
         {resume.volunteer?.map((vol, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -341,19 +406,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, volunteer: [...(resume.volunteer || []), { organization: "", position: "", summary: "" }] }); }}>+ Add Volunteering</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderHobbiesSection = () => (
     <Card key="hobbies">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Hobbies</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("hobbies")}>
+          <CollapseButton section="hobbies" />
+          <CardTitle className="text-lg">Hobbies</CardTitle>
+        </div>
         <button onClick={() => toggleSection("hobbies")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("hobbies") && <CardContent className="space-y-4">
         {resume.hobbies?.map((hobby, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -366,19 +434,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, hobbies: [...(resume.hobbies || []), { name: "" }] }); }}>+ Add Hobby</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderInternshipsSection = () => (
     <Card key="internships">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Internships</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("internships")}>
+          <CollapseButton section="internships" />
+          <CardTitle className="text-lg">Internships</CardTitle>
+        </div>
         <button onClick={() => toggleSection("internships")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("internships") && <CardContent className="space-y-4">
         {resume.internships?.map((intern, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-4">
             <div className="flex items-center justify-between">
@@ -396,19 +467,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, internships: [...(resume.internships || []), { company: "", position: "", startDate: "", endDate: "" }] }); }}>+ Add Internship</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderActivitiesSection = () => (
     <Card key="activities">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Extra-curricular Activities</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("activities")}>
+          <CollapseButton section="activities" />
+          <CardTitle className="text-lg">Extra-curricular Activities</CardTitle>
+        </div>
         <button onClick={() => toggleSection("activities")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("activities") && <CardContent className="space-y-4">
         {resume.activities?.map((activity, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -425,19 +499,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, activities: [...(resume.activities || []), { name: "", role: "", description: "" }] }); }}>+ Add Activity</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderPublicationsSection = () => (
     <Card key="publications">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Publications</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("publications")}>
+          <CollapseButton section="publications" />
+          <CardTitle className="text-lg">Publications</CardTitle>
+        </div>
         <button onClick={() => toggleSection("publications")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("publications") && <CardContent className="space-y-4">
         {resume.publications?.map((pub, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -454,19 +531,22 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, publications: [...(resume.publications || []), { name: "", publisher: "", summary: "" }] }); }}>+ Add Publication</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
   const renderCustomSection = () => (
     <Card key="custom">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Custom Section</CardTitle>
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("custom")}>
+          <CollapseButton section="custom" />
+          <CardTitle className="text-lg">Custom Section</CardTitle>
+        </div>
         <button onClick={() => toggleSection("custom")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCollapsed("custom") && <CardContent className="space-y-4">
         {resume.customSections?.map((custom, index) => (
           <div key={index} className="p-4 border rounded-lg space-y-3">
             <div className="flex items-center justify-between">
@@ -480,7 +560,7 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, customSections: [...(resume.customSections || []), { title: "", content: "" }] }); }}>+ Add Custom Section</Button>
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 
@@ -509,10 +589,11 @@ export default function ResumeEditor({
 
       {/* Basic Information */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("personal")}>
           <CardTitle className="text-lg">Personal Information</CardTitle>
+          <CollapseButton section="personal" />
         </CardHeader>
-        <CardContent className="space-y-4">
+        {!isCollapsed("personal") && <CardContent className="space-y-4">
           {/* Profile Photo */}
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -629,7 +710,7 @@ export default function ResumeEditor({
             </div>
           </div>
 
-        </CardContent>
+        </CardContent>}
       </Card>
 
       {/* Professional Summary */}
@@ -720,10 +801,11 @@ export default function ResumeEditor({
 
       {/* Work Experience */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("work")}>
           <CardTitle className="text-lg">Work Experience</CardTitle>
+          <CollapseButton section="work" />
         </CardHeader>
-        <CardContent className="space-y-4">
+        {!isCollapsed("work") && <CardContent className="space-y-4">
           {resume.work?.map((job, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">
               <div className="flex items-center justify-between">
@@ -796,15 +878,16 @@ export default function ResumeEditor({
           >
             + Add Experience
           </Button>
-        </CardContent>
+        </CardContent>}
       </Card>
 
       {/* Education */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("education")}>
           <CardTitle className="text-lg">Education</CardTitle>
+          <CollapseButton section="education" />
         </CardHeader>
-        <CardContent className="space-y-4">
+        {!isCollapsed("education") && <CardContent className="space-y-4">
           {resume.education?.map((edu, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-3">
               <div className="space-y-1">
@@ -859,15 +942,16 @@ export default function ResumeEditor({
           >
             + Add Education
           </Button>
-        </CardContent>
+        </CardContent>}
       </Card>
 
       {/* Skills */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => toggleCollapse("skills")}>
           <CardTitle className="text-lg">Skills</CardTitle>
+          <CollapseButton section="skills" />
         </CardHeader>
-        <CardContent className="space-y-4">
+        {!isCollapsed("skills") && <CardContent className="space-y-4">
           {resume.skills?.map((skill, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">
               <div className="flex items-center justify-between">
@@ -941,7 +1025,7 @@ export default function ResumeEditor({
           >
             + Add one more skill
           </Button>
-        </CardContent>
+        </CardContent>}
       </Card>
 
       {/* Render Additional Sections in Order */}
