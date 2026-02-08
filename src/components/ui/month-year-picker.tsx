@@ -31,12 +31,16 @@ export function MonthYearPicker({
   disabled = false,
 }: MonthYearPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1; // 1-12
+
   const [year, setYear] = useState(() => {
     if (value && value !== "Present") {
       const parts = value.split("-");
-      return parseInt(parts[0]) || new Date().getFullYear();
+      return parseInt(parts[0]) || currentYear;
     }
-    return new Date().getFullYear();
+    return currentYear;
   });
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +70,19 @@ export function MonthYearPicker({
   };
 
   const handlePrevYear = () => setYear((y) => y - 1);
-  const handleNextYear = () => setYear((y) => y + 1);
+  const handleNextYear = () => {
+    // Don't allow going beyond current year
+    if (year < currentYear) {
+      setYear((y) => y + 1);
+    }
+  };
+
+  // Check if a month is in the future
+  const isMonthDisabled = (monthNum: string) => {
+    if (year > currentYear) return true;
+    if (year === currentYear && parseInt(monthNum) > currentMonth) return true;
+    return false;
+  };
 
   const displayValue = value === "Present"
     ? "Present"
@@ -108,9 +124,14 @@ export function MonthYearPicker({
             <button
               type="button"
               onClick={handleNextYear}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              disabled={year >= currentYear}
+              className={`p-1 rounded-full transition-colors ${
+                year >= currentYear
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "hover:bg-gray-100 text-gray-600"
+              }`}
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -120,15 +141,19 @@ export function MonthYearPicker({
           <div className="grid grid-cols-4 gap-2">
             {months.map((month) => {
               const isSelected = selectedMonth === month.num && selectedYear === year.toString();
+              const isDisabled = isMonthDisabled(month.num);
               return (
                 <button
                   key={month.num}
                   type="button"
-                  onClick={() => handleMonthSelect(month.num)}
+                  onClick={() => !isDisabled && handleMonthSelect(month.num)}
+                  disabled={isDisabled}
                   className={`py-2 px-1 text-sm rounded-md transition-colors
-                    ${isSelected
-                      ? "bg-blue-500 text-white font-medium"
-                      : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    ${isDisabled
+                      ? "text-gray-300 cursor-not-allowed"
+                      : isSelected
+                        ? "bg-blue-500 text-white font-medium"
+                        : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                     }
                   `}
                 >

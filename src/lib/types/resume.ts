@@ -15,10 +15,17 @@ export interface Profile {
   url?: string;
 }
 
+export interface ImagePosition {
+  x: number; // -100 to 100 percent offset
+  y: number; // -100 to 100 percent offset
+  scale: number; // 1 to 2 zoom level
+}
+
 export interface Basics {
   name?: string;
   label?: string;
   image?: string;
+  imagePosition?: ImagePosition;
   email?: string;
   phone?: string;
   url?: string;
@@ -35,6 +42,8 @@ export interface Work {
   endDate?: string;
   summary?: string;
   highlights?: string[];
+  city?: string;
+  country?: string;
 }
 
 export interface Volunteer {
@@ -100,6 +109,10 @@ export interface Interest {
 export interface Reference {
   name?: string;
   reference?: string;
+  role?: string;
+  company?: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface Project {
@@ -118,7 +131,9 @@ export interface Project {
 export interface Course {
   name?: string;
   institution?: string;
-  date?: string;
+  startDate?: string;
+  endDate?: string;
+  isCurrent?: boolean;
   url?: string;
 }
 
@@ -128,6 +143,8 @@ export interface Internship {
   startDate?: string;
   endDate?: string;
   summary?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface Hobby {

@@ -7,8 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import TemplateSelector from "./TemplateSelector";
 import { DateRangeWithCurrent } from "@/components/ui/month-year-picker";
+import { PhotoPositionModal } from "./PhotoPositionModal";
 import { useRef, useState } from "react";
 
 type AdditionalSection =
@@ -52,6 +61,32 @@ export default function ResumeEditor({
   const [activeSections, setActiveSections] = useState<AdditionalSection[]>([]);
   // Track collapsed sections
   const [collapsedSections, setCollapsedSections] = useState<Set<CollapsibleSection>>(new Set());
+  // Photo position modal state
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  // Delete confirmation modal state
+  const [sectionToDelete, setSectionToDelete] = useState<AdditionalSection | null>(null);
+
+  const sectionNames: Record<AdditionalSection, string> = {
+    languages: "Languages",
+    courses: "Courses",
+    activities: "Extra-curricular Activities",
+    internships: "Internships",
+    hobbies: "Hobbies",
+    references: "References",
+    awards: "Awards",
+    volunteering: "Volunteering",
+    certifications: "Certifications",
+    projects: "Projects",
+    publications: "Publications",
+    custom: "Custom Section",
+  };
+
+  const confirmDeleteSection = () => {
+    if (sectionToDelete) {
+      setActiveSections((prev) => prev.filter((s) => s !== sectionToDelete));
+      setSectionToDelete(null);
+    }
+  };
 
   const toggleSection = (section: AdditionalSection) => {
     setActiveSections((prev) => {
@@ -182,7 +217,7 @@ export default function ResumeEditor({
           <CollapseButton section="languages" />
           <CardTitle className="text-lg">Languages</CardTitle>
         </div>
-        <button onClick={() => toggleSection("languages")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("languages")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -229,13 +264,13 @@ export default function ResumeEditor({
           <CollapseButton section="courses" />
           <CardTitle className="text-lg">Courses</CardTitle>
         </div>
-        <button onClick={() => toggleSection("courses")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("courses")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
       {!isCollapsed("courses") && <CardContent className="space-y-4">
         {resume.courses?.map((course, index) => (
-          <div key={index} className="p-4 border rounded-lg space-y-3">
+          <div key={index} className="p-4 border rounded-lg space-y-4">
             <div className="flex items-center justify-between">
               <p className="font-medium text-gray-900">{course.name || "(Not specified)"}</p>
               <button onClick={() => { const newCourses = [...(resume.courses || [])]; newCourses.splice(index, 1); onResumeChange({ ...resume, courses: newCourses }); }} className="text-gray-400 hover:text-red-500 transition-colors">
@@ -243,13 +278,61 @@ export default function ResumeEditor({
               </button>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-xs">Course Name</Label><Input value={course.name || ""} onChange={(e) => { const newCourses = [...(resume.courses || [])]; newCourses[index] = { ...newCourses[index], name: e.target.value }; onResumeChange({ ...resume, courses: newCourses }); }} placeholder="e.g. Advanced React" /></div>
-              <div className="space-y-2"><Label className="text-xs">Institution</Label><Input value={course.institution || ""} onChange={(e) => { const newCourses = [...(resume.courses || [])]; newCourses[index] = { ...newCourses[index], institution: e.target.value }; onResumeChange({ ...resume, courses: newCourses }); }} placeholder="e.g. Coursera" /></div>
+              <div className="space-y-2">
+                <Label className="text-xs">Course</Label>
+                <Input
+                  value={course.name || ""}
+                  onChange={(e) => {
+                    const newCourses = [...(resume.courses || [])];
+                    newCourses[index] = { ...newCourses[index], name: e.target.value };
+                    onResumeChange({ ...resume, courses: newCourses });
+                  }}
+                  placeholder="e.g. Advanced React"
+                  className="bg-slate-50 border-0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Institution</Label>
+                <Input
+                  value={course.institution || ""}
+                  onChange={(e) => {
+                    const newCourses = [...(resume.courses || [])];
+                    newCourses[index] = { ...newCourses[index], institution: e.target.value };
+                    onResumeChange({ ...resume, courses: newCourses });
+                  }}
+                  placeholder="e.g. Coursera"
+                  className="bg-slate-50 border-0"
+                />
+              </div>
             </div>
-            <div className="space-y-2"><Label className="text-xs">Completion Date</Label><Input value={course.date || ""} onChange={(e) => { const newCourses = [...(resume.courses || [])]; newCourses[index] = { ...newCourses[index], date: e.target.value }; onResumeChange({ ...resume, courses: newCourses }); }} placeholder="e.g. 2023-06" /></div>
+            <DateRangeWithCurrent
+              startDate={course.startDate || ""}
+              endDate={course.endDate || ""}
+              isCurrent={course.isCurrent || false}
+              onStartDateChange={(date) => {
+                const newCourses = [...(resume.courses || [])];
+                newCourses[index] = { ...newCourses[index], startDate: date };
+                onResumeChange({ ...resume, courses: newCourses });
+              }}
+              onEndDateChange={(date) => {
+                const newCourses = [...(resume.courses || [])];
+                newCourses[index] = { ...newCourses[index], endDate: date };
+                onResumeChange({ ...resume, courses: newCourses });
+              }}
+              onCurrentChange={(isCurrent) => {
+                const newCourses = [...(resume.courses || [])];
+                newCourses[index] = {
+                  ...newCourses[index],
+                  isCurrent,
+                  endDate: isCurrent ? "Present" : newCourses[index].endDate
+                };
+                onResumeChange({ ...resume, courses: newCourses });
+              }}
+              currentLabel="Currently taking this course"
+            />
           </div>
         ))}
-        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, courses: [...(resume.courses || []), { name: "", institution: "", date: "" }] }); }}>+ Add Course</Button>
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, courses: [...(resume.courses || []), { name: "", institution: "", startDate: "", endDate: "", isCurrent: false }] }); }}>+ Add Course</Button>
       </CardContent>}
     </Card>
   );
@@ -261,7 +344,7 @@ export default function ResumeEditor({
           <CollapseButton section="projects" />
           <CardTitle className="text-lg">Projects</CardTitle>
         </div>
-        <button onClick={() => toggleSection("projects")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("projects")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -291,7 +374,7 @@ export default function ResumeEditor({
           <CollapseButton section="certifications" />
           <CardTitle className="text-lg">Certifications</CardTitle>
         </div>
-        <button onClick={() => toggleSection("certifications")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("certifications")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -323,7 +406,7 @@ export default function ResumeEditor({
           <CollapseButton section="awards" />
           <CardTitle className="text-lg">Awards</CardTitle>
         </div>
-        <button onClick={() => toggleSection("awards")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("awards")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -355,7 +438,7 @@ export default function ResumeEditor({
           <CollapseButton section="references" />
           <CardTitle className="text-lg">References</CardTitle>
         </div>
-        <button onClick={() => toggleSection("references")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("references")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -369,10 +452,18 @@ export default function ResumeEditor({
               </button>
             </div>
             <div className="space-y-2"><Label className="text-xs">Name</Label><Input value={ref.name || ""} onChange={(e) => { const newRefs = [...(resume.references || [])]; newRefs[index] = { ...newRefs[index], name: e.target.value }; onResumeChange({ ...resume, references: newRefs }); }} placeholder="e.g. John Smith" /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label className="text-xs">Job Title</Label><Input value={ref.role || ""} onChange={(e) => { const newRefs = [...(resume.references || [])]; newRefs[index] = { ...newRefs[index], role: e.target.value }; onResumeChange({ ...resume, references: newRefs }); }} placeholder="e.g. Engineering Manager" /></div>
+              <div className="space-y-2"><Label className="text-xs">Company</Label><Input value={ref.company || ""} onChange={(e) => { const newRefs = [...(resume.references || [])]; newRefs[index] = { ...newRefs[index], company: e.target.value }; onResumeChange({ ...resume, references: newRefs }); }} placeholder="e.g. Google" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label className="text-xs">Email</Label><Input value={ref.email || ""} onChange={(e) => { const newRefs = [...(resume.references || [])]; newRefs[index] = { ...newRefs[index], email: e.target.value }; onResumeChange({ ...resume, references: newRefs }); }} placeholder="e.g. john@company.com" /></div>
+              <div className="space-y-2"><Label className="text-xs">Phone</Label><Input value={ref.phone || ""} onChange={(e) => { const newRefs = [...(resume.references || [])]; newRefs[index] = { ...newRefs[index], phone: e.target.value }; onResumeChange({ ...resume, references: newRefs }); }} placeholder="e.g. +1 (555) 123-4567" /></div>
+            </div>
             <div className="space-y-2"><Label className="text-xs">Reference Details</Label><Textarea value={ref.reference || ""} onChange={(e) => { const newRefs = [...(resume.references || [])]; newRefs[index] = { ...newRefs[index], reference: e.target.value }; onResumeChange({ ...resume, references: newRefs }); }} placeholder="Contact info or 'Available upon request'" rows={2} /></div>
           </div>
         ))}
-        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, references: [...(resume.references || []), { name: "", reference: "" }] }); }}>+ Add Reference</Button>
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, references: [...(resume.references || []), { name: "", role: "", company: "", email: "", phone: "", reference: "" }] }); }}>+ Add Reference</Button>
       </CardContent>}
     </Card>
   );
@@ -384,7 +475,7 @@ export default function ResumeEditor({
           <CollapseButton section="volunteering" />
           <CardTitle className="text-lg">Volunteering</CardTitle>
         </div>
-        <button onClick={() => toggleSection("volunteering")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("volunteering")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -416,7 +507,7 @@ export default function ResumeEditor({
           <CollapseButton section="hobbies" />
           <CardTitle className="text-lg">Hobbies</CardTitle>
         </div>
-        <button onClick={() => toggleSection("hobbies")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("hobbies")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -444,7 +535,7 @@ export default function ResumeEditor({
           <CollapseButton section="internships" />
           <CardTitle className="text-lg">Internships</CardTitle>
         </div>
-        <button onClick={() => toggleSection("internships")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("internships")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -460,6 +551,10 @@ export default function ResumeEditor({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label className="text-xs">Job Title</Label><Input value={intern.position || ""} onChange={(e) => { const newInterns = [...(resume.internships || [])]; newInterns[index] = { ...newInterns[index], position: e.target.value }; onResumeChange({ ...resume, internships: newInterns }); }} placeholder="e.g. Software Intern" /></div>
               <div className="space-y-2"><Label className="text-xs">Employer</Label><Input value={intern.company || ""} onChange={(e) => { const newInterns = [...(resume.internships || [])]; newInterns[index] = { ...newInterns[index], company: e.target.value }; onResumeChange({ ...resume, internships: newInterns }); }} placeholder="e.g. Google" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label className="text-xs">City</Label><Input value={intern.city || ""} onChange={(e) => { const newInterns = [...(resume.internships || [])]; newInterns[index] = { ...newInterns[index], city: e.target.value }; onResumeChange({ ...resume, internships: newInterns }); }} placeholder="e.g. San Francisco" /></div>
+              <div className="space-y-2"><Label className="text-xs">Country</Label><Input value={intern.country || ""} onChange={(e) => { const newInterns = [...(resume.internships || [])]; newInterns[index] = { ...newInterns[index], country: e.target.value }; onResumeChange({ ...resume, internships: newInterns }); }} placeholder="e.g. USA" /></div>
             </div>
             <DateRangeWithCurrent startDate={intern.startDate || ""} endDate={intern.endDate || ""} onStartDateChange={(value) => { const newInterns = [...(resume.internships || [])]; newInterns[index] = { ...newInterns[index], startDate: value }; onResumeChange({ ...resume, internships: newInterns }); }} onEndDateChange={(value) => { const newInterns = [...(resume.internships || [])]; newInterns[index] = { ...newInterns[index], endDate: value }; onResumeChange({ ...resume, internships: newInterns }); }} currentLabel="Currently work here" />
             <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={intern.summary || ""} onChange={(e) => { const newInterns = [...(resume.internships || [])]; newInterns[index] = { ...newInterns[index], summary: e.target.value }; onResumeChange({ ...resume, internships: newInterns }); }} placeholder="Describe your responsibilities" rows={3} /></div>
@@ -477,7 +572,7 @@ export default function ResumeEditor({
           <CollapseButton section="activities" />
           <CardTitle className="text-lg">Extra-curricular Activities</CardTitle>
         </div>
-        <button onClick={() => toggleSection("activities")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("activities")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -509,7 +604,7 @@ export default function ResumeEditor({
           <CollapseButton section="publications" />
           <CardTitle className="text-lg">Publications</CardTitle>
         </div>
-        <button onClick={() => toggleSection("publications")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("publications")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -541,7 +636,7 @@ export default function ResumeEditor({
           <CollapseButton section="custom" />
           <CardTitle className="text-lg">Custom Section</CardTitle>
         </div>
-        <button onClick={() => toggleSection("custom")} className="text-gray-400 hover:text-red-500 transition-colors">
+        <button onClick={() => setSectionToDelete("custom")} className="text-gray-400 hover:text-red-500 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </CardHeader>
@@ -598,18 +693,35 @@ export default function ResumeEditor({
         </button>
         {!isCollapsed("personal") && <CardContent className="space-y-4">
           {/* Profile Photo */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <div className="relative">
               {resume.basics?.image ? (
-                <div className="relative">
-                  <img
-                    src={resume.basics.image}
-                    alt="Profile"
-                    className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 shadow-sm"
-                  />
+                <div className="relative group">
+                  <div
+                    className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm cursor-pointer"
+                    onClick={() => setIsPhotoModalOpen(true)}
+                  >
+                    <img
+                      src={resume.basics.image}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      style={{
+                        transform: `translate(${resume.basics.imagePosition?.x || 0}%, ${resume.basics.imagePosition?.y || 0}%) scale(${resume.basics.imagePosition?.scale || 1})`,
+                      }}
+                    />
+                  </div>
+                  {/* Edit overlay on hover */}
+                  <div
+                    className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    onClick={() => setIsPhotoModalOpen(true)}
+                  >
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  </div>
                   <button
                     onClick={removePhoto}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10"
                   >
                     ×
                   </button>
@@ -633,19 +745,52 @@ export default function ResumeEditor({
                 className="hidden"
                 id="photo-upload"
               />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-xs cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Upload Photo
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Upload Photo
+                </Button>
+                {resume.basics?.image && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsPhotoModalOpen(true)}
+                    className="text-xs cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                    Adjust
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Photo Position Modal */}
+          <PhotoPositionModal
+            isOpen={isPhotoModalOpen}
+            onClose={() => setIsPhotoModalOpen(false)}
+            imageUrl={resume.basics?.image || ""}
+            initialPosition={{
+              x: resume.basics?.imagePosition?.x || 0,
+              y: resume.basics?.imagePosition?.y || 0,
+              scale: resume.basics?.imagePosition?.scale || 1,
+            }}
+            onSave={(position) => {
+              onResumeChange({
+                ...resume,
+                basics: { ...resume.basics, imagePosition: position },
+              });
+            }}
+          />
 
           <Separator />
 
@@ -709,6 +854,71 @@ export default function ResumeEditor({
                 value={resume.basics?.location?.region || ""}
                 onChange={(e) => updateLocation("region", e.target.value)}
                 placeholder="CA"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="linkedin" className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                LinkedIn <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+              </Label>
+              <Input
+                id="linkedin"
+                value={resume.basics?.profiles?.find(p => p.network === "LinkedIn")?.url || ""}
+                onChange={(e) => {
+                  const profiles = [...(resume.basics?.profiles || [])];
+                  const linkedinIndex = profiles.findIndex(p => p.network === "LinkedIn");
+                  if (linkedinIndex >= 0) {
+                    if (e.target.value) {
+                      profiles[linkedinIndex] = { ...profiles[linkedinIndex], url: e.target.value };
+                    } else {
+                      profiles.splice(linkedinIndex, 1);
+                    }
+                  } else if (e.target.value) {
+                    profiles.push({ network: "LinkedIn", url: e.target.value });
+                  }
+                  onResumeChange({
+                    ...resume,
+                    basics: { ...resume.basics, profiles }
+                  });
+                }}
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="github" className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                GitHub <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+              </Label>
+              <Input
+                id="github"
+                value={resume.basics?.profiles?.find(p => p.network === "GitHub")?.url || ""}
+                onChange={(e) => {
+                  const profiles = [...(resume.basics?.profiles || [])];
+                  const githubIndex = profiles.findIndex(p => p.network === "GitHub");
+                  if (githubIndex >= 0) {
+                    if (e.target.value) {
+                      profiles[githubIndex] = { ...profiles[githubIndex], url: e.target.value };
+                    } else {
+                      profiles.splice(githubIndex, 1);
+                    }
+                  } else if (e.target.value) {
+                    profiles.push({ network: "GitHub", url: e.target.value });
+                  }
+                  onResumeChange({
+                    ...resume,
+                    basics: { ...resume.basics, profiles }
+                  });
+                }}
+                placeholder="https://github.com/username"
               />
             </div>
           </div>
@@ -856,6 +1066,32 @@ export default function ResumeEditor({
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">City</Label>
+                  <Input
+                    value={job.city || ""}
+                    onChange={(e) => {
+                      const newWork = [...(resume.work || [])];
+                      newWork[index] = { ...newWork[index], city: e.target.value };
+                      onResumeChange({ ...resume, work: newWork });
+                    }}
+                    placeholder="e.g. San Francisco"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Country</Label>
+                  <Input
+                    value={job.country || ""}
+                    onChange={(e) => {
+                      const newWork = [...(resume.work || [])];
+                      newWork[index] = { ...newWork[index], country: e.target.value };
+                      onResumeChange({ ...resume, work: newWork });
+                    }}
+                    placeholder="e.g. USA"
+                  />
+                </div>
+              </div>
               <DateRangeWithCurrent
                 startDate={job.startDate || ""}
                 endDate={job.endDate || ""}
@@ -871,6 +1107,19 @@ export default function ResumeEditor({
                 }}
                 currentLabel="Currently work here"
               />
+              <div className="space-y-2">
+                <Label className="text-xs">Description</Label>
+                <Textarea
+                  value={job.summary || ""}
+                  onChange={(e) => {
+                    const newWork = [...(resume.work || [])];
+                    newWork[index] = { ...newWork[index], summary: e.target.value };
+                    onResumeChange({ ...resume, work: newWork });
+                  }}
+                  placeholder="Describe your responsibilities and achievements"
+                  rows={3}
+                />
+              </div>
             </div>
           ))}
           <Button
@@ -879,7 +1128,7 @@ export default function ResumeEditor({
             onClick={() => {
               onResumeChange({
                 ...resume,
-                work: [...(resume.work || []), { name: "", position: "", startDate: "", endDate: "" }],
+                work: [...(resume.work || []), { name: "", position: "", startDate: "", endDate: "", summary: "" }],
               });
             }}
           >
@@ -1326,6 +1575,34 @@ export default function ResumeEditor({
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Section Confirmation Modal */}
+      <Dialog open={sectionToDelete !== null} onOpenChange={(open) => { if (!open) setSectionToDelete(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-900">Delete Section</DialogTitle>
+            <DialogDescription className="text-gray-500">
+              Are you sure you want to delete the <span className="font-medium text-gray-700">&quot;{sectionToDelete ? sectionNames[sectionToDelete] : ""}&quot;</span> section? All data in this section will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setSectionToDelete(null)}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteSection}
+              className="cursor-pointer bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
