@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ModernSidebar({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white flex shadow-lg print:shadow-none">
@@ -205,6 +205,33 @@ export default function ModernSidebar({ resume }: TemplateProps) {
                   <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
                   <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                   <p className="text-xs text-slate-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Awards */}
+        {awards && awards.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <span className="w-8 h-0.5 bg-slate-800"></span>
+              Awards
+            </h2>
+            <div className="space-y-4">
+              {awards.map((award, index) => (
+                <div key={index} className="relative pl-4 border-l-2 border-slate-200">
+                  <div className="absolute -left-[5px] top-1 w-2 h-2 bg-slate-800 rounded-full"></div>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-semibold text-gray-900">{award.title}</h3>
+                    {award.date && (
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                        {formatDate(award.date)}
+                      </span>
+                    )}
+                  </div>
+                  {award.awarder && <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wide">{award.awarder}</p>}
+                  {award.summary && <p className="text-sm text-gray-600 italic line-clamp-3">{award.summary}</p>}
                 </div>
               ))}
             </div>

@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ClassicTraditional({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-10 shadow-lg print:shadow-none font-['Times_New_Roman',serif]">
@@ -133,6 +133,31 @@ export default function ClassicTraditional({ resume }: TemplateProps) {
                   <span className="text-gray-700"> — {edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</span>
                 </div>
                 <span className="text-sm text-gray-600">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Awards */}
+      {awards && awards.length > 0 && (
+        <section className="mb-5">
+          <h2 className="text-sm font-bold text-gray-900 uppercase border-b border-gray-400 pb-1 mb-3">
+            Honors & Awards
+          </h2>
+          <div className="space-y-2">
+            {awards.map((award, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-baseline">
+                  <h3 className="font-bold text-gray-900">{award.title}</h3>
+                  <span className="text-sm text-gray-600">{formatDate(award.date)}</span>
+                </div>
+                {award.awarder && (
+                  <p className="text-gray-700 italic text-sm">{award.awarder}</p>
+                )}
+                {award.summary && (
+                  <p className="text-sm text-gray-700 mt-1">{award.summary}</p>
+                )}
               </div>
             ))}
           </div>

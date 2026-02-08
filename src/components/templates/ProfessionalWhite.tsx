@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ProfessionalWhite({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-12 font-['Inter',sans-serif] text-gray-800 shadow-lg print:shadow-none print:p-8">
@@ -188,6 +188,35 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
                 <span className="text-xs text-gray-500 whitespace-nowrap">
                   {formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}
                 </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Awards */}
+      {awards && awards.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+            Awards
+          </h2>
+          <div className="space-y-3">
+            {awards.map((award, index) => (
+              <div key={index} className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-gray-900">{award.title}</h3>
+                  {award.awarder && (
+                    <p className="text-sm text-gray-600">{award.awarder}</p>
+                  )}
+                  {award.summary && (
+                    <p className="text-sm text-gray-600 mt-1">{award.summary}</p>
+                  )}
+                </div>
+                {award.date && (
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {formatDate(award.date)}
+                  </span>
+                )}
               </div>
             ))}
           </div>

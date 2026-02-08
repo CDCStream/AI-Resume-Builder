@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function CreativeGradient({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg print:shadow-none overflow-hidden">
@@ -149,6 +149,37 @@ export default function CreativeGradient({ resume }: TemplateProps) {
                       <h3 className="font-bold text-white">{edu.institution}</h3>
                       <p className="text-sm text-slate-300">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                       <p className="text-xs text-slate-400 mt-1">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Awards */}
+            {awards && awards.length > 0 && (
+              <section>
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <span className="w-8 h-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded"></span>
+                  Awards
+                </h2>
+                <div className="space-y-3">
+                  {awards.map((award, index) => (
+                    <div key={index} className="p-4 bg-white/5 backdrop-blur rounded-xl border border-white/10 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-amber-400/10 rounded-bl-full transition-all group-hover:scale-110"></div>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-bold text-white">{award.title}</h3>
+                          {award.awarder && <p className="text-amber-400 text-sm">{award.awarder}</p>}
+                        </div>
+                        {award.date && (
+                          <span className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full">
+                            {formatDate(award.date)}
+                          </span>
+                        )}
+                      </div>
+                      {award.summary && (
+                        <p className="text-sm text-slate-300 italic">{award.summary}</p>
+                      )}
                     </div>
                   ))}
                 </div>

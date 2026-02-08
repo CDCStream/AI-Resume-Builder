@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function MinimalistElegant({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-12 shadow-lg print:shadow-none font-['Georgia',serif]">
@@ -124,6 +124,30 @@ export default function MinimalistElegant({ resume }: TemplateProps) {
                 <h3 className="font-semibold text-gray-800">{edu.institution}</h3>
                 <p className="text-gray-500 italic">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                 <p className="text-sm text-gray-400">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Awards */}
+      {awards && awards.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-center text-sm tracking-[0.3em] text-gray-400 uppercase mb-6">
+            Honors & Awards
+          </h2>
+          <div className="space-y-6 text-center max-w-lg mx-auto">
+            {awards.map((award, index) => (
+              <div key={index}>
+                <h3 className="font-semibold text-gray-800 uppercase tracking-widest">{award.title}</h3>
+                <div className="flex justify-center gap-2 text-sm text-gray-400 italic mb-1">
+                  {award.awarder && <span>{award.awarder}</span>}
+                  {award.awarder && award.date && <span>•</span>}
+                  {award.date && <span>{formatDate(award.date)}</span>}
+                </div>
+                {award.summary && (
+                  <p className="text-sm text-gray-600 italic leading-relaxed">{award.summary}</p>
+                )}
               </div>
             ))}
           </div>

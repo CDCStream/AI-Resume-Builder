@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ProfessionalNavy({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none flex">
@@ -192,6 +192,29 @@ export default function ProfessionalNavy({ resume }: TemplateProps) {
                   <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
                   <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                   <p className="text-xs text-gray-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Awards */}
+        {awards && awards.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Honors & Awards</h2>
+            <div className="space-y-4">
+              {awards.map((award, index) => (
+                <div key={index} className="border-l-3 border-amber-500 pl-4 bg-amber-50/30 p-3 rounded-r-lg">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-semibold text-gray-900">{award.title}</h3>
+                    {award.date && (
+                      <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
+                        {formatDate(award.date)}
+                      </span>
+                    )}
+                  </div>
+                  {award.awarder && <p className="text-sm text-[#1e3a5f] font-medium mb-1">{award.awarder}</p>}
+                  {award.summary && <p className="text-sm text-gray-600 italic">{award.summary}</p>}
                 </div>
               ))}
             </div>

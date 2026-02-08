@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function CreativeTimeline({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-violet-50 to-white shadow-lg print:shadow-none overflow-hidden">
@@ -162,6 +162,42 @@ export default function CreativeTimeline({ resume }: TemplateProps) {
                       <p className="text-xs text-violet-500 mt-1">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
                     </div>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* Awards Timeline */}
+            {awards && awards.length > 0 && (
+              <section>
+                <h2 className="text-lg font-bold text-violet-800 mb-4 flex items-center gap-2">
+                  <span className="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center text-white text-sm">🏆</span>
+                  Awards
+                </h2>
+                <div className="relative">
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-violet-200"></div>
+                  <div className="space-y-4">
+                    {awards.map((award, index) => (
+                      <div key={index} className="relative pl-10">
+                        <div className="absolute left-2 top-2 w-5 h-5 bg-violet-500 rounded-full border-4 border-white shadow"></div>
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-violet-100">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-bold text-gray-900">{award.title}</h3>
+                              {award.awarder && <p className="text-sm text-violet-600 font-medium">{award.awarder}</p>}
+                            </div>
+                            {award.date && (
+                              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-bold">
+                                {formatDate(award.date)}
+                              </span>
+                            )}
+                          </div>
+                          {award.summary && (
+                            <p className="text-sm text-gray-600 italic mt-2">{award.summary}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </section>
             )}

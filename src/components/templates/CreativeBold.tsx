@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function CreativeBold({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-amber-50 shadow-lg print:shadow-none">
@@ -144,6 +144,23 @@ export default function CreativeBold({ resume }: TemplateProps) {
                       <h3 className="font-bold text-gray-900">{edu.institution}</h3>
                       <p className="text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                       <p className="text-sm text-orange-500 mt-1">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Awards */}
+            {awards && awards.length > 0 && (
+              <section>
+                <h2 className="text-2xl font-black text-orange-600 mb-4">AWARDS</h2>
+                <div className="space-y-3">
+                  {awards.map((award, index) => (
+                    <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-r-4 border-orange-500 text-right">
+                      <h3 className="font-bold text-gray-900 text-lg">{award.title}</h3>
+                      {award.awarder && <p className="text-orange-600 font-medium">{award.awarder}</p>}
+                      {award.date && <p className="text-sm text-orange-400 mt-1">{formatDate(award.date)}</p>}
+                      {award.summary && <p className="text-sm text-gray-600 mt-2 italic">{award.summary}</p>}
                     </div>
                   ))}
                 </div>

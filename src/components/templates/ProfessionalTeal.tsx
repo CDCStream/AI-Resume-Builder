@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ProfessionalTeal({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none">
@@ -149,30 +149,23 @@ export default function ProfessionalTeal({ resume }: TemplateProps) {
             </section>
           )}
 
-          {/* Skills */}
-          {skills && skills.length > 0 && (
+          {/* Awards */}
+          {awards && awards.length > 0 && (
             <section>
               <h2 className="text-lg font-bold text-teal-600 border-b-2 border-teal-600 pb-1 mb-3">
-                Skills
+                Awards
               </h2>
-              <div className="space-y-2">
-                {skills.filter(skill => skill.name).map((skill, index) => {
-                  const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
-                  const filledDots = levelMap[skill.level || "Intermediate"] || 3;
-                  return (
-                    <div key={index}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">{skill.name}</span>
-                        <span className="text-xs text-gray-400">{skill.level || "Intermediate"}</span>
-                      </div>
-                      <div className="flex gap-1 mt-1">
-                        {[1, 2, 3, 4, 5].map((dot) => (
-                          <div key={dot} className={`w-2 h-2 rounded-full ${dot <= filledDots ? "bg-teal-500" : "bg-gray-200"}`} />
-                        ))}
-                      </div>
+              <div className="space-y-3">
+                {awards.map((award, index) => (
+                  <div key={index} className="bg-teal-50/50 p-2 rounded">
+                    <h3 className="font-semibold text-gray-900 text-sm">{award.title}</h3>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-xs text-teal-700 font-medium">{award.awarder}</p>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase">{formatDate(award.date)}</span>
                     </div>
-                  );
-                })}
+                    {award.summary && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{award.summary}</p>}
+                  </div>
+                ))}
               </div>
             </section>
           )}

@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function MinimalistClean({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-14 shadow-lg print:shadow-none">
@@ -137,6 +137,29 @@ export default function MinimalistClean({ resume }: TemplateProps) {
                 <div className="col-span-3">
                   <h3 className="font-medium text-gray-900">{edu.institution}</h3>
                   <p className="text-sm text-gray-500">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Awards */}
+      {awards && awards.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-100">
+            Awards
+          </h2>
+          <div className="space-y-4">
+            {awards.map((award, index) => (
+              <div key={index} className="grid grid-cols-4 gap-4">
+                <div className="text-sm text-gray-400">
+                  {formatDate(award.date)}
+                </div>
+                <div className="col-span-3">
+                  <h3 className="font-medium text-gray-900">{award.title}</h3>
+                  {award.awarder && <p className="text-sm text-gray-500 italic">{award.awarder}</p>}
+                  {award.summary && <p className="text-sm text-gray-600 mt-1">{award.summary}</p>}
                 </div>
               </div>
             ))}

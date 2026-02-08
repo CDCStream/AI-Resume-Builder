@@ -423,7 +423,22 @@ export default function ResumeEditor({
               <div className="space-y-2"><Label className="text-xs">Award Title</Label><Input value={award.title || ""} onChange={(e) => { const newAwards = [...(resume.awards || [])]; newAwards[index] = { ...newAwards[index], title: e.target.value }; onResumeChange({ ...resume, awards: newAwards }); }} placeholder="e.g. Employee of Year" /></div>
               <div className="space-y-2"><Label className="text-xs">Awarder</Label><Input value={award.awarder || ""} onChange={(e) => { const newAwards = [...(resume.awards || [])]; newAwards[index] = { ...newAwards[index], awarder: e.target.value }; onResumeChange({ ...resume, awards: newAwards }); }} placeholder="e.g. Company" /></div>
             </div>
-            <div className="space-y-2"><Label className="text-xs">Date</Label><Input value={award.date || ""} onChange={(e) => { const newAwards = [...(resume.awards || [])]; newAwards[index] = { ...newAwards[index], date: e.target.value }; onResumeChange({ ...resume, awards: newAwards }); }} placeholder="e.g. 2023-12" /></div>
+            <div className="space-y-2">
+              <Label className="text-xs">Date</Label>
+              <DateRangeWithCurrent
+                startDate={award.date}
+                onStartDateChange={(newDate) => {
+                  const newAwards = [...(resume.awards || [])];
+                  newAwards[index] = { ...newAwards[index], date: newDate };
+                  onResumeChange({ ...resume, awards: newAwards });
+                }}
+                onEndDateChange={() => {}}
+                endDate=""
+                showEndDate={false}
+                showCurrent={false}
+                placeholder="Select award date"
+              />
+            </div>
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, awards: [...(resume.awards || []), { title: "", awarder: "", date: "" }] }); }}>+ Add Award</Button>

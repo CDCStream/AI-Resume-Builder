@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ExecutiveDark({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-zinc-900 text-zinc-100 shadow-lg print:shadow-none">
@@ -153,7 +153,7 @@ export default function ExecutiveDark({ resume }: TemplateProps) {
 
           {/* Education */}
           {education && education.length > 0 && (
-            <section>
+            <section className="mb-8">
               <h2 className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-4">
                 Education
               </h2>
@@ -163,6 +163,37 @@ export default function ExecutiveDark({ resume }: TemplateProps) {
                     <h3 className="font-semibold text-white">{edu.institution}</h3>
                     <p className="text-sm text-zinc-400">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                     <p className="text-xs text-zinc-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Awards */}
+          {awards && awards.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-4 flex items-center gap-2">
+                Awards & Recognition
+              </h2>
+              <div className="space-y-4">
+                {awards.map((award, index) => (
+                  <div key={index} className="border-l-2 border-amber-500 pl-4 relative">
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-semibold text-white">{award.title}</h3>
+                      {award.date && (
+                        <span className="text-xs text-zinc-500 font-mono">
+                          {formatDate(award.date).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    {award.awarder && (
+                      <p className="text-sm text-amber-500/80 mb-2">{award.awarder}</p>
+                    )}
+                    {award.summary && (
+                      <p className="text-sm text-zinc-400 leading-relaxed italic border-t border-zinc-800 pt-2 mt-2">
+                        {award.summary}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function MinimalistLine({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-16 font-['Inter',sans-serif] text-gray-900 shadow-lg print:shadow-none">
@@ -136,6 +136,32 @@ export default function MinimalistLine({ resume }: TemplateProps) {
                 <h3 className="font-medium text-gray-900">{edu.institution}</h3>
                 <p className="text-sm text-gray-500">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                 <p className="text-xs text-gray-400">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Awards */}
+      {awards && awards.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-center text-xs font-medium tracking-[0.3em] text-gray-400 mb-6">
+            AWARDS
+          </h2>
+          <div className="w-16 h-px bg-gray-200 mx-auto mb-6"></div>
+          <div className="space-y-6">
+            {awards.map((award, index) => (
+              <div key={index} className="text-center">
+                <h3 className="font-medium text-gray-900 tracking-wider uppercase">{award.title}</h3>
+                <p className="text-sm text-gray-500 mb-1 italic">{award.awarder}</p>
+                {award.date && (
+                  <p className="text-xs text-gray-400 mb-2">
+                    {formatDate(award.date).toUpperCase()}
+                  </p>
+                )}
+                {award.summary && (
+                  <p className="text-sm text-gray-600 max-w-lg mx-auto leading-relaxed">{award.summary}</p>
+                )}
               </div>
             ))}
           </div>

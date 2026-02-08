@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ModernAccent({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none">
@@ -158,6 +158,36 @@ export default function ModernAccent({ resume }: TemplateProps) {
                       <h3 className="font-bold text-gray-900">{edu.institution}</h3>
                       <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                       <p className="text-xs text-gray-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Awards */}
+            {awards && awards.length > 0 && (
+              <section>
+                <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-rose-200">
+                  <span className="text-rose-500">●</span> Awards
+                </h2>
+                <div className="space-y-4">
+                  {awards.map((award, index) => (
+                    <div key={index} className="flex gap-4 group">
+                      <div className="flex-shrink-0 w-10 h-10 bg-rose-50 rounded-lg flex items-center justify-center text-rose-500 transition-colors group-hover:bg-rose-500 group-hover:text-white">
+                        🏆
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-gray-900">{award.title}</h3>
+                          {award.date && (
+                            <span className="text-xs text-rose-400 font-medium tracking-wider uppercase">
+                              {formatDate(award.date)}
+                            </span>
+                          )}
+                        </div>
+                        {award.awarder && <p className="text-sm text-rose-500/80 font-medium">{award.awarder}</p>}
+                        {award.summary && <p className="text-sm text-gray-600 mt-1 italic">{award.summary}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>

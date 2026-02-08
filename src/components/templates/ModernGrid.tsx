@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ModernGrid({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-gray-50 p-8 shadow-lg print:shadow-none">
@@ -146,6 +146,35 @@ export default function ModernGrid({ resume }: TemplateProps) {
                     <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
                     <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
                     <p className="text-xs text-gray-500 mt-1">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Awards */}
+          {awards && awards.length > 0 && (
+            <section className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">🏆</span>
+                Awards
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                {awards.map((award, index) => (
+                  <div key={index} className="p-4 bg-gray-50 rounded-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-2 h-full bg-amber-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{award.title}</h3>
+                        {award.awarder && <p className="text-sm text-amber-600 font-medium">{award.awarder}</p>}
+                        {award.summary && <p className="text-sm text-gray-600 mt-2 italic line-clamp-2">{award.summary}</p>}
+                      </div>
+                      {award.date && (
+                        <span className="text-xs font-bold text-gray-400 ml-4">
+                          {formatDate(award.date)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
