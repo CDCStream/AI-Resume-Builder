@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import TemplateSelector from "./TemplateSelector";
-import { DateRangeWithCurrent } from "@/components/ui/month-year-picker";
+import { DateRangeWithCurrent, MonthYearPicker } from "@/components/ui/month-year-picker";
 import { PhotoPositionModal } from "./PhotoPositionModal";
 import { useRef, useState } from "react";
 
@@ -391,7 +391,18 @@ export default function ResumeEditor({
               <div className="space-y-2"><Label className="text-xs">Certificate Name</Label><Input value={cert.name || ""} onChange={(e) => { const newCerts = [...(resume.certificates || [])]; newCerts[index] = { ...newCerts[index], name: e.target.value }; onResumeChange({ ...resume, certificates: newCerts }); }} placeholder="e.g. AWS Certified" /></div>
               <div className="space-y-2"><Label className="text-xs">Issuer</Label><Input value={cert.issuer || ""} onChange={(e) => { const newCerts = [...(resume.certificates || [])]; newCerts[index] = { ...newCerts[index], issuer: e.target.value }; onResumeChange({ ...resume, certificates: newCerts }); }} placeholder="e.g. Amazon" /></div>
             </div>
-            <div className="space-y-2"><Label className="text-xs">Date</Label><Input value={cert.date || ""} onChange={(e) => { const newCerts = [...(resume.certificates || [])]; newCerts[index] = { ...newCerts[index], date: e.target.value }; onResumeChange({ ...resume, certificates: newCerts }); }} placeholder="e.g. 2023-01" /></div>
+            <div className="space-y-2">
+              <Label className="text-xs">Date</Label>
+              <MonthYearPicker
+                value={cert.date || ""}
+                onChange={(newDate) => {
+                  const newCerts = [...(resume.certificates || [])];
+                  newCerts[index] = { ...newCerts[index], date: newDate };
+                  onResumeChange({ ...resume, certificates: newCerts });
+                }}
+                placeholder="Select date"
+              />
+            </div>
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, certificates: [...(resume.certificates || []), { name: "", issuer: "", date: "" }] }); }}>+ Add Certification</Button>
@@ -425,17 +436,13 @@ export default function ResumeEditor({
             </div>
             <div className="space-y-2">
               <Label className="text-xs">Date</Label>
-              <DateRangeWithCurrent
-                startDate={award.date}
-                onStartDateChange={(newDate) => {
+              <MonthYearPicker
+                value={award.date || ""}
+                onChange={(newDate) => {
                   const newAwards = [...(resume.awards || [])];
                   newAwards[index] = { ...newAwards[index], date: newDate };
                   onResumeChange({ ...resume, awards: newAwards });
                 }}
-                onEndDateChange={() => {}}
-                endDate=""
-                showEndDate={false}
-                showCurrent={false}
                 placeholder="Select award date"
               />
             </div>
