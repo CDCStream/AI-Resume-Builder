@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import ResumeEditor from "@/components/editor/ResumeEditor";
 import GettingStartedModal from "@/components/editor/GettingStartedModal";
+import ResumePaginator from "@/components/preview/ResumePaginator";
 import { templates } from "@/components/templates";
 import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
 
@@ -38,16 +39,14 @@ export default function Home() {
     setShowGettingStarted(false);
   };
 
-  // A4 dimensions in pixels (at 96 DPI)
-  const A4_HEIGHT = 1122; // 297mm
-  const A4_WIDTH = 794; // 210mm
+  const A4_WIDTH = 794; // 210mm at 96dpi
 
   useEffect(() => {
     const updateScale = () => {
       if (containerRef.current) {
-        const containerHeight = containerRef.current.clientHeight;
-        const targetHeight = containerHeight * 0.95; // 95% of container height
-        const newScale = targetHeight / A4_HEIGHT;
+        const containerWidth = containerRef.current.clientWidth;
+        const targetWidth = containerWidth * 0.85;
+        const newScale = Math.min(targetWidth / A4_WIDTH, 1);
         setScale(newScale);
       }
     };
@@ -80,16 +79,18 @@ export default function Home() {
         {/* Right Panel - Preview */}
         <div
           ref={containerRef}
-          className="flex-1 flex justify-center items-center overflow-hidden"
+          className="flex-1 overflow-auto"
         >
           <div
-            className="print:scale-100 print:transform-none"
+            className="py-8 flex justify-center print:scale-100 print:transform-none print:py-0"
             style={{
               transform: `scale(${scale})`,
-              transformOrigin: 'center center'
+              transformOrigin: 'top center',
             }}
           >
-            {TemplateComponent && <TemplateComponent resume={resume} />}
+            <ResumePaginator>
+              {TemplateComponent && <TemplateComponent resume={resume} />}
+            </ResumePaginator>
           </div>
         </div>
       </div>

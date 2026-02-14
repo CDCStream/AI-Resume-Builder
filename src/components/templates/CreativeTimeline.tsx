@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function CreativeTimeline({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, signature } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-violet-50 to-white shadow-lg print:shadow-none overflow-hidden">
@@ -309,6 +309,94 @@ export default function CreativeTimeline({ resume }: TemplateProps) {
                 </div>
               </section>
             )}
+
+            {/* Publications */}
+            {publications && publications.length > 0 && publications.some(p => p.name) && (
+              <section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100">
+                <h2 className="text-sm font-bold text-violet-800 mb-3">📖 Publications</h2>
+                <div className="space-y-3">
+                  {publications.filter(p => p.name).map((pub, index) => (
+                    <div key={index}>
+                      <h3 className="font-semibold text-gray-900 text-sm">{pub.name}</h3>
+                      {pub.publisher && <p className="text-xs text-gray-600">{pub.publisher}</p>}
+                      {pub.releaseDate && <p className="text-xs text-gray-500 mt-1">{formatDate(pub.releaseDate)}</p>}
+                      {pub.summary && <p className="text-sm text-gray-600 mt-1">{pub.summary}</p>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Projects */}
+            {projects && projects.length > 0 && projects.some(p => p.name) && (
+              <section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100">
+                <h2 className="text-sm font-bold text-violet-800 mb-3">💻 Projects</h2>
+                <div className="space-y-3">
+                  {projects.filter(p => p.name).map((project, index) => (
+                    <div key={index}>
+                      <h3 className="font-semibold text-gray-900 text-sm">{project.name}</h3>
+                      {(project.startDate || project.endDate) && <p className="text-xs text-gray-500 mt-1">{formatDate(project.startDate)} {project.endDate ? `— ${formatDate(project.endDate)}` : ""}</p>}
+                      {project.description && <p className="text-sm text-gray-600 mt-1">{project.description}</p>}
+                      {project.url && <a href={project.url} className="text-xs text-violet-500 mt-1 block">{project.url}</a>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Certifications */}
+            {certificates && certificates.length > 0 && certificates.some(c => c.name) && (
+              <section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100">
+                <h2 className="text-sm font-bold text-violet-800 mb-3">🏅 Certifications</h2>
+                <div className="space-y-3">
+                  {certificates.filter(c => c.name).map((cert, index) => (
+                    <div key={index}>
+                      <h3 className="font-semibold text-gray-900 text-sm">{cert.name}</h3>
+                      {cert.issuer && <p className="text-xs text-gray-600">{cert.issuer}</p>}
+                      {(cert.date || cert.endDate) && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDate(cert.date)}{cert.endDate ? ` — ${formatDate(cert.endDate)}` : ""}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Volunteering */}
+            {volunteer && volunteer.length > 0 && volunteer.some(v => v.organization) && (
+              <section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100">
+                <h2 className="text-sm font-bold text-violet-800 mb-3">🤝 Volunteering</h2>
+                <div className="space-y-3">
+                  {volunteer.filter(v => v.organization).map((vol, index) => (
+                    <div key={index}>
+                      <h3 className="font-semibold text-gray-900 text-sm">{vol.organization}</h3>
+                      {vol.position && <p className="text-xs text-gray-600">{vol.position}</p>}
+                      {(vol.startDate || vol.endDate) && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {[vol.startDate, vol.endDate].filter(Boolean).join(" - ")}
+                        </p>
+                      )}
+                      {vol.summary && <p className="text-sm text-gray-600 mt-1">{vol.summary}</p>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Strengths */}
+            {strengths && strengths.length > 0 && strengths.some(s => s.name) && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100"><h2 className="text-sm font-bold text-violet-800 mb-3">💪 Strengths</h2><div className="space-y-3">{strengths.filter(s => s.name).map((s, i) => (<div key={i}><h3 className="font-semibold text-gray-900 text-sm">{s.name}</h3>{s.description && <p className="text-sm text-gray-600 mt-1">{s.description}</p>}</div>))}</div></section>)}
+            {/* Industry Expertise */}
+            {industryExpertise && industryExpertise.length > 0 && industryExpertise.some(e => e.name) && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100"><h2 className="text-sm font-bold text-violet-800 mb-3">🎯 Industry Expertise</h2><div className="space-y-2">{industryExpertise.filter(e => e.name).map((e, i) => (<div key={i}><div className="flex justify-between text-sm"><span className="font-medium text-gray-900">{e.name}</span><span className="text-gray-500">{e.level}</span></div><div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-violet-500 h-1.5 rounded-full" style={{ width: e.level === 'Expert' ? '100%' : e.level === 'Advanced' ? '75%' : e.level === 'Intermediate' ? '50%' : '25%' }}></div></div></div>))}</div></section>)}
+            {/* Philosophy */}
+            {philosophy && philosophy.quote && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100"><h2 className="text-sm font-bold text-violet-800 mb-3">💭 My Life Philosophy</h2><blockquote className="italic text-gray-600 border-l-2 border-violet-300 pl-3">&ldquo;{philosophy.quote}&rdquo;</blockquote>{philosophy.author && <p className="text-sm text-gray-500 mt-2 text-right">— {philosophy.author}</p>}</section>)}
+            {/* Books */}
+            {books && books.length > 0 && books.some(b => b.title) && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100"><h2 className="text-sm font-bold text-violet-800 mb-3">📚 Books</h2><div className="space-y-2">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-semibold text-gray-900 text-sm">{b.title}</h3>{b.author && <p className="text-xs text-gray-500">{b.author}</p>}</div>))}</div></section>)}
+            {/* Find Me Online */}
+            {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100"><h2 className="text-sm font-bold text-violet-800 mb-3">🌐 Find Me Online</h2><div className="space-y-2">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i} className="flex items-center gap-2"><span className="font-semibold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-500">{l.username}</span>}</div>))}</div></section>)}
+            {/* Signature */}
+            {signature && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100 text-center"><p className="text-2xl italic text-gray-700" style={{ fontFamily: 'cursive' }}>{signature}</p></section>)}
 
             {/* Custom Sections */}
             {customSections && customSections.length > 0 && customSections.map((section, index) => (

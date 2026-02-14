@@ -78,6 +78,7 @@ export interface Award {
 export interface Certificate {
   name?: string;
   date?: string;
+  endDate?: string;
   issuer?: string;
   url?: string;
 }
@@ -165,6 +166,32 @@ export interface CustomSection {
   content?: string;
 }
 
+export interface Strength {
+  name?: string;
+  description?: string;
+}
+
+export interface Philosophy {
+  quote?: string;
+  author?: string;
+}
+
+export interface Book {
+  title?: string;
+  author?: string;
+}
+
+export interface SocialLink {
+  network?: string;
+  username?: string;
+  url?: string;
+}
+
+export interface IndustryExpertise {
+  name?: string;
+  level?: string; // "Beginner" | "Intermediate" | "Advanced" | "Expert"
+}
+
 export interface Resume {
   $schema?: string;
   basics?: Basics;
@@ -184,6 +211,12 @@ export interface Resume {
   hobbies?: Hobby[];
   activities?: Activity[];
   customSections?: CustomSection[];
+  strengths?: Strength[];
+  philosophy?: Philosophy;
+  books?: Book[];
+  socialLinks?: SocialLink[];
+  industryExpertise?: IndustryExpertise[];
+  signature?: string;
 }
 
 // Default empty resume

@@ -32,6 +32,12 @@ type AdditionalSection =
   | "certifications"
   | "projects"
   | "publications"
+  | "strengths"
+  | "philosophy"
+  | "books"
+  | "socialLinks"
+  | "industryExpertise"
+  | "signature"
   | "custom";
 
 interface ResumeEditorProps {
@@ -78,12 +84,79 @@ export default function ResumeEditor({
     certifications: "Certifications",
     projects: "Projects",
     publications: "Publications",
+    strengths: "Strengths",
+    philosophy: "My Life Philosophy",
+    books: "Books",
+    socialLinks: "Find Me Online",
+    industryExpertise: "Industry Expertise",
+    signature: "Signature",
     custom: "Custom Section",
   };
 
   const confirmDeleteSection = () => {
     if (sectionToDelete) {
       setActiveSections((prev) => prev.filter((s) => s !== sectionToDelete));
+
+      // Also clear the data from resume
+      const updatedResume = { ...resume };
+      switch (sectionToDelete) {
+        case "languages":
+          updatedResume.languages = [];
+          break;
+        case "courses":
+          updatedResume.courses = [];
+          break;
+        case "activities":
+          updatedResume.activities = [];
+          break;
+        case "internships":
+          updatedResume.internships = [];
+          break;
+        case "hobbies":
+          updatedResume.hobbies = [];
+          break;
+        case "references":
+          updatedResume.references = [];
+          break;
+        case "awards":
+          updatedResume.awards = [];
+          break;
+        case "volunteering":
+          updatedResume.volunteer = [];
+          break;
+        case "certifications":
+          updatedResume.certificates = [];
+          break;
+        case "projects":
+          updatedResume.projects = [];
+          break;
+        case "publications":
+          updatedResume.publications = [];
+          break;
+        case "strengths":
+          updatedResume.strengths = [];
+          break;
+        case "philosophy":
+          updatedResume.philosophy = undefined;
+          break;
+        case "books":
+          updatedResume.books = [];
+          break;
+        case "socialLinks":
+          updatedResume.socialLinks = [];
+          break;
+        case "industryExpertise":
+          updatedResume.industryExpertise = [];
+          break;
+        case "signature":
+          updatedResume.signature = undefined;
+          break;
+        case "custom":
+          updatedResume.customSections = [];
+          break;
+      }
+      onResumeChange(updatedResume);
+
       setSectionToDelete(null);
     }
   };
@@ -157,6 +230,18 @@ export default function ResumeEditor({
         return renderActivitiesSection();
       case "publications":
         return renderPublicationsSection();
+      case "strengths":
+        return renderStrengthsSection();
+      case "philosophy":
+        return renderPhilosophySection();
+      case "books":
+        return renderBooksSection();
+      case "socialLinks":
+        return renderSocialLinksSection();
+      case "industryExpertise":
+        return renderIndustryExpertiseSection();
+      case "signature":
+        return renderSignatureSection();
       case "custom":
         return renderCustomSection();
       default:
@@ -359,6 +444,24 @@ export default function ResumeEditor({
             </div>
             <div className="space-y-2"><Label className="text-xs">Project Name</Label><Input value={project.name || ""} onChange={(e) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], name: e.target.value }; onResumeChange({ ...resume, projects: newProjects }); }} placeholder="e.g. E-commerce Platform" /></div>
             <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={project.description || ""} onChange={(e) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], description: e.target.value }; onResumeChange({ ...resume, projects: newProjects }); }} placeholder="Briefly describe the project" rows={2} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Start Date</Label>
+                <MonthYearPicker
+                  value={project.startDate || ""}
+                  onChange={(newDate) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], startDate: newDate }; onResumeChange({ ...resume, projects: newProjects }); }}
+                  placeholder="Start date"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">End Date</Label>
+                <MonthYearPicker
+                  value={project.endDate || ""}
+                  onChange={(newDate) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], endDate: newDate }; onResumeChange({ ...resume, projects: newProjects }); }}
+                  placeholder="End date"
+                />
+              </div>
+            </div>
             <div className="space-y-2"><Label className="text-xs">URL</Label><Input value={project.url || ""} onChange={(e) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], url: e.target.value }; onResumeChange({ ...resume, projects: newProjects }); }} placeholder="e.g. https://myproject.com" /></div>
           </div>
         ))}
@@ -391,21 +494,35 @@ export default function ResumeEditor({
               <div className="space-y-2"><Label className="text-xs">Certificate Name</Label><Input value={cert.name || ""} onChange={(e) => { const newCerts = [...(resume.certificates || [])]; newCerts[index] = { ...newCerts[index], name: e.target.value }; onResumeChange({ ...resume, certificates: newCerts }); }} placeholder="e.g. AWS Certified" /></div>
               <div className="space-y-2"><Label className="text-xs">Issuer</Label><Input value={cert.issuer || ""} onChange={(e) => { const newCerts = [...(resume.certificates || [])]; newCerts[index] = { ...newCerts[index], issuer: e.target.value }; onResumeChange({ ...resume, certificates: newCerts }); }} placeholder="e.g. Amazon" /></div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Date</Label>
-              <MonthYearPicker
-                value={cert.date || ""}
-                onChange={(newDate) => {
-                  const newCerts = [...(resume.certificates || [])];
-                  newCerts[index] = { ...newCerts[index], date: newDate };
-                  onResumeChange({ ...resume, certificates: newCerts });
-                }}
-                placeholder="Select date"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Start Date</Label>
+                <MonthYearPicker
+                  value={cert.date || ""}
+                  onChange={(newDate) => {
+                    const newCerts = [...(resume.certificates || [])];
+                    newCerts[index] = { ...newCerts[index], date: newDate };
+                    onResumeChange({ ...resume, certificates: newCerts });
+                  }}
+                  placeholder="Start date"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">End Date</Label>
+                <MonthYearPicker
+                  value={cert.endDate || ""}
+                  onChange={(newDate) => {
+                    const newCerts = [...(resume.certificates || [])];
+                    newCerts[index] = { ...newCerts[index], endDate: newDate };
+                    onResumeChange({ ...resume, certificates: newCerts });
+                  }}
+                  placeholder="End date"
+                />
+              </div>
             </div>
           </div>
         ))}
-        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, certificates: [...(resume.certificates || []), { name: "", issuer: "", date: "" }] }); }}>+ Add Certification</Button>
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, certificates: [...(resume.certificates || []), { name: "", issuer: "", date: "", endDate: "" }] }); }}>+ Add Certification</Button>
       </CardContent>}
     </Card>
   );
@@ -659,6 +776,173 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, publications: [...(resume.publications || []), { name: "", publisher: "", summary: "" }] }); }}>+ Add Publication</Button>
+      </CardContent>}
+    </Card>
+  );
+
+  const renderStrengthsSection = () => (
+    <Card key="strengths">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("strengths")}>
+          <CollapseButton section="strengths" />
+          <CardTitle className="text-lg">Strengths</CardTitle>
+        </div>
+        <button onClick={() => setSectionToDelete("strengths")} className="text-gray-400 hover:text-red-500 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </CardHeader>
+      {!isCollapsed("strengths") && <CardContent className="space-y-4">
+        {resume.strengths?.map((str, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-gray-900">{str.name || "(Not specified)"}</p>
+              <button onClick={() => { const newStrs = [...(resume.strengths || [])]; newStrs.splice(index, 1); onResumeChange({ ...resume, strengths: newStrs }); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+            <div className="space-y-2"><Label className="text-xs">Strength Name</Label><Input value={str.name || ""} onChange={(e) => { const newStrs = [...(resume.strengths || [])]; newStrs[index] = { ...newStrs[index], name: e.target.value }; onResumeChange({ ...resume, strengths: newStrs }); }} placeholder="e.g. Go-getter" /></div>
+            <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={str.description || ""} onChange={(e) => { const newStrs = [...(resume.strengths || [])]; newStrs[index] = { ...newStrs[index], description: e.target.value }; onResumeChange({ ...resume, strengths: newStrs }); }} placeholder="Describe this strength" rows={2} /></div>
+          </div>
+        ))}
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, strengths: [...(resume.strengths || []), { name: "", description: "" }] }); }}>+ Add Strength</Button>
+      </CardContent>}
+    </Card>
+  );
+
+  const renderPhilosophySection = () => (
+    <Card key="philosophy">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("philosophy")}>
+          <CollapseButton section="philosophy" />
+          <CardTitle className="text-lg">My Life Philosophy</CardTitle>
+        </div>
+        <button onClick={() => setSectionToDelete("philosophy")} className="text-gray-400 hover:text-red-500 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </CardHeader>
+      {!isCollapsed("philosophy") && <CardContent className="space-y-4">
+        <div className="space-y-2"><Label className="text-xs">Quote</Label><Textarea value={resume.philosophy?.quote || ""} onChange={(e) => { onResumeChange({ ...resume, philosophy: { ...resume.philosophy, quote: e.target.value } }); }} placeholder="e.g. First they ignore you, then they laugh at you..." rows={3} /></div>
+        <div className="space-y-2"><Label className="text-xs">Author</Label><Input value={resume.philosophy?.author || ""} onChange={(e) => { onResumeChange({ ...resume, philosophy: { ...resume.philosophy, author: e.target.value } }); }} placeholder="e.g. Mahatma Gandhi" /></div>
+      </CardContent>}
+    </Card>
+  );
+
+  const renderBooksSection = () => (
+    <Card key="books">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("books")}>
+          <CollapseButton section="books" />
+          <CardTitle className="text-lg">Books</CardTitle>
+        </div>
+        <button onClick={() => setSectionToDelete("books")} className="text-gray-400 hover:text-red-500 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </CardHeader>
+      {!isCollapsed("books") && <CardContent className="space-y-4">
+        {resume.books?.map((book, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-gray-900">{book.title || "(Not specified)"}</p>
+              <button onClick={() => { const newBooks = [...(resume.books || [])]; newBooks.splice(index, 1); onResumeChange({ ...resume, books: newBooks }); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label className="text-xs">Book Title</Label><Input value={book.title || ""} onChange={(e) => { const newBooks = [...(resume.books || [])]; newBooks[index] = { ...newBooks[index], title: e.target.value }; onResumeChange({ ...resume, books: newBooks }); }} placeholder="e.g. Finding Your Element" /></div>
+              <div className="space-y-2"><Label className="text-xs">Author</Label><Input value={book.author || ""} onChange={(e) => { const newBooks = [...(resume.books || [])]; newBooks[index] = { ...newBooks[index], author: e.target.value }; onResumeChange({ ...resume, books: newBooks }); }} placeholder="e.g. Ken Robinson" /></div>
+            </div>
+          </div>
+        ))}
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, books: [...(resume.books || []), { title: "", author: "" }] }); }}>+ Add Book</Button>
+      </CardContent>}
+    </Card>
+  );
+
+  const renderSocialLinksSection = () => (
+    <Card key="socialLinks">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("socialLinks")}>
+          <CollapseButton section="socialLinks" />
+          <CardTitle className="text-lg">Find Me Online</CardTitle>
+        </div>
+        <button onClick={() => setSectionToDelete("socialLinks")} className="text-gray-400 hover:text-red-500 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </CardHeader>
+      {!isCollapsed("socialLinks") && <CardContent className="space-y-4">
+        {resume.socialLinks?.map((link, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-gray-900">{link.network || "(Not specified)"}</p>
+              <button onClick={() => { const newLinks = [...(resume.socialLinks || [])]; newLinks.splice(index, 1); onResumeChange({ ...resume, socialLinks: newLinks }); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label className="text-xs">Network</Label><Input value={link.network || ""} onChange={(e) => { const newLinks = [...(resume.socialLinks || [])]; newLinks[index] = { ...newLinks[index], network: e.target.value }; onResumeChange({ ...resume, socialLinks: newLinks }); }} placeholder="e.g. LinkedIn, GitHub" /></div>
+              <div className="space-y-2"><Label className="text-xs">Username</Label><Input value={link.username || ""} onChange={(e) => { const newLinks = [...(resume.socialLinks || [])]; newLinks[index] = { ...newLinks[index], username: e.target.value }; onResumeChange({ ...resume, socialLinks: newLinks }); }} placeholder="e.g. johndoe" /></div>
+            </div>
+            <div className="space-y-2"><Label className="text-xs">URL</Label><Input value={link.url || ""} onChange={(e) => { const newLinks = [...(resume.socialLinks || [])]; newLinks[index] = { ...newLinks[index], url: e.target.value }; onResumeChange({ ...resume, socialLinks: newLinks }); }} placeholder="e.g. https://linkedin.com/in/johndoe" /></div>
+          </div>
+        ))}
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, socialLinks: [...(resume.socialLinks || []), { network: "", username: "", url: "" }] }); }}>+ Add Social Link</Button>
+      </CardContent>}
+    </Card>
+  );
+
+  const renderIndustryExpertiseSection = () => (
+    <Card key="industryExpertise">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("industryExpertise")}>
+          <CollapseButton section="industryExpertise" />
+          <CardTitle className="text-lg">Industry Expertise</CardTitle>
+        </div>
+        <button onClick={() => setSectionToDelete("industryExpertise")} className="text-gray-400 hover:text-red-500 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </CardHeader>
+      {!isCollapsed("industryExpertise") && <CardContent className="space-y-4">
+        {resume.industryExpertise?.map((exp, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-gray-900">{exp.name || "(Not specified)"}</p>
+              <button onClick={() => { const newExps = [...(resume.industryExpertise || [])]; newExps.splice(index, 1); onResumeChange({ ...resume, industryExpertise: newExps }); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label className="text-xs">Expertise</Label><Input value={exp.name || ""} onChange={(e) => { const newExps = [...(resume.industryExpertise || [])]; newExps[index] = { ...newExps[index], name: e.target.value }; onResumeChange({ ...resume, industryExpertise: newExps }); }} placeholder="e.g. Leadership" /></div>
+              <div className="space-y-2">
+                <Label className="text-xs">Level</Label>
+                <select value={exp.level || ""} onChange={(e) => { const newExps = [...(resume.industryExpertise || [])]; newExps[index] = { ...newExps[index], level: e.target.value }; onResumeChange({ ...resume, industryExpertise: newExps }); }} className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <option value="">Select level</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                  <option value="Expert">Expert</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        ))}
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, industryExpertise: [...(resume.industryExpertise || []), { name: "", level: "" }] }); }}>+ Add Expertise</Button>
+      </CardContent>}
+    </Card>
+  );
+
+  const renderSignatureSection = () => (
+    <Card key="signature">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("signature")}>
+          <CollapseButton section="signature" />
+          <CardTitle className="text-lg">Signature</CardTitle>
+        </div>
+        <button onClick={() => setSectionToDelete("signature")} className="text-gray-400 hover:text-red-500 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </CardHeader>
+      {!isCollapsed("signature") && <CardContent className="space-y-4">
+        <div className="space-y-2"><Label className="text-xs">Your Signature Name</Label><Input value={resume.signature || ""} onChange={(e) => { onResumeChange({ ...resume, signature: e.target.value }); }} placeholder="e.g. John Doe" /></div>
       </CardContent>}
     </Card>
   );
@@ -1227,7 +1511,7 @@ export default function ResumeEditor({
                 <div className="space-y-1">
                   <Label className="text-xs">Degree</Label>
                   <div className="flex flex-wrap gap-1">
-                    {["High School", "Associate", "Bachelor", "Master", "PhD"].map((degree) => (
+                    {["High School", "Associate", "Bachelor's Degree", "Master", "PhD"].map((degree) => (
                       <button
                         key={degree}
                         type="button"
@@ -1605,6 +1889,120 @@ export default function ResumeEditor({
                 </svg>
               </div>
               <span className="font-medium">Publications</span>
+            </button>
+
+            {/* Strengths */}
+            <button
+              onClick={() => toggleSection("strengths")}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                isSectionActive("strengths")
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSectionActive("strengths") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
+              }`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <span className="font-medium">Strengths</span>
+            </button>
+
+            {/* Industry Expertise */}
+            <button
+              onClick={() => toggleSection("industryExpertise")}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                isSectionActive("industryExpertise")
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSectionActive("industryExpertise") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
+              }`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+              </div>
+              <span className="font-medium">Industry Expertise</span>
+            </button>
+
+            {/* My Life Philosophy */}
+            <button
+              onClick={() => toggleSection("philosophy")}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                isSectionActive("philosophy")
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSectionActive("philosophy") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
+              }`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                </svg>
+              </div>
+              <span className="font-medium">Philosophy</span>
+            </button>
+
+            {/* Books */}
+            <button
+              onClick={() => toggleSection("books")}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                isSectionActive("books")
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSectionActive("books") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
+              }`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <span className="font-medium">Books</span>
+            </button>
+
+            {/* Find Me Online */}
+            <button
+              onClick={() => toggleSection("socialLinks")}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                isSectionActive("socialLinks")
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSectionActive("socialLinks") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
+              }`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                </svg>
+              </div>
+              <span className="font-medium">Find Me Online</span>
+            </button>
+
+            {/* Signature */}
+            <button
+              onClick={() => toggleSection("signature")}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                isSectionActive("signature")
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSectionActive("signature") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
+              }`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+              </div>
+              <span className="font-medium">Signature</span>
             </button>
           </div>
         </CardContent>
