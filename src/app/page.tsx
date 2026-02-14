@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import ResumeEditor from "@/components/editor/ResumeEditor";
 import GettingStartedModal from "@/components/editor/GettingStartedModal";
+import LinkedInImportModal from "@/components/editor/LinkedInImportModal";
 import ResumePaginator from "@/components/preview/ResumePaginator";
 import { templates } from "@/components/templates";
 import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
@@ -12,6 +13,7 @@ export default function Home() {
   const [selectedTemplate, setSelectedTemplate] = useState("professional-white");
   const [scale, setScale] = useState(1);
   const [showGettingStarted, setShowGettingStarted] = useState(true);
+  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const currentTemplate = templates.find((t) => t.id === selectedTemplate);
@@ -21,22 +23,31 @@ export default function Home() {
     switch (option) {
       case "new":
         setResume(emptyResume);
+        setShowGettingStarted(false);
         break;
       case "ai":
         // TODO: Open AI assistance modal
         setResume(emptyResume);
+        setShowGettingStarted(false);
         break;
       case "upload":
         // TODO: Open file upload dialog
+        setShowGettingStarted(false);
         break;
       case "linkedin":
-        // TODO: Open LinkedIn import modal
-        break;
+        setShowGettingStarted(false);
+        setShowLinkedInModal(true);
+        return; // Don't close getting started yet
       case "example":
         setResume(defaultResume);
+        setShowGettingStarted(false);
         break;
     }
-    setShowGettingStarted(false);
+  };
+
+  const handleLinkedInImport = (importedResume: Resume) => {
+    setResume(importedResume);
+    setShowLinkedInModal(false);
   };
 
   const A4_WIDTH = 794; // 210mm at 96dpi
@@ -63,6 +74,13 @@ export default function Home() {
         isOpen={showGettingStarted}
         onClose={() => setShowGettingStarted(false)}
         onSelectOption={handleSelectOption}
+      />
+
+      {/* LinkedIn Import Modal */}
+      <LinkedInImportModal
+        isOpen={showLinkedInModal}
+        onClose={() => setShowLinkedInModal(false)}
+        onImport={handleLinkedInImport}
       />
 
       <div className="flex h-screen bg-gray-100">
