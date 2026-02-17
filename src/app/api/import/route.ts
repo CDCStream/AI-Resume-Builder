@@ -156,21 +156,18 @@ function mapToResume(profile: ApifyLinkedInProfile): Resume {
   const location = profile.addressWithCountry || profile.addressWithoutCountry || "";
   const locationParts = location.split(",").map((s) => s.trim());
 
-  // Map skills - new format uses "title" instead of "name"
-  const skillNames: string[] = [];
+  // Map skills - each skill becomes a separate entry with its name
+  const skillGroups: { name: string; keywords: string[] }[] = [];
   if (Array.isArray(profile.skills)) {
     profile.skills.forEach((s) => {
-      if (s && typeof s === "object" && "title" in s) {
-        skillNames.push(s.title || "");
+      if (s && typeof s === "object" && "title" in s && s.title) {
+        skillGroups.push({
+          name: s.title,
+          keywords: [], // Individual skill, no sub-keywords needed
+        });
       }
     });
   }
-
-  // Put all skills in a single group with all keywords
-  const skillGroups = skillNames.length > 0 ? [{
-    name: "Skills",
-    keywords: skillNames,
-  }] : [];
 
   // Map languages - new format uses "title" instead of "name"
   const languages: { language: string; fluency: string }[] = [];
@@ -264,7 +261,7 @@ function mapToResume(profile: ApifyLinkedInProfile): Resume {
       // Try to get dates from startedOn/finishedOn objects first, then from caption
       let startDate = "";
       let endDate = "";
-      
+
       if (cert.startedOn && cert.startedOn.year) {
         const month = cert.startedOn.month ? String(cert.startedOn.month).padStart(2, "0") : "01";
         startDate = `${cert.startedOn.year}-${month}`;
@@ -273,14 +270,14 @@ function mapToResume(profile: ApifyLinkedInProfile): Resume {
         const month = cert.finishedOn.month ? String(cert.finishedOn.month).padStart(2, "0") : "01";
         endDate = `${cert.finishedOn.year}-${month}`;
       }
-      
+
       // Fallback to caption parsing if dates not found
       if (!startDate && cert.caption) {
         const parsed = parseCertificationCaption(cert.caption);
         startDate = parsed.startDate;
         endDate = parsed.endDate;
       }
-      
+
       return {
         name: cert.name || cert.title || "",
         issuer: cert.authority || cert.subtitle || "",
