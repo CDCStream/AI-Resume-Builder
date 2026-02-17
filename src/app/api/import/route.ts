@@ -4,76 +4,103 @@ import { Resume } from "@/lib/types/resume";
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 const APIFY_ACTOR_ID = "dev_fusion~linkedin-profile-scraper";
 
+// Updated interface based on actual Apify dev_fusion~linkedin-profile-scraper response
 interface ApifyLinkedInProfile {
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
   headline?: string;
-  summary?: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  profilePicture?: string;
+  about?: string;
+  email?: string | null;
+  mobileNumber?: string | null;
+  profilePic?: string;
+  profilePicHighQuality?: string;
+  addressWithCountry?: string;
+  addressWithoutCountry?: string;
+  linkedinUrl?: string;
+  linkedinPublicUrl?: string;
+  
+  // Experiences array with different field names
   experiences?: Array<{
     title?: string;
-    company?: string;
-    location?: string;
-    startDate?: string;
-    endDate?: string;
-    description?: string;
+    companyName?: string | null;
+    companyLink1?: string;
+    jobDescription?: string | null;
+    jobStartedOn?: string | null;
+    jobEndedOn?: string | null;
+    jobLocation?: string;
+    jobStillWorking?: boolean;
+    logo?: string;
   }>;
-  education?: Array<{
-    school?: string;
-    degree?: string;
-    fieldOfStudy?: string;
-    startDate?: string;
-    endDate?: string;
-    description?: string;
+  
+  // Educations array
+  educations?: Array<{
+    title?: string; // School name
+    subtitle?: string; // "Degree, Field of Study"
+    description?: string | null;
+    grade?: string | null;
+    period?: {
+      startedOn?: string | null;
+      endedOn?: string | null;
+    };
+    logo?: string;
   }>;
+  
+  // Skills array
   skills?: Array<{
-    name?: string;
-  }> | string[];
+    title?: string;
+  }>;
+  
+  // Languages array
   languages?: Array<{
-    name?: string;
+    title?: string;
     proficiency?: string;
-  }> | string[];
-  certifications?: Array<{
-    name?: string;
-    authority?: string;
-    startDate?: string;
-    endDate?: string;
   }>;
+  
+  // Certifications
+  licenseAndCertificates?: Array<{
+    title?: string;
+    subtitle?: string; // Issuer
+    caption?: string; // "Issued Aug 2023 · Expired Nov 2023"
+    logo?: string;
+  }>;
+  
+  // Courses
   courses?: Array<{
-    name?: string;
-    institution?: string;
+    title?: string;
+    subtitle?: string;
   }>;
-  volunteerExperiences?: Array<{
-    role?: string;
-    organization?: string;
-    startDate?: string;
-    endDate?: string;
+  
+  // Volunteer
+  volunteerAndAwards?: Array<{
+    title?: string;
+    subtitle?: string;
     description?: string;
   }>;
+  
+  // Projects
   projects?: Array<{
     title?: string;
     description?: string;
-    startDate?: string;
-    endDate?: string;
     url?: string;
   }>;
+  
+  // Publications
   publications?: Array<{
     title?: string;
     publisher?: string;
-    date?: string;
     description?: string;
     url?: string;
   }>;
-  honors?: Array<{
+  
+  // Honors and Awards
+  honorsAndAwards?: Array<{
     title?: string;
     issuer?: string;
-    date?: string;
     description?: string;
   }>;
-  websites?: string[];
-  // Some scrapers return data in different shapes
+  
+  // Allow other properties
   [key: string]: unknown;
 }
 
@@ -118,15 +145,17 @@ function parseDate(dateStr?: string): string {
 }
 
 function mapToResume(profile: ApifyLinkedInProfile): Resume {
-  // Parse location
-  const locationParts = (profile.location || "").split(",").map((s) => s.trim());
+  // Parse location from addressWithCountry
+  const location = profile.addressWithCountry || profile.addressWithoutCountry || "";
+  const locationParts = location.split(",").map((s) => s.trim());
 
-  // Map skills - handle both array of objects and array of strings
+  // Map skills - new format uses "title" instead of "name"
   const skillNames: string[] = [];
   if (Array.isArray(profile.skills)) {
     profile.skills.forEach((s) => {
-      if (typeof s === "string") skillNames.push(s);
-      else if (s && typeof s === "object" && "name" in s) skillNames.push(s.name || "");
+      if (s && typeof s === "object" && "title" in s) {
+        skillNames.push(s.title || "");
+      }
     });
   }
 
@@ -139,92 +168,131 @@ function mapToResume(profile: ApifyLinkedInProfile): Resume {
     });
   }
 
-  // Map languages
+  // Map languages - new format uses "title" instead of "name"
   const languages: { language: string; fluency: string }[] = [];
   if (Array.isArray(profile.languages)) {
     profile.languages.forEach((l) => {
-      if (typeof l === "string") languages.push({ language: l, fluency: "" });
-      else if (l && typeof l === "object") languages.push({ language: l.name || "", fluency: l.proficiency || "" });
+      if (l && typeof l === "object") {
+        languages.push({ language: l.title || "", fluency: l.proficiency || "" });
+      }
     });
   }
 
+  // Parse education subtitle to get degree and field
+  // Format: "Master's degree, Data Science" or "Bachelor's degree, Industrial Engineering"
+  const parseEducationSubtitle = (subtitle?: string) => {
+    if (!subtitle) return { degree: "", field: "" };
+    const parts = subtitle.split(",").map(s => s.trim());
+    return {
+      degree: parts[0] || "",
+      field: parts[1] || "",
+    };
+  };
+
+  // Parse certification caption to get dates
+  // Format: "Issued Aug 2023 · Expired Nov 2023" or "Issued Aug 2023"
+  const parseCertificationCaption = (caption?: string) => {
+    if (!caption) return { startDate: "", endDate: "" };
+    const issuedMatch = caption.match(/Issued\s+(\w+\s+\d{4})/i);
+    const expiredMatch = caption.match(/Expired\s+(\w+\s+\d{4})/i);
+    return {
+      startDate: issuedMatch ? parseDate(issuedMatch[1]) : "",
+      endDate: expiredMatch ? parseDate(expiredMatch[1]) : "",
+    };
+  };
+
+  // Parse date from format "01-2026" to "2026-01"
+  const parseLinkedInDate = (dateStr?: string | null): string => {
+    if (!dateStr) return "";
+    // Format: "01-2026" -> "2026-01"
+    const match = dateStr.match(/^(\d{2})-(\d{4})$/);
+    if (match) {
+      return `${match[2]}-${match[1]}`;
+    }
+    return parseDate(dateStr);
+  };
+
   const resume: Resume = {
     basics: {
-      name: profile.fullName || "",
+      name: profile.fullName || `${profile.firstName || ""} ${profile.lastName || ""}`.trim(),
       label: profile.headline || "",
       email: profile.email || "",
-      phone: profile.phone || "",
-      summary: profile.summary || "",
-      image: profile.profilePicture || "",
+      phone: profile.mobileNumber || "",
+      summary: profile.about || "",
+      image: profile.profilePicHighQuality || profile.profilePic || "",
       location: {
         city: locationParts[0] || "",
         region: locationParts[1] || "",
-        countryCode: locationParts[2] || "",
+        countryCode: "",
       },
-      profiles: [],
+      profiles: profile.linkedinPublicUrl ? [{
+        network: "LinkedIn",
+        url: profile.linkedinPublicUrl,
+        username: profile.fullName || "",
+      }] : [],
     },
-    work: (profile.experiences || []).map((exp) => ({
-      name: exp.company || "",
-      position: exp.title || "",
-      startDate: parseDate(exp.startDate),
-      endDate: parseDate(exp.endDate),
-      summary: exp.description || "",
-      city: (exp.location || "").split(",")[0]?.trim() || "",
-      country: (exp.location || "").split(",")[1]?.trim() || "",
-      highlights: [],
-    })),
-    education: (profile.education || []).map((edu) => ({
-      institution: edu.school || "",
-      studyType: edu.degree || "",
-      area: edu.fieldOfStudy || "",
-      startDate: parseDate(edu.startDate),
-      endDate: parseDate(edu.endDate),
-    })),
+    work: (profile.experiences || []).map((exp) => {
+      const locationParts = (exp.jobLocation || "").split(",").map(s => s.trim());
+      return {
+        name: exp.companyName || "",
+        position: exp.title || "",
+        startDate: parseLinkedInDate(exp.jobStartedOn),
+        endDate: exp.jobStillWorking ? "Present" : parseLinkedInDate(exp.jobEndedOn),
+        summary: exp.jobDescription || "",
+        city: locationParts[0] || "",
+        country: locationParts[locationParts.length - 1] || "",
+        highlights: [],
+      };
+    }),
+    education: (profile.educations || []).map((edu) => {
+      const { degree, field } = parseEducationSubtitle(edu.subtitle);
+      return {
+        institution: edu.title || "",
+        studyType: degree,
+        area: field,
+        startDate: parseDate(edu.period?.startedOn || ""),
+        endDate: parseDate(edu.period?.endedOn || ""),
+      };
+    }),
     skills: skillGroups.length > 0 ? skillGroups : [],
     languages: languages,
-    certificates: (profile.certifications || []).map((cert) => ({
-      name: cert.name || "",
-      issuer: cert.authority || "",
-      date: parseDate(cert.startDate),
-      endDate: parseDate(cert.endDate),
-    })),
-    volunteer: (profile.volunteerExperiences || []).map((vol) => ({
-      organization: vol.organization || "",
-      position: vol.role || "",
-      startDate: parseDate(vol.startDate),
-      endDate: parseDate(vol.endDate),
+    certificates: (profile.licenseAndCertificates || []).map((cert) => {
+      const { startDate, endDate } = parseCertificationCaption(cert.caption);
+      return {
+        name: cert.title || "",
+        issuer: cert.subtitle || "",
+        date: startDate,
+        endDate: endDate,
+      };
+    }),
+    volunteer: (profile.volunteerAndAwards || []).map((vol) => ({
+      organization: vol.subtitle || "",
+      position: vol.title || "",
+      startDate: "",
+      endDate: "",
       summary: vol.description || "",
     })),
     projects: (profile.projects || []).map((proj) => ({
       name: proj.title || "",
       description: proj.description || "",
-      startDate: parseDate(proj.startDate),
-      endDate: parseDate(proj.endDate),
+      startDate: "",
+      endDate: "",
       url: proj.url || "",
     })),
     publications: (profile.publications || []).map((pub) => ({
       name: pub.title || "",
       publisher: pub.publisher || "",
-      releaseDate: parseDate(pub.date),
+      releaseDate: "",
       summary: pub.description || "",
       url: pub.url || "",
     })),
-    awards: (profile.honors || []).map((honor) => ({
+    awards: (profile.honorsAndAwards || []).map((honor) => ({
       title: honor.title || "",
       awarder: honor.issuer || "",
-      date: parseDate(honor.date),
+      date: "",
       summary: honor.description || "",
     })),
   };
-
-  // Add website profiles
-  if (profile.websites && Array.isArray(profile.websites)) {
-    resume.basics!.profiles = profile.websites.map((url) => ({
-      network: new URL(url).hostname.replace("www.", ""),
-      url: url,
-      username: "",
-    }));
-  }
 
   return resume;
 }
@@ -281,7 +349,7 @@ export async function POST(request: NextRequest) {
     }
 
     const results = await runResponse.json();
-    
+
     // Debug: Log raw API response
     console.log("Apify raw response:", JSON.stringify(results, null, 2));
 
@@ -304,7 +372,7 @@ export async function POST(request: NextRequest) {
 
     // Use the first result
     const profileData = firstResult as ApifyLinkedInProfile;
-    
+
     // Validate that we have actual profile data
     if (!profileData.fullName && !profileData.headline && !profileData.experiences) {
       console.error("Empty profile data received:", profileData);
@@ -313,7 +381,7 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-    
+
     const resume = mapToResume(profileData);
     console.log("Mapped resume basics:", JSON.stringify(resume.basics, null, 2));
 
