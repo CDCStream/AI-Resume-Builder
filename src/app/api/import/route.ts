@@ -281,6 +281,9 @@ export async function POST(request: NextRequest) {
     }
 
     const results = await runResponse.json();
+    
+    // Debug: Log raw API response
+    console.log("Apify raw response:", JSON.stringify(results, null, 2));
 
     if (!results || results.length === 0) {
       return NextResponse.json(
@@ -289,9 +292,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check for Apify error response
+    const firstResult = results[0];
+    if (firstResult && firstResult.error) {
+      console.error("Apify actor error:", firstResult.error);
+      return NextResponse.json(
+        { error: "LinkedIn import service requires a paid Apify plan. Please upgrade your Apify subscription or try a different import method." },
+        { status: 402 }
+      );
+    }
+
     // Use the first result
-    const profileData = results[0] as ApifyLinkedInProfile;
+    const profileData = firstResult as ApifyLinkedInProfile;
+    
+    // Validate that we have actual profile data
+    if (!profileData.fullName && !profileData.headline && !profileData.experiences) {
+      console.error("Empty profile data received:", profileData);
+      return NextResponse.json(
+        { error: "Could not retrieve profile data. The profile may be private or the URL may be incorrect." },
+        { status: 404 }
+      );
+    }
+    
     const resume = mapToResume(profileData);
+    console.log("Mapped resume basics:", JSON.stringify(resume.basics, null, 2));
 
     return NextResponse.json({
       resume,
