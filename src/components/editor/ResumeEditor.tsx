@@ -18,7 +18,7 @@ import {
 import TemplateSelector from "./TemplateSelector";
 import { DateRangeWithCurrent, MonthYearPicker } from "@/components/ui/month-year-picker";
 import { PhotoPositionModal } from "./PhotoPositionModal";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 type AdditionalSection =
   | "languages"
@@ -70,6 +70,73 @@ export default function ResumeEditor({
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   // Delete confirmation modal state
   const [sectionToDelete, setSectionToDelete] = useState<AdditionalSection | null>(null);
+
+  // Auto-detect and activate sections based on resume data
+  useEffect(() => {
+    const sectionsToActivate: AdditionalSection[] = [];
+    
+    // Check each section for data
+    if (resume.languages && resume.languages.length > 0 && resume.languages.some(l => l.language)) {
+      sectionsToActivate.push("languages");
+    }
+    if (resume.courses && resume.courses.length > 0 && resume.courses.some(c => c.name)) {
+      sectionsToActivate.push("courses");
+    }
+    if (resume.activities && resume.activities.length > 0 && resume.activities.some(a => a.name)) {
+      sectionsToActivate.push("activities");
+    }
+    if (resume.internships && resume.internships.length > 0 && resume.internships.some(i => i.company)) {
+      sectionsToActivate.push("internships");
+    }
+    if (resume.hobbies && resume.hobbies.length > 0 && resume.hobbies.some(h => h.name)) {
+      sectionsToActivate.push("hobbies");
+    }
+    if (resume.references && resume.references.length > 0 && resume.references.some(r => r.name)) {
+      sectionsToActivate.push("references");
+    }
+    if (resume.awards && resume.awards.length > 0 && resume.awards.some(a => a.title)) {
+      sectionsToActivate.push("awards");
+    }
+    if (resume.volunteer && resume.volunteer.length > 0 && resume.volunteer.some(v => v.organization)) {
+      sectionsToActivate.push("volunteering");
+    }
+    if (resume.certificates && resume.certificates.length > 0 && resume.certificates.some(c => c.name)) {
+      sectionsToActivate.push("certifications");
+    }
+    if (resume.projects && resume.projects.length > 0 && resume.projects.some(p => p.name)) {
+      sectionsToActivate.push("projects");
+    }
+    if (resume.publications && resume.publications.length > 0 && resume.publications.some(p => p.name)) {
+      sectionsToActivate.push("publications");
+    }
+    if (resume.strengths && resume.strengths.length > 0 && resume.strengths.some(s => s.name)) {
+      sectionsToActivate.push("strengths");
+    }
+    if (resume.philosophy && resume.philosophy.quote) {
+      sectionsToActivate.push("philosophy");
+    }
+    if (resume.books && resume.books.length > 0 && resume.books.some(b => b.title)) {
+      sectionsToActivate.push("books");
+    }
+    if (resume.socialLinks && resume.socialLinks.length > 0 && resume.socialLinks.some(l => l.network)) {
+      sectionsToActivate.push("socialLinks");
+    }
+    if (resume.industryExpertise && resume.industryExpertise.length > 0 && resume.industryExpertise.some(e => e.name)) {
+      sectionsToActivate.push("industryExpertise");
+    }
+    if (resume.customSections && resume.customSections.length > 0 && resume.customSections.some(s => s.title)) {
+      sectionsToActivate.push("custom");
+    }
+
+    // Only update if there are sections to add that aren't already active
+    setActiveSections(prev => {
+      const newSections = sectionsToActivate.filter(s => !prev.includes(s));
+      if (newSections.length > 0) {
+        return [...prev, ...newSections];
+      }
+      return prev;
+    });
+  }, [resume]);
 
   const sectionNames: Record<AdditionalSection, string> = {
     languages: "Languages",
