@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Resume, SectionType, defaultSectionOrder } from "@/lib/types/resume";
 import { Input } from "@/components/ui/input";
@@ -1119,7 +1119,7 @@ export default function ResumeEditor({
                     onClick={removePhoto}
                     className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10"
                   >
-                    ×
+                    Ã—
                   </button>
                 </div>
               ) : (
@@ -1690,7 +1690,7 @@ export default function ResumeEditor({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Level — <span className="text-blue-600">{skill.level || "Expert"}</span></Label>
+                  <Label className="text-xs">Level â€” <span className="text-blue-600">{skill.level || "Expert"}</span></Label>
                   <div className="flex gap-1">
                     {["Beginner", "Intermediate", "Advanced", "Expert"].map((level, levelIndex) => (
                       <button
