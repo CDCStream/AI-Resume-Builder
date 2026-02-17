@@ -152,6 +152,45 @@
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
+/* Each page-content extends the resume template background for multi-page */
+.page-content > .resume-page {
+  min-height: var(--page-total-height, 297mm);
+}
+
+/* Ensure all page containers stretch the template to cover full page height */
+.page-content > div {
+  min-height: var(--page-total-height, 297mm);
+}
+
+/* Resume section item - prevent page break inside */
+.resume-item {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+}
+
+/* Entire section should avoid breaks when possible */
+section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Keep section headers with their content - NEVER break after header */
+section > h2,
+section > h3,
+.resume-page h2,
+.resume-page h3 {
+  break-after: avoid !important;
+  page-break-after: avoid !important;
+  -webkit-column-break-after: avoid !important;
+}
+
+/* Prevent orphan text */
+section p, section span {
+  orphans: 3;
+  widows: 3;
+}
+
 /* Print Styles */
 @media print {
   @page {
@@ -181,5 +220,15 @@
   .resume-page:last-child {
     page-break-after: auto;
     break-after: auto;
+  }
+
+  /* Prevent breaking inside resume items during print */
+  .resume-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  section {
+    break-inside: avoid-column;
   }
 }

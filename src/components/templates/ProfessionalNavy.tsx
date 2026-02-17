@@ -1,6 +1,7 @@
 "use client";
 
-import { Resume } from "@/lib/types/resume";
+import { Resume, SectionType, defaultSectionOrder } from "@/lib/types/resume";
+import { renderSections, useOrderedSections, ThemeConfig } from "./SharedSections";
 import { LanguageDots } from "./LanguageDots";
 import { formatDate } from "./utils";
 
@@ -9,7 +10,11 @@ interface TemplateProps {
 }
 
 export default function ProfessionalNavy({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+
+  const theme: ThemeConfig = { headingClass: "text-sm font-semibold text-blue-900 uppercase tracking-wider mb-3", textClass: "text-sm text-gray-600", subTextClass: "text-xs text-gray-500", accentColor: "#1E3A5F", dotFilledClass: "bg-blue-900", dotEmptyClass: "bg-blue-200", tagClass: "text-sm text-blue-800 bg-blue-50 px-3 py-1 rounded" };
+const orderedSections = useOrderedSections(resume);
+
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none flex">
@@ -115,261 +120,8 @@ export default function ProfessionalNavy({ resume }: TemplateProps) {
 
       {/* Main Content */}
       <main className="flex-1 p-8">
-        {/* Summary */}
-        {basics?.summary && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-2">About Me</h2>
-            <p className="text-gray-600 leading-relaxed">{basics.summary}</p>
-          </section>
-        )}
-
-        {/* Experience */}
-        {work && work.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Professional Experience</h2>
-            <div className="space-y-5">
-              {work.map((job, index) => (
-                <div key={index} className="border-l-3 border-[#1e3a5f] pl-4">
-                  <div className="flex justify-between items-start mb-1">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{job.position}</h3>
-                      <p className="text-[#1e3a5f]">{job.name}{(job.city || job.country) && <span className="text-gray-500"> · {[job.city, job.country].filter(Boolean).join(", ")}</span>}</p>
-                    </div>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
-                    </span>
-                  </div>
-                  {job.summary && (
-                    <p className="text-sm text-gray-600 mt-1">{job.summary}</p>
-                  )}
-                  {job.highlights && (
-                    <ul className="mt-2 space-y-1">
-                      {job.highlights.map((h, idx) => (
-                        <li key={idx} className="text-sm text-gray-600 flex items-start">
-                          <span className="mr-2 text-[#1e3a5f]">•</span>{h}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Internships */}
-        {internships && internships.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Internships</h2>
-            <div className="space-y-4">
-              {internships.map((intern, index) => (
-                <div key={index}>
-                  <div className="flex justify-between items-start mb-1">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{intern.position}</h3>
-                      <p className="text-[#1e3a5f]">{intern.company}{(intern.city || intern.country) && <span className="text-gray-500"> · {[intern.city, intern.country].filter(Boolean).join(", ")}</span>}</p>
-                    </div>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {formatDate(intern.startDate)} — {formatDate(intern.endDate) || "Present"}
-                    </span>
-                  </div>
-                  {intern.summary && (
-                    <p className="text-sm text-gray-600 mt-1">{intern.summary}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Education */}
-        {education && education.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Education</h2>
-            <div className="space-y-3">
-              {education.map((edu, index) => (
-                <div key={index} className="border-l-3 border-[#1e3a5f] pl-4">
-                  <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
-                  <p className="text-sm text-gray-600">{edu.studyType}{edu.studyType && edu.area && " • "}{edu.area}</p>
-                  <p className="text-xs text-gray-500">{formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Awards */}
-        {awards && awards.length > 0 && (
-          <section className="mt-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Honors & Awards</h2>
-            <div className="space-y-4">
-              {awards.map((award, index) => (
-                <div key={index} className="border-l-3 border-amber-500 pl-4 bg-amber-50/30 p-3 rounded-r-lg">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-gray-900">{award.title}</h3>
-                    {award.date && (
-                      <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
-                        {formatDate(award.date)}
-                      </span>
-                    )}
-                  </div>
-                  {award.awarder && <p className="text-sm text-[#1e3a5f] font-medium mb-1">{award.awarder}</p>}
-                  {award.summary && <p className="text-sm text-gray-600 italic">{award.summary}</p>}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Courses */}
-        {courses && courses.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Courses</h2>
-            <div className="space-y-2">
-              {courses.map((course, index) => (
-                <div key={index} className="border-l-3 border-[#1e3a5f] pl-4">
-                  <h3 className="font-semibold text-gray-900">{course.name}</h3>
-                  {course.institution && <p className="text-sm text-gray-600">{course.institution}</p>}
-                  {(course.startDate || course.endDate) && (
-                    <p className="text-xs text-gray-500">{formatDate(course.startDate)} — {formatDate(course.endDate)}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Hobbies */}
-        {hobbies && hobbies.length > 0 && hobbies.some(h => h.name) && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Hobbies & Interests</h2>
-            <div className="flex flex-wrap gap-2">
-              {hobbies.filter(h => h.name).map((hobby, index) => (
-                <span key={index} className="text-sm bg-blue-50 text-[#1e3a5f] px-3 py-1 rounded-full">{hobby.name}</span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* References */}
-        {references && references.length > 0 && references.some(r => r.name) && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">References</h2>
-            <div className="space-y-3">
-              {references.filter(r => r.name).map((ref, index) => (
-                <div key={index} className="p-3 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-gray-900">{ref.name}</h3>
-                  {(ref.role || ref.company) && (
-                    <p className="text-sm text-gray-600">
-                      {[ref.role, ref.company].filter(Boolean).join(" • ")}
-                    </p>
-                  )}
-                  {(ref.email || ref.phone) && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {[ref.email, ref.phone].filter(Boolean).join(" • ")}
-                    </p>
-                  )}
-                  {ref.reference && <p className="text-sm text-gray-600 mt-1">{ref.reference}</p>}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Publications */}
-        {publications && publications.length > 0 && publications.some(p => p.name) && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Publications</h2>
-            <div className="space-y-3">
-              {publications.filter(p => p.name).map((pub, index) => (
-                <div key={index}>
-                  <h3 className="font-semibold text-gray-900">{pub.name}</h3>
-                  {pub.publisher && <p className="text-sm text-gray-600">{pub.publisher}</p>}
-                  {pub.releaseDate && <p className="text-xs text-gray-500 mt-1">{formatDate(pub.releaseDate)}</p>}
-                  {pub.summary && <p className="text-gray-600 leading-relaxed mt-1">{pub.summary}</p>}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Projects */}
-        {projects && projects.length > 0 && projects.some(p => p.name) && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Projects</h2>
-            <div className="space-y-3">
-              {projects.filter(p => p.name).map((project, index) => (
-                <div key={index}>
-                  <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                  {(project.startDate || project.endDate) && <p className="text-xs text-gray-500 mt-1">{formatDate(project.startDate)} {project.endDate ? `— ${formatDate(project.endDate)}` : ""}</p>}
-                  {project.description && <p className="text-gray-600 leading-relaxed mt-1">{project.description}</p>}
-                  {project.url && <a href={project.url} className="text-xs text-blue-500 mt-1 block">{project.url}</a>}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Certifications */}
-        {certificates && certificates.length > 0 && certificates.some(c => c.name) && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Certifications</h2>
-            <div className="space-y-3">
-              {certificates.filter(c => c.name).map((cert, index) => (
-                <div key={index}>
-                  <h3 className="font-semibold text-gray-900">{cert.name}</h3>
-                  {cert.issuer && <p className="text-sm text-gray-600">{cert.issuer}</p>}
-                  {(cert.date || cert.endDate) && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formatDate(cert.date)}{cert.endDate ? ` — ${formatDate(cert.endDate)}` : ""}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Volunteering */}
-        {volunteer && volunteer.length > 0 && volunteer.some(v => v.organization) && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Volunteering</h2>
-            <div className="space-y-3">
-              {volunteer.filter(v => v.organization).map((vol, index) => (
-                <div key={index}>
-                  <h3 className="font-semibold text-gray-900">{vol.organization}</h3>
-                  {vol.position && <p className="text-sm text-gray-600">{vol.position}</p>}
-                  {(vol.startDate || vol.endDate) && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {[vol.startDate, vol.endDate].filter(Boolean).join(" - ")}
-                    </p>
-                  )}
-                  {vol.summary && <p className="text-gray-600 leading-relaxed mt-1">{vol.summary}</p>}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {strengths && strengths.length > 0 && strengths.some(s => s.name) && (<section className="mb-6"><h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Strengths</h2><div className="space-y-3">{strengths.filter(s => s.name).map((s, i) => (<div key={i}><h3 className="font-semibold text-gray-900">{s.name}</h3>{s.description && <p className="text-gray-600 leading-relaxed mt-1">{s.description}</p>}</div>))}</div></section>)}
-        {industryExpertise && industryExpertise.length > 0 && industryExpertise.some(e => e.name) && (<section className="mb-6"><h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Industry Expertise</h2><div className="space-y-2">{industryExpertise.filter(e => e.name).map((e, i) => (<div key={i}><div className="flex justify-between text-sm"><span className="font-medium text-gray-900">{e.name}</span><span className="text-gray-500">{e.level}</span></div><div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-[#1e3a5f] h-1.5 rounded-full" style={{ width: e.level === 'Expert' ? '100%' : e.level === 'Advanced' ? '75%' : e.level === 'Intermediate' ? '50%' : '25%' }}></div></div></div>))}</div></section>)}
-        {philosophy && philosophy.quote && (<section className="mb-6"><h2 className="text-lg font-bold text-[#1e3a5f] mb-4">My Life Philosophy</h2><blockquote className="italic text-gray-600 border-l-2 border-[#1e3a5f]/30 pl-3">&ldquo;{philosophy.quote}&rdquo;</blockquote>{philosophy.author && <p className="text-sm text-gray-500 mt-2 text-right">— {philosophy.author}</p>}</section>)}
-        {books && books.length > 0 && books.some(b => b.title) && (<section className="mb-6"><h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Books</h2><div className="space-y-2">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-semibold text-gray-900 text-sm">{b.title}</h3>{b.author && <p className="text-xs text-gray-500">{b.author}</p>}</div>))}</div></section>)}
-        {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="mb-6"><h2 className="text-lg font-bold text-[#1e3a5f] mb-4">Find Me Online</h2><div className="space-y-2">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i} className="flex items-center gap-2"><span className="font-semibold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-500">{l.username}</span>}</div>))}</div></section>)}
-
-        {/* Custom Sections */}
-        {customSections && customSections.length > 0 && customSections.map((section, index) => (
-          section.title && (
-            <section key={index} className="mb-6">
-              <h2 className="text-lg font-bold text-[#1e3a5f] mb-4">{section.title}</h2>
-              {section.content && (
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">{section.content}</p>
-              )}
-            </section>
-          )
-        ))}
+        {renderSections(resume, orderedSections, theme)}
       </main>
     </div>
   );
 }
-

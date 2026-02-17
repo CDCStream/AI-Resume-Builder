@@ -192,6 +192,21 @@ export interface IndustryExpertise {
   level?: string; // "Beginner" | "Intermediate" | "Advanced" | "Expert"
 }
 
+export type SectionType =
+  | "summary" | "experience" | "education" | "skills" | "languages"
+  | "courses" | "internships" | "hobbies" | "references" | "awards"
+  | "volunteering" | "certifications" | "projects" | "publications"
+  | "strengths" | "industryExpertise" | "philosophy" | "books"
+  | "socialLinks" | "custom";
+
+export const defaultSectionOrder: SectionType[] = [
+  "summary", "experience", "internships", "education", "awards",
+  "skills", "languages", "courses", "hobbies", "references",
+  "publications", "projects", "certifications", "volunteering",
+  "strengths", "industryExpertise", "philosophy", "books",
+  "socialLinks", "custom",
+];
+
 export interface Resume {
   $schema?: string;
   basics?: Basics;
@@ -216,6 +231,7 @@ export interface Resume {
   books?: Book[];
   socialLinks?: SocialLink[];
   industryExpertise?: IndustryExpertise[];
+  sectionOrder?: SectionType[];
 }
 
 // Default empty resume

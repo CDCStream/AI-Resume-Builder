@@ -1,141 +1,151 @@
 "use client";
 
-import { useRef, useState, useLayoutEffect, useEffect, ReactNode, useCallback } from "react";
+import { useRef, useState, useLayoutEffect, useEffect, ReactNode } from "react";
 
 interface ResumePaginatorProps {
   children: ReactNode;
 }
 
-const A4_HEIGHT_PX = 1122; // 297mm at 96dpi
-const A4_WIDTH_PX = 794;   // 210mm at 96dpi
-// If a section is smaller than this fraction of a page, avoid splitting it
-const MAX_MOVABLE_RATIO = 0.6;
+const A4_HEIGHT_PX = 1122;
+const A4_WIDTH_PX = 794;
+// Template padding (p-12 = 48px) creates offset between measured position and actual clip boundary.
+// The outer page div clips at A4_HEIGHT_PX, but sections are measured relative to the content wrapper
+// which includes the template's padding. We need extra space to ensure sections clear the page boundary.
+const BUFFER = 48;
 
-/**
- * Applies spacers before sections that would be split across page boundaries.
- * Modifies the DOM directly by inserting spacer divs.
- * Returns an array of { sectionIndex, spacerHeight } for replication to other containers.
- */
-function calculateAndApplySpacers(container: HTMLElement): { sectionIndex: number; height: number }[] {
-  // Remove old spacers first
-  container.querySelectorAll(".pb-spacer").forEach((el) => el.remove());
-
-  // Force reflow so positions are clean
-  void container.offsetHeight;
-
-  const sections = Array.from(container.querySelectorAll("section"));
-  const spacers: { sectionIndex: number; height: number }[] = [];
-
-  for (let i = 0; i < sections.length; i++) {
-    const el = sections[i] as HTMLElement;
-    // Re-read position each iteration (previous spacers shift things)
-    const containerTop = container.getBoundingClientRect().top;
-    const rect = el.getBoundingClientRect();
-    const top = rect.top - containerTop;
-    const bottom = top + rect.height;
-
-    if (rect.height <= 0) continue;
-
-    const pageOfTop = Math.floor(top / A4_HEIGHT_PX);
-    const pageOfBottom = Math.floor(Math.max(0, bottom - 1) / A4_HEIGHT_PX);
-
-    // Section crosses a page boundary AND is small enough to move
-    if (pageOfTop !== pageOfBottom && rect.height < A4_HEIGHT_PX * MAX_MOVABLE_RATIO) {
-      const pageEnd = (pageOfTop + 1) * A4_HEIGHT_PX;
-      const spacerHeight = pageEnd - top;
-
-      // Insert spacer before the section
-      const spacerEl = document.createElement("div");
-      spacerEl.className = "pb-spacer";
-      spacerEl.style.height = `${spacerHeight}px`;
-      spacerEl.style.flexShrink = "0";
-      el.parentNode?.insertBefore(spacerEl, el);
-
-      spacers.push({ sectionIndex: i, height: spacerHeight });
-    }
+function getOffsetRelativeTo(element: HTMLElement, ancestor: HTMLElement): number {
+  let top = 0;
+  let el: HTMLElement | null = element;
+  while (el && el !== ancestor) {
+    top += el.offsetTop;
+    el = el.offsetParent as HTMLElement | null;
+    if (el === ancestor) break;
   }
-
-  return spacers;
-}
-
-/**
- * Applies pre-calculated spacers to a container (e.g. page content div).
- */
-function applySpacers(container: HTMLElement, spacers: { sectionIndex: number; height: number }[]) {
-  // Remove old spacers
-  container.querySelectorAll(".pb-spacer").forEach((el) => el.remove());
-
-  const sections = Array.from(container.querySelectorAll("section"));
-
-  // Apply in order (from last to first to avoid index shifting)
-  const sortedSpacers = [...spacers].sort((a, b) => b.sectionIndex - a.sectionIndex);
-
-  for (const { sectionIndex, height } of sortedSpacers) {
-    const el = sections[sectionIndex] as HTMLElement | undefined;
-    if (el) {
-      const spacerEl = document.createElement("div");
-      spacerEl.className = "pb-spacer";
-      spacerEl.style.height = `${height}px`;
-      spacerEl.style.flexShrink = "0";
-      el.parentNode?.insertBefore(spacerEl, el);
-    }
-  }
+  return top;
 }
 
 export default function ResumePaginator({ children }: ResumePaginatorProps) {
-  const measureRef = useRef<HTMLDivElement>(null);
-  const pageContentRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const pagesContainerRef = useRef<HTMLDivElement>(null);
+  const firstPageRef = useRef<HTMLDivElement>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const spacersRef = useRef<{ sectionIndex: number; height: number }[]>([]);
-  const iterRef = useRef(0);
 
   useLayoutEffect(() => {
-    if (!measureRef.current) return;
+    if (!pagesContainerRef.current || !firstPageRef.current) return;
 
-    // Calculate spacers from the measurement div
-    const spacers = calculateAndApplySpacers(measureRef.current);
-    spacersRef.current = spacers;
+    const firstPage = firstPageRef.current;
+    const pagesContainer = pagesContainerRef.current;
+    const allPages = Array.from(pagesContainer.querySelectorAll(".page-content")) as HTMLElement[];
 
-    // Measure adjusted height
-    void measureRef.current.offsetHeight;
-    const h = measureRef.current.scrollHeight;
-    const pages = Math.max(1, Math.ceil(h / A4_HEIGHT_PX));
-
-    // Apply same spacers to all visible page content divs
-    pageContentRefs.current.forEach((el) => {
-      if (el) applySpacers(el, spacers);
+    // Step 1: Clear ALL margins from ALL pages
+    allPages.forEach((page) => {
+      page.querySelectorAll("section").forEach((sec) => {
+        (sec as HTMLElement).style.marginTop = "";
+      });
+      page.querySelectorAll(".resume-item").forEach((item) => {
+        (item as HTMLElement).style.marginTop = "";
+      });
     });
 
-    // Update page count (with stabilization guard)
-    if (pages !== totalPages && iterRef.current < 4) {
-      iterRef.current++;
+    void firstPage.offsetHeight; // Force reflow
+
+    // Step 2: Measure sections from FIRST page (real layout, no margins)
+    const sectionEls = Array.from(firstPage.querySelectorAll("section")) as HTMLElement[];
+
+    const sections = sectionEls.map((section, si) => {
+      const items = Array.from(section.querySelectorAll(".resume-item")) as HTMLElement[];
+      return {
+        index: si,
+        top: getOffsetRelativeTo(section, firstPage),
+        height: section.offsetHeight,
+        splittable: section.getAttribute("data-splittable") === "true",
+        items: items.map((item, ii) => ({
+          index: ii,
+          top: getOffsetRelativeTo(item, firstPage),
+          height: item.offsetHeight,
+        })),
+      };
+    });
+
+    sections.sort((a, b) => a.top - b.top);
+
+    // Step 3: Calculate margins
+    const sectionMargins = new Map<number, number>();
+    const itemMargins = new Map<string, number>();
+    let cumulativeShift = 0;
+
+    for (const section of sections) {
+      const adjTop = section.top + cumulativeShift;
+      const adjBottom = adjTop + section.height;
+      const pageEnd = (Math.floor(adjTop / A4_HEIGHT_PX) + 1) * A4_HEIGHT_PX;
+
+      if (adjBottom > pageEnd && adjTop < pageEnd) {
+        const margin = pageEnd - adjTop + BUFFER;
+
+        if (section.splittable) {
+          // Splittable sections (e.g. Experience in CreativeBold) - don't push the whole section,
+          // just let it flow naturally across pages. No margin needed.
+          // Skip - let the content break across pages
+        } else if (section.height <= A4_HEIGHT_PX * 0.93) {
+          sectionMargins.set(section.index, margin);
+          cumulativeShift += margin;
+        } else {
+          for (const item of section.items) {
+            const iTop = item.top + cumulativeShift;
+            const iBottom = iTop + item.height;
+            const iPageEnd = (Math.floor(iTop / A4_HEIGHT_PX) + 1) * A4_HEIGHT_PX;
+
+            if (iBottom > iPageEnd && iTop < iPageEnd && item.height <= A4_HEIGHT_PX * 0.9) {
+              if (item.index === 0) {
+                const sm = pageEnd - adjTop + BUFFER;
+                sectionMargins.set(section.index, sm);
+                cumulativeShift += sm;
+              } else {
+                const im = iPageEnd - iTop + BUFFER;
+                itemMargins.set(`${section.index}-${item.index}`, im);
+                cumulativeShift += im;
+              }
+            }
+          }
+        }
+      } else if (adjTop < pageEnd) {
+        const spaceLeft = pageEnd - adjTop;
+        if (spaceLeft > 0 && spaceLeft < 80 && adjTop > A4_HEIGHT_PX * 0.1) {
+          sectionMargins.set(section.index, spaceLeft + BUFFER);
+          cumulativeShift += spaceLeft + BUFFER;
+        }
+      }
+    }
+
+    // Step 4: Apply margins to ALL pages' sections
+    allPages.forEach((page) => {
+      const pageSections = Array.from(page.querySelectorAll("section")) as HTMLElement[];
+      pageSections.forEach((sec, si) => {
+        if (sectionMargins.has(si)) {
+          sec.style.marginTop = `${sectionMargins.get(si)}px`;
+        }
+        const items = Array.from(sec.querySelectorAll(".resume-item")) as HTMLElement[];
+        items.forEach((item, ii) => {
+          if (itemMargins.has(`${si}-${ii}`)) {
+            item.style.marginTop = `${itemMargins.get(`${si}-${ii}`)}px`;
+          }
+        });
+      });
+    });
+
+    // Step 5: Calculate pages from the first page content (now with margins)
+    void firstPage.offsetHeight;
+    const totalHeight = firstPage.scrollHeight;
+    const pages = Math.max(1, Math.ceil(totalHeight / A4_HEIGHT_PX));
+
+    if (pages !== totalPages) {
       setTotalPages(pages);
-    } else {
-      iterRef.current = 0;
     }
   });
 
-  // Reset stabilizer when children change
-  useEffect(() => {
-    iterRef.current = 0;
-  }, [children]);
-
   return (
-    <div className="flex flex-col items-center">
-      {/* Hidden measurement div - same width as A4 */}
-      <div
-        ref={measureRef}
-        className="absolute opacity-0 pointer-events-none"
-        style={{ width: `${A4_WIDTH_PX}px`, left: "-9999px" }}
-        aria-hidden="true"
-      >
-        {children}
-      </div>
-
-      {/* Visible pages */}
+    <div ref={pagesContainerRef} className="flex flex-col items-center">
       {Array.from({ length: totalPages }, (_, pageIndex) => (
         <div key={pageIndex}>
-          {/* Page divider */}
           {pageIndex > 0 && (
             <div className="flex items-center gap-4 py-5 no-print" style={{ width: `${A4_WIDTH_PX}px` }}>
               <div className="flex-1 h-px bg-gray-300"></div>
@@ -146,21 +156,21 @@ export default function ResumePaginator({ children }: ResumePaginatorProps) {
             </div>
           )}
 
-          {/* A4 page */}
           <div
-            className="relative bg-white shadow-lg overflow-hidden"
+            className="relative shadow-lg overflow-hidden resume-page"
             style={{
               width: `${A4_WIDTH_PX}px`,
               height: `${A4_HEIGHT_PX}px`,
             }}
           >
             <div
-              ref={(el) => {
-                pageContentRefs.current[pageIndex] = el;
-              }}
+              ref={pageIndex === 0 ? firstPageRef : undefined}
+              className="page-content"
               style={{
                 transform: `translateY(-${pageIndex * A4_HEIGHT_PX}px)`,
-              }}
+                width: `${A4_WIDTH_PX}px`,
+                ['--page-total-height' as string]: `${totalPages * A4_HEIGHT_PX}px`,
+              } as React.CSSProperties}
             >
               {children}
             </div>

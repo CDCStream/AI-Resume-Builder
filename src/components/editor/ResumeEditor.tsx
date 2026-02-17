@@ -1,7 +1,8 @@
 "use client";
 
-import { Resume } from "@/lib/types/resume";
+import { Resume, SectionType, defaultSectionOrder } from "@/lib/types/resume";
 import { Input } from "@/components/ui/input";
+import SectionOrderManager from "./SectionOrderManager";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,40 @@ export default function ResumeEditor({
       return prev;
     });
   }, [resume]);
+
+  // Helper to get active sections for the section order manager
+  const getActiveSectionsForOrder = (): SectionType[] => {
+    const sections: SectionType[] = [];
+    if (resume.basics?.summary) sections.push("summary");
+    if (resume.work && resume.work.length > 0) sections.push("experience");
+    if (resume.internships && resume.internships.length > 0) sections.push("internships");
+    if (resume.education && resume.education.length > 0) sections.push("education");
+    if (resume.awards && resume.awards.length > 0) sections.push("awards");
+    if (resume.skills && resume.skills.length > 0) sections.push("skills");
+    if (resume.languages && resume.languages.length > 0) sections.push("languages");
+    if (resume.courses && resume.courses.length > 0) sections.push("courses");
+    if (resume.hobbies && resume.hobbies.length > 0) sections.push("hobbies");
+    if (resume.references && resume.references.length > 0) sections.push("references");
+    if (resume.publications && resume.publications.length > 0) sections.push("publications");
+    if (resume.projects && resume.projects.length > 0) sections.push("projects");
+    if (resume.certificates && resume.certificates.length > 0) sections.push("certifications");
+    if (resume.volunteer && resume.volunteer.length > 0) sections.push("volunteering");
+    if (resume.strengths && resume.strengths.length > 0) sections.push("strengths");
+    if (resume.industryExpertise && resume.industryExpertise.length > 0) sections.push("industryExpertise");
+    if (resume.philosophy?.quote) sections.push("philosophy");
+    if (resume.books && resume.books.length > 0) sections.push("books");
+    if (resume.socialLinks && resume.socialLinks.length > 0) sections.push("socialLinks");
+    if (resume.customSections && resume.customSections.length > 0) sections.push("custom");
+    return sections;
+  };
+
+  // Handle section order change from drag-drop
+  const handleSectionOrderChange = (newOrder: SectionType[]) => {
+    onResumeChange({
+      ...resume,
+      sectionOrder: newOrder,
+    });
+  };
 
   const sectionNames: Record<AdditionalSection, string> = {
     languages: "Languages",
@@ -1694,6 +1729,13 @@ export default function ResumeEditor({
         </CardContent>}
       </Card>
 
+      {/* Section Order Manager */}
+      <SectionOrderManager
+        sectionOrder={resume.sectionOrder || defaultSectionOrder}
+        activeSections={getActiveSectionsForOrder()}
+        onOrderChange={handleSectionOrderChange}
+      />
+
       {/* Render Additional Sections in Order */}
       {activeSections.map((section) => renderSection(section))}
 
@@ -2062,4 +2104,3 @@ export default function ResumeEditor({
     </div>
   );
 }
-

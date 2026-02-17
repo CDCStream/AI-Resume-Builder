@@ -1,15 +1,490 @@
 "use client";
 
-import { Resume } from "@/lib/types/resume";
+import { Resume, SectionType, defaultSectionOrder } from "@/lib/types/resume";
 import { LanguageGrid } from "./LanguageDots";
 import { formatDate } from "./utils";
+import { ReactNode, useMemo } from "react";
 
 interface TemplateProps {
   resume: Resume;
 }
 
 export default function ProfessionalWhite({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+
+  // Get section order (use default if not set)
+  const orderedSections = useMemo(() => {
+    return sectionOrder || defaultSectionOrder;
+  }, [sectionOrder]);
+
+  // Section render functions
+  const renderSection = (sectionType: SectionType): ReactNode => {
+    switch (sectionType) {
+      case "summary":
+        if (!basics?.summary) return null;
+        return (
+          <section key="summary" className="mb-6" data-section="summary">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">
+              Summary
+            </h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {basics.summary}
+            </p>
+          </section>
+        );
+
+      case "experience":
+        if (!work || work.length === 0) return null;
+        return (
+          <section key="experience" className="mb-6" data-section="experience">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Experience
+            </h2>
+            <div className="space-y-4">
+              {work.map((job, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="flex justify-between items-start mb-1">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{job.position}</h3>
+                      <p className="text-sm text-gray-600">
+                        {job.name}
+                        {(job.city || job.country) && <span className="text-gray-400"> · {[job.city, job.country].filter(Boolean).join(", ")}</span>}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
+                    </span>
+                  </div>
+                  {job.summary && (
+                    <p className="text-sm text-gray-600 mt-1">{job.summary}</p>
+                  )}
+                  {job.highlights && job.highlights.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {job.highlights.map((highlight, idx) => (
+                        <li key={idx} className="text-sm text-gray-600 flex items-start">
+                          <span className="mr-2 text-gray-400">•</span>
+                          {highlight}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "internships":
+        if (!internships || internships.length === 0) return null;
+        return (
+          <section key="internships" className="mb-6" data-section="internships">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Internships
+            </h2>
+            <div className="space-y-4">
+              {internships.map((intern, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="flex justify-between items-start mb-1">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{intern.position}</h3>
+                      <p className="text-sm text-gray-600">
+                        {intern.company}
+                        {(intern.city || intern.country) && <span className="text-gray-400"> · {[intern.city, intern.country].filter(Boolean).join(", ")}</span>}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {formatDate(intern.startDate)} — {formatDate(intern.endDate) || "Present"}
+                    </span>
+                  </div>
+                  {intern.summary && (
+                    <p className="text-sm text-gray-600 mt-1">{intern.summary}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "education":
+        if (!education || education.length === 0) return null;
+        return (
+          <section key="education" className="mb-6" data-section="education">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Education
+            </h2>
+            <div className="space-y-3">
+              {education.map((edu, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
+                      <p className="text-sm text-gray-600">
+                        {edu.studyType && <span className="font-medium">{edu.studyType}</span>}
+                        {edu.studyType && edu.area && " • "}
+                        {edu.area}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "awards":
+        if (!awards || awards.length === 0) return null;
+        return (
+          <section key="awards" className="mb-6" data-section="awards">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Awards
+            </h2>
+            <div className="space-y-3">
+              {awards.map((award, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{award.title}</h3>
+                      {award.awarder && <p className="text-sm text-gray-600">{award.awarder}</p>}
+                      {award.summary && <p className="text-sm text-gray-600 mt-1">{award.summary}</p>}
+                    </div>
+                    {award.date && (
+                      <span className="text-xs text-gray-500 whitespace-nowrap">{formatDate(award.date)}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "skills":
+        if (!skills || skills.length === 0) return null;
+        return (
+          <section key="skills" className="mb-6" data-section="skills">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Skills
+            </h2>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+              {skills.filter(skill => skill.name).map((skill, index) => {
+                const levelMap: Record<string, number> = {
+                  "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1,
+                };
+                const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                return (
+                  <div key={index} className="resume-item">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">{skill.name}</span>
+                      <span className="text-xs text-gray-500">{skill.level || "Intermediate"}</span>
+                    </div>
+                    <div className="flex gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((dot) => (
+                        <div
+                          key={dot}
+                          className={`w-2 h-2 rounded-full ${dot <= filledDots ? "bg-blue-500" : "bg-gray-300"}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+
+      case "languages":
+        if (!languages || languages.length === 0) return null;
+        return (
+          <section key="languages" className="mb-6" data-section="languages">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Languages
+            </h2>
+            <LanguageGrid languages={languages} />
+          </section>
+        );
+
+      case "courses":
+        if (!courses || courses.length === 0) return null;
+        return (
+          <section key="courses" className="mb-6" data-section="courses">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Courses
+            </h2>
+            <div className="space-y-3">
+              {courses.map((course, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{course.name}</h3>
+                      {course.institution && <p className="text-sm text-gray-600">{course.institution}</p>}
+                    </div>
+                    {(course.startDate || course.endDate) && (
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {formatDate(course.startDate)} — {formatDate(course.endDate) || "Present"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "hobbies":
+        if (!hobbies || hobbies.length === 0) return null;
+        return (
+          <section key="hobbies" className="mb-6" data-section="hobbies">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Hobbies & Interests
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {hobbies.map((hobby, index) => (
+                <span key={index} className="resume-item px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
+                  {hobby.name}
+                </span>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "references":
+        if (!references || references.length === 0) return null;
+        return (
+          <section key="references" className="mb-6" data-section="references">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              References
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              {references.map((ref, index) => (
+                <div key={index} className="resume-item p-3 border border-gray-200 rounded-lg" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <h3 className="font-semibold text-gray-900">{ref.name}</h3>
+                  {ref.role && <p className="text-sm text-gray-600">{ref.role}</p>}
+                  {ref.company && <p className="text-sm text-gray-500">{ref.company}</p>}
+                  {ref.email && <p className="text-xs text-blue-500">{ref.email}</p>}
+                  {ref.phone && <p className="text-xs text-gray-500">{ref.phone}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "publications":
+        if (!publications || publications.length === 0) return null;
+        return (
+          <section key="publications" className="mb-6" data-section="publications">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Publications
+            </h2>
+            <div className="space-y-3">
+              {publications.map((pub, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <h3 className="font-semibold text-gray-900 text-sm">{pub.name}</h3>
+                  {pub.publisher && <p className="text-sm text-gray-600">{pub.publisher}</p>}
+                  {pub.releaseDate && <p className="text-xs text-gray-500">{formatDate(pub.releaseDate)}</p>}
+                  {pub.summary && <p className="text-sm text-gray-600 mt-1">{pub.summary}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "projects":
+        if (!projects || projects.length === 0 || !projects.some(p => p.name)) return null;
+        return (
+          <section key="projects" className="mb-6" data-section="projects">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Projects
+            </h2>
+            <div className="space-y-3">
+              {projects.filter(p => p.name).map((project, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <h3 className="font-semibold text-gray-900 text-sm">{project.name}</h3>
+                  {(project.startDate || project.endDate) && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formatDate(project.startDate)} {project.endDate ? `— ${formatDate(project.endDate)}` : ""}
+                    </p>
+                  )}
+                  {project.description && <p className="text-sm text-gray-600 mt-1">{project.description}</p>}
+                  {project.url && <a href={project.url} className="text-xs text-blue-500 mt-1 block">{project.url}</a>}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "certifications":
+        if (!certificates || certificates.length === 0 || !certificates.some(c => c.name)) return null;
+        return (
+          <section key="certifications" className="mb-6" data-section="certifications">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Certifications
+            </h2>
+            <div className="space-y-3">
+              {certificates.filter(c => c.name).map((cert, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <h3 className="font-semibold text-gray-900 text-sm">{cert.name}</h3>
+                  {cert.issuer && <p className="text-sm text-gray-600">{cert.issuer}</p>}
+                  {(cert.date || cert.endDate) && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formatDate(cert.date)}{cert.endDate ? ` — ${formatDate(cert.endDate)}` : ""}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "volunteering":
+        if (!volunteer || volunteer.length === 0 || !volunteer.some(v => v.organization)) return null;
+        return (
+          <section key="volunteering" className="mb-6" data-section="volunteering">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Volunteering
+            </h2>
+            <div className="space-y-3">
+              {volunteer.filter(v => v.organization).map((vol, index) => (
+                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{vol.organization}</h3>
+                      {vol.position && <p className="text-sm text-gray-600">{vol.position}</p>}
+                      {vol.summary && <p className="text-sm text-gray-600 mt-1">{vol.summary}</p>}
+                    </div>
+                    {(vol.startDate || vol.endDate) && (
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {formatDate(vol.startDate)} — {formatDate(vol.endDate) || "Present"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "strengths":
+        if (!strengths || strengths.length === 0 || !strengths.some(s => s.name)) return null;
+        return (
+          <section key="strengths" className="mb-6" data-section="strengths">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Strengths
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {strengths.filter(s => s.name).map((strength, index) => (
+                <div key={index} className="resume-item p-3 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 text-sm">{strength.name}</h3>
+                  {strength.description && (
+                    <p className="text-xs text-gray-600 mt-1">{strength.description}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "industryExpertise":
+        if (!industryExpertise || industryExpertise.length === 0 || !industryExpertise.some(e => e.name)) return null;
+        return (
+          <section key="industryExpertise" className="mb-6" data-section="industryExpertise">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Industry Expertise
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {industryExpertise.filter(e => e.name).map((expertise, index) => (
+                <span key={index} className="resume-item px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
+                  {expertise.name}
+                  {expertise.level && ` (${expertise.level})`}
+                </span>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "philosophy":
+        if (!philosophy?.quote) return null;
+        return (
+          <section key="philosophy" className="mb-6" data-section="philosophy">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Life Philosophy
+            </h2>
+            <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600">
+              "{philosophy.quote}"
+              {philosophy.author && (
+                <cite className="block text-sm text-gray-500 mt-1 not-italic">— {philosophy.author}</cite>
+              )}
+            </blockquote>
+          </section>
+        );
+
+      case "books":
+        if (!books || books.length === 0 || !books.some(b => b.title)) return null;
+        return (
+          <section key="books" className="mb-6" data-section="books">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Books
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {books.filter(b => b.title).map((book, index) => (
+                <div key={index} className="resume-item flex gap-2">
+                  <span className="text-gray-400">📚</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{book.title}</p>
+                    {book.author && <p className="text-xs text-gray-500">{book.author}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "socialLinks":
+        if (!socialLinks || socialLinks.length === 0 || !socialLinks.some(l => l.network)) return null;
+        return (
+          <section key="socialLinks" className="mb-6" data-section="socialLinks">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Find Me Online
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {socialLinks.filter(l => l.network).map((link, index) => (
+                <a
+                  key={index}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="resume-item flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+                >
+                  <span className="font-medium">{link.network}</span>
+                  {link.username && <span className="text-gray-500">@{link.username}</span>}
+                </a>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "custom":
+        if (!customSections || customSections.length === 0 || !customSections.some(s => s.title)) return null;
+        return (
+          <div key="custom">
+            {customSections.filter(s => s.title).map((section, index) => (
+              <section key={index} className="mb-6" data-section={`custom-${index}`}>
+                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+                  {section.title}
+                </h2>
+                <div className="text-sm text-gray-600 leading-relaxed">
+                  {section.content}
+                </div>
+              </section>
+            ))}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-12 font-['Inter',sans-serif] text-gray-800 shadow-lg print:shadow-none print:p-8">
@@ -86,374 +561,8 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
         </div>
       </header>
 
-      {/* Summary */}
-      {basics?.summary && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">
-            Summary
-          </h2>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {basics.summary}
-          </p>
-        </section>
-      )}
-
-      {/* Experience */}
-      {work && work.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Experience
-          </h2>
-          <div className="space-y-4">
-            {work.map((job, index) => (
-              <div key={index}>
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{job.position}</h3>
-                    <p className="text-sm text-gray-600">
-                      {job.name}
-                      {(job.city || job.country) && <span className="text-gray-400"> · {[job.city, job.country].filter(Boolean).join(", ")}</span>}
-                    </p>
-                  </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                    {formatDate(job.startDate)} — {formatDate(job.endDate) || "Present"}
-                  </span>
-                </div>
-                {job.summary && (
-                  <p className="text-sm text-gray-600 mt-1">{job.summary}</p>
-                )}
-                {job.highlights && job.highlights.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {job.highlights.map((highlight, idx) => (
-                      <li key={idx} className="text-sm text-gray-600 flex items-start">
-                        <span className="mr-2 text-gray-400">•</span>
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Internships */}
-      {internships && internships.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Internships
-          </h2>
-          <div className="space-y-4">
-            {internships.map((intern, index) => (
-              <div key={index}>
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{intern.position}</h3>
-                    <p className="text-sm text-gray-600">
-                      {intern.company}
-                      {(intern.city || intern.country) && <span className="text-gray-400"> · {[intern.city, intern.country].filter(Boolean).join(", ")}</span>}
-                    </p>
-                  </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                    {formatDate(intern.startDate)} — {formatDate(intern.endDate) || "Present"}
-                  </span>
-                </div>
-                {intern.summary && (
-                  <p className="text-sm text-gray-600 mt-1">{intern.summary}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Education */}
-      {education && education.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Education
-          </h2>
-          <div className="space-y-3">
-            {education.map((edu, index) => (
-              <div key={index} className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
-                  <p className="text-sm text-gray-600">
-                    {edu.studyType && <span className="font-medium">{edu.studyType}</span>}
-                    {edu.studyType && edu.area && " • "}
-                    {edu.area}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 whitespace-nowrap">
-                  {formatDate(edu.startDate)} — {formatDate(edu.endDate) || "Present"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Awards */}
-      {awards && awards.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Awards
-          </h2>
-          <div className="space-y-3">
-            {awards.map((award, index) => (
-              <div key={index} className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{award.title}</h3>
-                  {award.awarder && (
-                    <p className="text-sm text-gray-600">{award.awarder}</p>
-                  )}
-                  {award.summary && (
-                    <p className="text-sm text-gray-600 mt-1">{award.summary}</p>
-                  )}
-                </div>
-                {award.date && (
-                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                    {formatDate(award.date)}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Skills */}
-      {skills && skills.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Skills
-          </h2>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-            {skills.filter(skill => skill.name).map((skill, index) => {
-              const levelMap: Record<string, number> = {
-                "Expert": 5,
-                "Advanced": 4,
-                "Intermediate": 3,
-                "Beginner": 2,
-                "Basic": 1,
-              };
-              const filledDots = levelMap[skill.level || "Intermediate"] || 3;
-              return (
-                <div key={index}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">{skill.name}</span>
-                    <span className="text-xs text-gray-500">{skill.level || "Intermediate"}</span>
-                  </div>
-                  <div className="flex gap-1 mt-1">
-                    {[1, 2, 3, 4, 5].map((dot) => (
-                      <div
-                        key={dot}
-                        className={`w-2 h-2 rounded-full ${
-                          dot <= filledDots ? "bg-blue-500" : "bg-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Languages */}
-      {languages && languages.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Languages
-          </h2>
-          <LanguageGrid
-            languages={languages}
-            dotColor="#3B82F6"
-            textColor="text-gray-900"
-            subTextColor="text-gray-500"
-            emptyDotColor="#E5E7EB"
-            columns={2}
-          />
-        </section>
-      )}
-
-      {/* Courses */}
-      {courses && courses.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Courses
-          </h2>
-          <div className="space-y-3">
-            {courses.map((course, index) => (
-              <div key={index}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{course.name}</h3>
-                    {course.institution && (
-                      <p className="text-sm text-gray-600">{course.institution}</p>
-                    )}
-                  </div>
-                  {(course.startDate || course.endDate) && (
-                    <span className="text-sm text-gray-500">
-                      {formatDate(course.startDate)} — {formatDate(course.endDate)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Hobbies */}
-      {hobbies && hobbies.length > 0 && hobbies.some(h => h.name) && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Hobbies & Interests
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {hobbies.filter(h => h.name).map((hobby, index) => (
-              <span key={index} className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                {hobby.name}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* References */}
-      {references && references.length > 0 && references.some(r => r.name) && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            References
-          </h2>
-          <div className="space-y-3">
-            {references.filter(r => r.name).map((ref, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-gray-900">{ref.name}</h3>
-                {(ref.role || ref.company) && (
-                  <p className="text-sm text-gray-600">
-                    {[ref.role, ref.company].filter(Boolean).join(" • ")}
-                  </p>
-                )}
-                {(ref.email || ref.phone) && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {[ref.email, ref.phone].filter(Boolean).join(" • ")}
-                  </p>
-                )}
-                {ref.reference && (
-                  <p className="text-sm text-gray-600 mt-1">{ref.reference}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Publications */}
-      {publications && publications.length > 0 && publications.some(p => p.name) && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Publications
-          </h2>
-          <div className="space-y-3">
-            {publications.filter(p => p.name).map((pub, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-gray-900 text-sm">{pub.name}</h3>
-                {pub.publisher && <p className="text-sm text-gray-600">{pub.publisher}</p>}
-                {pub.releaseDate && <p className="text-xs text-gray-500 mt-1">{formatDate(pub.releaseDate)}</p>}
-                {pub.summary && <p className="text-sm text-gray-600 mt-1">{pub.summary}</p>}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Projects */}
-      {projects && projects.length > 0 && projects.some(p => p.name) && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Projects
-          </h2>
-          <div className="space-y-3">
-            {projects.filter(p => p.name).map((project, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-gray-900 text-sm">{project.name}</h3>
-                {(project.startDate || project.endDate) && <p className="text-xs text-gray-500 mt-1">{formatDate(project.startDate)} {project.endDate ? `— ${formatDate(project.endDate)}` : ""}</p>}
-                {project.description && <p className="text-sm text-gray-600 mt-1">{project.description}</p>}
-                {project.url && <a href={project.url} className="text-xs text-blue-500 mt-1 block">{project.url}</a>}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Certifications */}
-      {certificates && certificates.length > 0 && certificates.some(c => c.name) && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Certifications
-          </h2>
-          <div className="space-y-3">
-            {certificates.filter(c => c.name).map((cert, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-gray-900 text-sm">{cert.name}</h3>
-                {cert.issuer && <p className="text-sm text-gray-600">{cert.issuer}</p>}
-                {(cert.date || cert.endDate) && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatDate(cert.date)}{cert.endDate ? ` — ${formatDate(cert.endDate)}` : ""}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Volunteering */}
-      {volunteer && volunteer.length > 0 && volunteer.some(v => v.organization) && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-            Volunteering
-          </h2>
-          <div className="space-y-3">
-            {volunteer.filter(v => v.organization).map((vol, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-gray-900 text-sm">{vol.organization}</h3>
-                {vol.position && <p className="text-sm text-gray-600">{vol.position}</p>}
-                {(vol.startDate || vol.endDate) && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {[vol.startDate, vol.endDate].filter(Boolean).join(" - ")}
-                  </p>
-                )}
-                {vol.summary && <p className="text-sm text-gray-600 mt-1">{vol.summary}</p>}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {strengths && strengths.length > 0 && strengths.some(s => s.name) && (<section className="mb-6"><h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Strengths</h2><div className="space-y-3">{strengths.filter(s => s.name).map((s, i) => (<div key={i}><h3 className="font-semibold text-gray-900 text-sm">{s.name}</h3>{s.description && <p className="text-sm text-gray-600 mt-1">{s.description}</p>}</div>))}</div></section>)}
-      {industryExpertise && industryExpertise.length > 0 && industryExpertise.some(e => e.name) && (<section className="mb-6"><h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Industry Expertise</h2><div className="space-y-2">{industryExpertise.filter(e => e.name).map((e, i) => (<div key={i}><div className="flex justify-between text-sm"><span className="font-medium text-gray-900">{e.name}</span><span className="text-gray-500">{e.level}</span></div><div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-gray-800 h-1.5 rounded-full" style={{ width: e.level === 'Expert' ? '100%' : e.level === 'Advanced' ? '75%' : e.level === 'Intermediate' ? '50%' : '25%' }}></div></div></div>))}</div></section>)}
-      {philosophy && philosophy.quote && (<section className="mb-6"><h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">My Life Philosophy</h2><blockquote className="italic text-gray-600 border-l-2 border-gray-300 pl-3">&ldquo;{philosophy.quote}&rdquo;</blockquote>{philosophy.author && <p className="text-sm text-gray-500 mt-2 text-right">— {philosophy.author}</p>}</section>)}
-      {books && books.length > 0 && books.some(b => b.title) && (<section className="mb-6"><h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Books</h2><div className="space-y-2">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-semibold text-gray-900 text-sm">{b.title}</h3>{b.author && <p className="text-xs text-gray-500">{b.author}</p>}</div>))}</div></section>)}
-      {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="mb-6"><h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Find Me Online</h2><div className="space-y-2">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i} className="flex items-center gap-2"><span className="font-semibold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-500">{l.username}</span>}</div>))}</div></section>)}
-
-      {/* Custom Sections */}
-      {customSections && customSections.length > 0 && customSections.map((section, index) => (
-        section.title && (
-          <section key={index} className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
-              {section.title}
-            </h2>
-            {section.content && (
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{section.content}</p>
-            )}
-          </section>
-        )
-      ))}
+      {/* Render sections in order */}
+      {orderedSections.map((sectionType) => renderSection(sectionType))}
     </div>
   );
 }
