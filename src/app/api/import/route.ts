@@ -57,11 +57,16 @@ interface ApifyLinkedInProfile {
     proficiency?: string;
   }>;
 
-  // Certifications
+  // Certifications - actual API format
   licenseAndCertificates?: Array<{
-    title?: string;
-    subtitle?: string; // Issuer
+    name?: string;
+    title?: string; // fallback
+    authority?: string;
+    subtitle?: string; // fallback issuer
     caption?: string; // "Issued Aug 2023 · Expired Nov 2023"
+    startedOn?: { year?: number; month?: number; day?: number | null };
+    finishedOn?: { year?: number; month?: number; day?: number | null };
+    url?: string;
     logo?: string;
   }>;
 
@@ -161,14 +166,11 @@ function mapToResume(profile: ApifyLinkedInProfile): Resume {
     });
   }
 
-  // Group skills into categories of ~6
-  const skillGroups = [];
-  for (let i = 0; i < skillNames.length; i += 6) {
-    skillGroups.push({
-      name: i === 0 ? "Skills" : `Skills ${Math.floor(i / 6) + 1}`,
-      keywords: skillNames.slice(i, i + 6),
-    });
-  }
+  // Put all skills in a single group with all keywords
+  const skillGroups = skillNames.length > 0 ? [{
+    name: "Skills",
+    keywords: skillNames,
+  }] : [];
 
   // Map languages - new format uses "title" instead of "name"
   const languages: { language: string; fluency: string }[] = [];
@@ -259,10 +261,29 @@ function mapToResume(profile: ApifyLinkedInProfile): Resume {
     skills: skillGroups.length > 0 ? skillGroups : [],
     languages: languages,
     certificates: (profile.licenseAndCertificates || []).map((cert) => {
-      const { startDate, endDate } = parseCertificationCaption(cert.caption);
+      // Try to get dates from startedOn/finishedOn objects first, then from caption
+      let startDate = "";
+      let endDate = "";
+      
+      if (cert.startedOn && cert.startedOn.year) {
+        const month = cert.startedOn.month ? String(cert.startedOn.month).padStart(2, "0") : "01";
+        startDate = `${cert.startedOn.year}-${month}`;
+      }
+      if (cert.finishedOn && cert.finishedOn.year) {
+        const month = cert.finishedOn.month ? String(cert.finishedOn.month).padStart(2, "0") : "01";
+        endDate = `${cert.finishedOn.year}-${month}`;
+      }
+      
+      // Fallback to caption parsing if dates not found
+      if (!startDate && cert.caption) {
+        const parsed = parseCertificationCaption(cert.caption);
+        startDate = parsed.startDate;
+        endDate = parsed.endDate;
+      }
+      
       return {
-        name: cert.title || "",
-        issuer: cert.subtitle || "",
+        name: cert.name || cert.title || "",
+        issuer: cert.authority || cert.subtitle || "",
         date: startDate,
         endDate: endDate,
       };
