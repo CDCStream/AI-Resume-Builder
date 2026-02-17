@@ -19,7 +19,7 @@ interface ApifyLinkedInProfile {
   addressWithoutCountry?: string;
   linkedinUrl?: string;
   linkedinPublicUrl?: string;
-  
+
   // Experiences array with different field names
   experiences?: Array<{
     title?: string;
@@ -32,7 +32,7 @@ interface ApifyLinkedInProfile {
     jobStillWorking?: boolean;
     logo?: string;
   }>;
-  
+
   // Educations array
   educations?: Array<{
     title?: string; // School name
@@ -45,18 +45,18 @@ interface ApifyLinkedInProfile {
     };
     logo?: string;
   }>;
-  
+
   // Skills array
   skills?: Array<{
     title?: string;
   }>;
-  
+
   // Languages array
   languages?: Array<{
     title?: string;
     proficiency?: string;
   }>;
-  
+
   // Certifications
   licenseAndCertificates?: Array<{
     title?: string;
@@ -64,27 +64,27 @@ interface ApifyLinkedInProfile {
     caption?: string; // "Issued Aug 2023 · Expired Nov 2023"
     logo?: string;
   }>;
-  
+
   // Courses
   courses?: Array<{
     title?: string;
     subtitle?: string;
   }>;
-  
+
   // Volunteer
   volunteerAndAwards?: Array<{
     title?: string;
     subtitle?: string;
     description?: string;
   }>;
-  
+
   // Projects
   projects?: Array<{
     title?: string;
     description?: string;
     url?: string;
   }>;
-  
+
   // Publications
   publications?: Array<{
     title?: string;
@@ -92,20 +92,22 @@ interface ApifyLinkedInProfile {
     description?: string;
     url?: string;
   }>;
-  
+
   // Honors and Awards
   honorsAndAwards?: Array<{
     title?: string;
     issuer?: string;
     description?: string;
   }>;
-  
+
   // Allow other properties
   [key: string]: unknown;
 }
 
-function parseDate(dateStr?: string): string {
+function parseDate(dateStr?: string | null | unknown): string {
   if (!dateStr) return "";
+  // Ensure we have a string
+  if (typeof dateStr !== "string") return "";
   // Handle formats like "Jan 2020", "2020", "January 2020", "2020-01"
   const str = dateStr.trim();
 
