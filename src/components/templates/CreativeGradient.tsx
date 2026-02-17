@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function CreativeGradient({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, signature } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg print:shadow-none overflow-hidden">
@@ -370,7 +370,6 @@ export default function CreativeGradient({ resume }: TemplateProps) {
             {philosophy && philosophy.quote && (<section className="p-4 bg-white/5 backdrop-blur rounded-xl border border-white/10"><h2 className="text-sm font-bold mb-3 text-cyan-400">💭 My Life Philosophy</h2><blockquote className="italic text-slate-300 border-l-2 border-cyan-400/30 pl-3">&ldquo;{philosophy.quote}&rdquo;</blockquote>{philosophy.author && <p className="text-sm text-slate-400 mt-2 text-right">— {philosophy.author}</p>}</section>)}
             {books && books.length > 0 && books.some(b => b.title) && (<section className="p-4 bg-white/5 backdrop-blur rounded-xl border border-white/10"><h2 className="text-sm font-bold mb-3 text-cyan-400">📚 Books</h2><div className="space-y-2">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-semibold text-white text-sm">{b.title}</h3>{b.author && <p className="text-xs text-slate-400">{b.author}</p>}</div>))}</div></section>)}
             {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="p-4 bg-white/5 backdrop-blur rounded-xl border border-white/10"><h2 className="text-sm font-bold mb-3 text-cyan-400">🌐 Find Me Online</h2><div className="space-y-2">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i} className="flex items-center gap-2"><span className="font-semibold text-white text-sm">{l.network}</span>{l.username && <span className="text-sm text-slate-400">{l.username}</span>}</div>))}</div></section>)}
-            {signature && (<section className="p-4 bg-white/5 backdrop-blur rounded-xl border border-white/10 text-center"><p className="text-2xl italic text-white" style={{ fontFamily: 'cursive' }}>{signature}</p></section>)}
 
             {/* Custom Sections */}
             {customSections && customSections.length > 0 && customSections.map((section, index) => (

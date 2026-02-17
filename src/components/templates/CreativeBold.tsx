@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function CreativeBold({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, signature } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-amber-50 shadow-lg print:shadow-none">
@@ -351,7 +351,6 @@ export default function CreativeBold({ resume }: TemplateProps) {
             {philosophy && philosophy.quote && (<section className="bg-white p-4 rounded-xl shadow-sm"><h2 className="text-lg font-black text-orange-600 mb-3">MY LIFE PHILOSOPHY</h2><blockquote className="italic text-gray-600 border-l-4 border-orange-300 pl-3">&ldquo;{philosophy.quote}&rdquo;</blockquote>{philosophy.author && <p className="text-sm text-gray-500 mt-2 text-right">— {philosophy.author}</p>}</section>)}
             {books && books.length > 0 && books.some(b => b.title) && (<section className="bg-white p-4 rounded-xl shadow-sm"><h2 className="text-lg font-black text-orange-600 mb-3">BOOKS</h2><div className="space-y-2">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-bold text-gray-900">{b.title}</h3>{b.author && <p className="text-xs text-gray-500">{b.author}</p>}</div>))}</div></section>)}
             {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="bg-white p-4 rounded-xl shadow-sm"><h2 className="text-lg font-black text-orange-600 mb-3">FIND ME ONLINE</h2><div className="space-y-2">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i} className="flex items-center gap-2"><span className="font-bold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-500">{l.username}</span>}</div>))}</div></section>)}
-            {signature && (<section className="bg-white p-4 rounded-xl shadow-sm text-center"><p className="text-2xl italic text-gray-700" style={{ fontFamily: 'cursive' }}>{signature}</p></section>)}
 
             {/* Custom Sections */}
             {customSections && customSections.length > 0 && customSections.map((section, index) => (

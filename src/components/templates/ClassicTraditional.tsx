@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ClassicTraditional({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, signature } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-10 shadow-lg print:shadow-none font-['Times_New_Roman',serif]">
@@ -360,7 +360,6 @@ export default function ClassicTraditional({ resume }: TemplateProps) {
       {philosophy && philosophy.quote && (<section className="mb-5"><h2 className="text-sm font-bold text-gray-900 uppercase border-b border-gray-400 pb-1 mb-2">My Life Philosophy</h2><blockquote className="italic text-gray-700 text-sm border-l-2 border-gray-400 pl-3">&ldquo;{philosophy.quote}&rdquo;</blockquote>{philosophy.author && <p className="text-xs text-gray-500 mt-2 text-right">— {philosophy.author}</p>}</section>)}
       {books && books.length > 0 && books.some(b => b.title) && (<section className="mb-5"><h2 className="text-sm font-bold text-gray-900 uppercase border-b border-gray-400 pb-1 mb-2">Books</h2><div className="space-y-2">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-semibold text-gray-900 text-sm">{b.title}</h3>{b.author && <p className="text-xs text-gray-500">{b.author}</p>}</div>))}</div></section>)}
       {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="mb-5"><h2 className="text-sm font-bold text-gray-900 uppercase border-b border-gray-400 pb-1 mb-2">Find Me Online</h2><div className="space-y-1">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i} className="flex items-center gap-2"><span className="font-semibold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-600">{l.username}</span>}</div>))}</div></section>)}
-      {signature && (<section className="mb-5 text-center pt-4"><p className="text-2xl italic text-gray-700" style={{ fontFamily: 'cursive' }}>{signature}</p></section>)}
 
       {/* Custom Sections */}
       {customSections && customSections.length > 0 && customSections.map((section, index) => (

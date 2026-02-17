@@ -107,7 +107,7 @@ export default function Home() {
             }}
           >
             <ResumePaginator>
-              {TemplateComponent && <TemplateComponent resume={resume} />}
+            {TemplateComponent && <TemplateComponent resume={resume} />}
             </ResumePaginator>
           </div>
         </div>

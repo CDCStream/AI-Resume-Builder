@@ -216,7 +216,6 @@ export interface Resume {
   books?: Book[];
   socialLinks?: SocialLink[];
   industryExpertise?: IndustryExpertise[];
-  signature?: string;
 }
 
 // Default empty resume

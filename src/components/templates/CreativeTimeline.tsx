@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function CreativeTimeline({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, signature } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-violet-50 to-white shadow-lg print:shadow-none overflow-hidden">
@@ -395,8 +395,6 @@ export default function CreativeTimeline({ resume }: TemplateProps) {
             {books && books.length > 0 && books.some(b => b.title) && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100"><h2 className="text-sm font-bold text-violet-800 mb-3">📚 Books</h2><div className="space-y-2">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-semibold text-gray-900 text-sm">{b.title}</h3>{b.author && <p className="text-xs text-gray-500">{b.author}</p>}</div>))}</div></section>)}
             {/* Find Me Online */}
             {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100"><h2 className="text-sm font-bold text-violet-800 mb-3">🌐 Find Me Online</h2><div className="space-y-2">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i} className="flex items-center gap-2"><span className="font-semibold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-500">{l.username}</span>}</div>))}</div></section>)}
-            {/* Signature */}
-            {signature && (<section className="bg-white rounded-lg p-4 shadow-sm border border-violet-100 text-center"><p className="text-2xl italic text-gray-700" style={{ fontFamily: 'cursive' }}>{signature}</p></section>)}
 
             {/* Custom Sections */}
             {customSections && customSections.length > 0 && customSections.map((section, index) => (

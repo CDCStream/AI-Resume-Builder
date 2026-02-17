@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function MinimalistLine({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, signature } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-16 font-['Inter',sans-serif] text-gray-900 shadow-lg print:shadow-none">
@@ -382,7 +382,6 @@ export default function MinimalistLine({ resume }: TemplateProps) {
       {philosophy && philosophy.quote && (<section className="mb-10 text-center"><h2 className="text-xs font-medium tracking-[0.3em] text-gray-400 mb-4">MY LIFE PHILOSOPHY</h2><blockquote className="italic text-gray-600 max-w-xl mx-auto">&ldquo;{philosophy.quote}&rdquo;</blockquote>{philosophy.author && <p className="text-sm text-gray-500 mt-2">— {philosophy.author}</p>}</section>)}
       {books && books.length > 0 && books.some(b => b.title) && (<section className="mb-10"><h2 className="text-center text-xs font-medium tracking-[0.3em] text-gray-400 mb-4">BOOKS</h2><div className="space-y-2 text-center">{books.filter(b => b.title).map((b, i) => (<div key={i}><h3 className="font-semibold text-gray-900">{b.title}</h3>{b.author && <p className="text-sm text-gray-600">{b.author}</p>}</div>))}</div></section>)}
       {socialLinks && socialLinks.length > 0 && socialLinks.some(l => l.network) && (<section className="mb-10"><h2 className="text-center text-xs font-medium tracking-[0.3em] text-gray-400 mb-4">FIND ME ONLINE</h2><div className="flex flex-wrap justify-center gap-4">{socialLinks.filter(l => l.network).map((l, i) => (<div key={i}><span className="font-semibold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-500 ml-1">{l.username}</span>}</div>))}</div></section>)}
-      {signature && (<section className="mb-10 text-center pt-4"><p className="text-2xl italic text-gray-700" style={{ fontFamily: 'cursive' }}>{signature}</p></section>)}
 
       {/* Custom Sections */}
       {customSections && customSections.length > 0 && customSections.map((section, index) => (

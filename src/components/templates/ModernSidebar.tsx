@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function ModernSidebar({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, signature } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white flex shadow-lg print:shadow-none">
@@ -444,13 +444,6 @@ export default function ModernSidebar({ resume }: TemplateProps) {
                 <div key={i} className="flex items-center gap-2"><span className="font-semibold text-gray-900 text-sm">{l.network}</span>{l.username && <span className="text-sm text-gray-500">{l.username}</span>}</div>
               ))}
             </div>
-          </section>
-        )}
-
-        {/* Signature */}
-        {signature && (
-          <section className="mb-6 pt-4">
-            <p className="text-2xl italic text-gray-700" style={{ fontFamily: 'cursive' }}>{signature}</p>
           </section>
         )}
 

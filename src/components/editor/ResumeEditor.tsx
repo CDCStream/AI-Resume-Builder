@@ -37,7 +37,6 @@ type AdditionalSection =
   | "books"
   | "socialLinks"
   | "industryExpertise"
-  | "signature"
   | "custom";
 
 interface ResumeEditorProps {
@@ -89,7 +88,6 @@ export default function ResumeEditor({
     books: "Books",
     socialLinks: "Find Me Online",
     industryExpertise: "Industry Expertise",
-    signature: "Signature",
     custom: "Custom Section",
   };
 
@@ -147,9 +145,6 @@ export default function ResumeEditor({
           break;
         case "industryExpertise":
           updatedResume.industryExpertise = [];
-          break;
-        case "signature":
-          updatedResume.signature = undefined;
           break;
         case "custom":
           updatedResume.customSections = [];
@@ -240,8 +235,6 @@ export default function ResumeEditor({
         return renderSocialLinksSection();
       case "industryExpertise":
         return renderIndustryExpertiseSection();
-      case "signature":
-        return renderSignatureSection();
       case "custom":
         return renderCustomSection();
       default:
@@ -495,17 +488,17 @@ export default function ResumeEditor({
               <div className="space-y-2"><Label className="text-xs">Issuer</Label><Input value={cert.issuer || ""} onChange={(e) => { const newCerts = [...(resume.certificates || [])]; newCerts[index] = { ...newCerts[index], issuer: e.target.value }; onResumeChange({ ...resume, certificates: newCerts }); }} placeholder="e.g. Amazon" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <Label className="text-xs">Start Date</Label>
-                <MonthYearPicker
-                  value={cert.date || ""}
-                  onChange={(newDate) => {
-                    const newCerts = [...(resume.certificates || [])];
-                    newCerts[index] = { ...newCerts[index], date: newDate };
-                    onResumeChange({ ...resume, certificates: newCerts });
-                  }}
+              <MonthYearPicker
+                value={cert.date || ""}
+                onChange={(newDate) => {
+                  const newCerts = [...(resume.certificates || [])];
+                  newCerts[index] = { ...newCerts[index], date: newDate };
+                  onResumeChange({ ...resume, certificates: newCerts });
+                }}
                   placeholder="Start date"
-                />
+              />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">End Date</Label>
@@ -926,23 +919,6 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, industryExpertise: [...(resume.industryExpertise || []), { name: "", level: "" }] }); }}>+ Add Expertise</Button>
-      </CardContent>}
-    </Card>
-  );
-
-  const renderSignatureSection = () => (
-    <Card key="signature">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("signature")}>
-          <CollapseButton section="signature" />
-          <CardTitle className="text-lg">Signature</CardTitle>
-        </div>
-        <button onClick={() => setSectionToDelete("signature")} className="text-gray-400 hover:text-red-500 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-      </CardHeader>
-      {!isCollapsed("signature") && <CardContent className="space-y-4">
-        <div className="space-y-2"><Label className="text-xs">Your Signature Name</Label><Input value={resume.signature || ""} onChange={(e) => { onResumeChange({ ...resume, signature: e.target.value }); }} placeholder="e.g. John Doe" /></div>
       </CardContent>}
     </Card>
   );
@@ -1984,25 +1960,6 @@ export default function ResumeEditor({
                 </svg>
               </div>
               <span className="font-medium">Find Me Online</span>
-            </button>
-
-            {/* Signature */}
-            <button
-              onClick={() => toggleSection("signature")}
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
-                isSectionActive("signature")
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-              }`}
-            >
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                isSectionActive("signature") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
-              }`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </div>
-              <span className="font-medium">Signature</span>
             </button>
           </div>
         </CardContent>

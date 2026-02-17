@@ -178,17 +178,17 @@ export function MonthYearPicker({
           {/* === MONTHS VIEW === */}
           {view === "months" && (
             <>
-              {/* Year Navigation */}
+          {/* Year Navigation */}
               <div className="flex items-center justify-between mb-3">
-                <button
-                  type="button"
-                  onClick={handlePrevYear}
+            <button
+              type="button"
+              onClick={handlePrevYear}
                   className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                >
+            >
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
 
                 {/* Clickable Year - opens year selector */}
                 <button
@@ -205,48 +205,48 @@ export function MonthYearPicker({
                   </svg>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleNextYear}
-                  disabled={year >= currentYear}
+            <button
+              type="button"
+              onClick={handleNextYear}
+              disabled={year >= currentYear}
                   className={`p-1.5 rounded-lg transition-colors ${
                     year >= currentYear ? "text-gray-200 cursor-not-allowed" : "hover:bg-gray-100 text-gray-500"
-                  }`}
-                >
+              }`}
+            >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
 
-              {/* Month Grid */}
+          {/* Month Grid */}
               <div className="grid grid-cols-4 gap-1.5">
-                {months.map((month) => {
-                  const isSelected = selectedMonth === month.num && selectedYear === year.toString();
-                  const isDisabled = isMonthDisabled(month.num);
+            {months.map((month) => {
+              const isSelected = selectedMonth === month.num && selectedYear === year.toString();
+              const isDisabled = isMonthDisabled(month.num);
                   const isCurrent = year === currentYear && parseInt(month.num) === currentMonth;
-                  return (
-                    <button
-                      key={month.num}
-                      type="button"
-                      onClick={() => !isDisabled && handleMonthSelect(month.num)}
-                      disabled={isDisabled}
+              return (
+                <button
+                  key={month.num}
+                  type="button"
+                  onClick={() => !isDisabled && handleMonthSelect(month.num)}
+                  disabled={isDisabled}
                       className={`py-2.5 px-1 text-sm rounded-lg transition-all duration-150
-                        ${isDisabled
+                    ${isDisabled
                           ? "text-gray-200 cursor-not-allowed"
-                          : isSelected
+                      : isSelected
                             ? "bg-blue-500 text-white font-semibold shadow-sm"
                             : isCurrent
                               ? "bg-blue-50 text-blue-600 font-medium ring-1 ring-blue-200"
                               : "text-gray-700 hover:bg-gray-100"
-                        }
-                      `}
-                    >
-                      {month.short}
-                    </button>
-                  );
-                })}
-              </div>
+                    }
+                  `}
+                >
+                  {month.short}
+                </button>
+              );
+            })}
+          </div>
             </>
           )}
 
