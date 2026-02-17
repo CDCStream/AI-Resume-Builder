@@ -74,7 +74,7 @@ export default function ResumeEditor({
   // Auto-detect and activate sections based on resume data
   useEffect(() => {
     const sectionsToActivate: AdditionalSection[] = [];
-    
+
     // Check each section for data
     if (resume.languages && resume.languages.length > 0 && resume.languages.some(l => l.language)) {
       sectionsToActivate.push("languages");

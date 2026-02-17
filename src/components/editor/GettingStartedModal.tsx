@@ -99,14 +99,7 @@ export default function GettingStartedModal({
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">{option.title}</span>
-                  {option.badge && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full">
-                      {option.badge}
-                    </span>
-                  )}
-                </div>
+                <span className="font-semibold text-gray-900">{option.title}</span>
                 <p className="text-sm text-gray-500 mt-0.5">{option.description}</p>
               </div>
 
