@@ -151,3 +151,15 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* Resume page content - ensure background extends to fill page */
+.page-content .resume-page {
+  min-height: var(--page-total-height, 1122px);
+}
+
+/* Print styles - hide no-print elements */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

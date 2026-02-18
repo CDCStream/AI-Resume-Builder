@@ -18,6 +18,56 @@ const A4_HEIGHT_PX = 1122;
 const A4_WIDTH_PX = 794;
 const BUFFER = 48;
 
+// Component to render page content with margins applied
+interface PageContentProps {
+  children: ReactNode;
+  pageIndex: number;
+  totalPages: number;
+  calculatedMargins: Map<string, number>;
+}
+
+function PageContent({ children, pageIndex, totalPages, calculatedMargins }: PageContentProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!contentRef.current) return;
+
+    const content = contentRef.current;
+
+    // Apply calculated margins to this page's content
+    calculatedMargins.forEach((margin, key) => {
+      const [type, indexStr] = key.split("-");
+      const index = parseInt(indexStr);
+
+      if (type === "section") {
+        const sections = content.querySelectorAll("section");
+        if (sections[index]) {
+          (sections[index] as HTMLElement).style.marginTop = `${margin}px`;
+        }
+      } else if (type === "item") {
+        const items = content.querySelectorAll(".resume-item");
+        if (items[index]) {
+          (items[index] as HTMLElement).style.marginTop = `${margin}px`;
+        }
+      }
+    });
+  }, [calculatedMargins]);
+
+  return (
+    <div
+      ref={contentRef}
+      className="page-content"
+      style={{
+        transform: `translateY(-${pageIndex * A4_HEIGHT_PX}px)`,
+        width: `${A4_WIDTH_PX}px`,
+        ["--page-total-height" as string]: `${totalPages * A4_HEIGHT_PX}px`,
+      } as React.CSSProperties}
+    >
+      {children}
+    </div>
+  );
+}
+
 function getOffsetRelativeTo(element: HTMLElement, ancestor: HTMLElement): number {
   let top = 0;
   let el: HTMLElement | null = element;
@@ -115,6 +165,23 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
     const [customMargins, setCustomMargins] = useState<Map<string, number>>(new Map());
     const prevViewModeRef = useRef<"edit" | "page">(viewMode);
 
+    // Track view mode changes to force recalculation
+    const [recalcKey, setRecalcKey] = useState(0);
+
+    // Force recalculation when switching to page mode
+    useEffect(() => {
+      if (viewMode === "page" && prevViewModeRef.current === "edit") {
+        // Small delay to ensure DOM is updated
+        const timer = setTimeout(() => {
+          setRecalcKey(prev => prev + 1);
+        }, 50);
+        return () => clearTimeout(timer);
+      }
+    }, [viewMode]);
+
+    // Store calculated margins to apply to visible pages
+    const [calculatedMargins, setCalculatedMargins] = useState<Map<string, number>>(new Map());
+
     // Apply margins and calculate pages
     useLayoutEffect(() => {
       if (!contentRef.current) return;
@@ -131,54 +198,54 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
 
       void content.offsetHeight;
 
-      // In page mode, ALWAYS recalculate auto-margins for proper pagination
-      if (viewMode === "page") {
-        const sections = Array.from(content.querySelectorAll("section")) as HTMLElement[];
-        const autoMargins = new Map<number, number>();
-        let cumulativeShift = 0;
+      // Calculate auto-margins for pagination (used in both modes for calculation)
+      const sections = Array.from(content.querySelectorAll("section")) as HTMLElement[];
+      const autoMargins = new Map<string, number>();
+      let cumulativeShift = 0;
 
-        // First pass: calculate all required margins
-        sections.forEach((section, si) => {
-          const top = getOffsetRelativeTo(section, content) + cumulativeShift;
-          const height = section.offsetHeight;
-          const bottom = top + height;
-          const pageEnd = (Math.floor(top / A4_HEIGHT_PX) + 1) * A4_HEIGHT_PX;
-          const splittable = section.getAttribute("data-splittable") === "true";
+      // First pass: calculate all required margins
+      sections.forEach((section, si) => {
+        const top = getOffsetRelativeTo(section, content) + cumulativeShift;
+        const height = section.offsetHeight;
+        const bottom = top + height;
+        const pageEnd = (Math.floor(top / A4_HEIGHT_PX) + 1) * A4_HEIGHT_PX;
+        const splittable = section.getAttribute("data-splittable") === "true";
 
-          if (bottom > pageEnd && top < pageEnd && !splittable) {
-            if (height <= A4_HEIGHT_PX * 0.93) {
-              const margin = pageEnd - top + BUFFER;
-              autoMargins.set(si, margin);
-              cumulativeShift += margin;
-            }
+        if (bottom > pageEnd && top < pageEnd && !splittable) {
+          if (height <= A4_HEIGHT_PX * 0.93) {
+            const margin = pageEnd - top + BUFFER;
+            autoMargins.set(`section-${si}`, margin);
+            cumulativeShift += margin;
           }
-        });
+        }
+      });
 
-        // Apply auto-calculated margins
-        sections.forEach((section, si) => {
-          if (autoMargins.has(si)) {
-            section.style.marginTop = `${autoMargins.get(si)}px`;
-          }
-        });
-      } else {
-        // Edit mode: apply custom margins from user edits
-        customMargins.forEach((margin, key) => {
-          const [type, indexStr] = key.split("-");
-          const index = parseInt(indexStr);
+      // Merge custom margins with auto margins (custom takes precedence)
+      const finalMargins = new Map(autoMargins);
+      customMargins.forEach((margin, key) => {
+        finalMargins.set(key, margin);
+      });
 
-          if (type === "section") {
-            const sections = content.querySelectorAll("section");
-            if (sections[index]) {
-              (sections[index] as HTMLElement).style.marginTop = `${margin}px`;
-            }
-          } else if (type === "item") {
-            const items = content.querySelectorAll(".resume-item");
-            if (items[index]) {
-              (items[index] as HTMLElement).style.marginTop = `${margin}px`;
-            }
+      // Apply margins to measurement content
+      finalMargins.forEach((margin, key) => {
+        const [type, indexStr] = key.split("-");
+        const index = parseInt(indexStr);
+
+        if (type === "section") {
+          const secs = content.querySelectorAll("section");
+          if (secs[index]) {
+            (secs[index] as HTMLElement).style.marginTop = `${margin}px`;
           }
-        });
-      }
+        } else if (type === "item") {
+          const items = content.querySelectorAll(".resume-item");
+          if (items[index]) {
+            (items[index] as HTMLElement).style.marginTop = `${margin}px`;
+          }
+        }
+      });
+
+      // Store calculated margins for visible pages
+      setCalculatedMargins(finalMargins);
 
       void content.offsetHeight;
       const totalHeight = content.scrollHeight;
@@ -186,7 +253,7 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
       setTotalPages(pages);
 
       prevViewModeRef.current = viewMode;
-    }, [children, viewMode, customMargins]);
+    }, [children, viewMode, customMargins, recalcKey]);
 
     // Handle element selection in text edit mode
     const handleContentClick = useCallback(
@@ -350,6 +417,16 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
       // Page Mode: Paginated view
       return (
         <div ref={containerRef} className="flex flex-col items-center">
+          {/* Hidden content for measurement */}
+          <div
+            ref={contentRef}
+            className="absolute opacity-0 pointer-events-none"
+            style={{ width: `${A4_WIDTH_PX}px`, left: "-9999px" }}
+            key={`measure-${recalcKey}`}
+          >
+            {children}
+          </div>
+
           {Array.from({ length: totalPages }, (_, pageIndex) => (
             <div key={pageIndex} className="relative">
               {pageIndex > 0 && (
@@ -372,17 +449,13 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
                   height: `${A4_HEIGHT_PX}px`,
                 }}
               >
-                <div
-                  ref={pageIndex === 0 ? contentRef : undefined}
-                  className="page-content"
-                  style={{
-                    transform: `translateY(-${pageIndex * A4_HEIGHT_PX}px)`,
-                    width: `${A4_WIDTH_PX}px`,
-                    ["--page-total-height" as string]: `${totalPages * A4_HEIGHT_PX}px`,
-                  } as React.CSSProperties}
+                <PageContent
+                  pageIndex={pageIndex}
+                  totalPages={totalPages}
+                  calculatedMargins={calculatedMargins}
                 >
                   {children}
-                </div>
+                </PageContent>
               </div>
             </div>
           ))}
