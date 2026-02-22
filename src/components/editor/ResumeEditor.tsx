@@ -24,6 +24,8 @@ import ATSScorePanel from "./ATSScorePanel";
 import ProfessionATSPanel from "./ProfessionATSPanel";
 import ResumeScanPreview from "./ResumeScanPreview";
 import { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { LayoutDashboard, Pencil } from "lucide-react";
 
 type AdditionalSection =
   | "languages"
@@ -60,6 +62,12 @@ interface ResumeEditorProps {
   onHeatmapZoneChange?: (zone: HeatmapZone | null) => void;
   onDownloadPDF?: () => void;
   isExportingPDF?: boolean;
+  documentId?: string | null;
+  documentName?: string;
+  onSave?: (name: string) => void;
+  onRename?: (newName: string) => void;
+  isSaving?: boolean;
+  hasUnsavedChanges?: boolean;
 }
 
 // Collapsible section types
@@ -79,6 +87,12 @@ export default function ResumeEditor({
   onHeatmapZoneChange,
   onDownloadPDF,
   isExportingPDF,
+  documentId,
+  documentName,
+  onSave,
+  onRename,
+  isSaving,
+  hasUnsavedChanges,
 }: ResumeEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Using array to maintain insertion order
@@ -93,6 +107,54 @@ export default function ResumeEditor({
   const [isATSScoreExpanded, setIsATSScoreExpanded] = useState(false);
   const [isProfessionATSExpanded, setIsProfessionATSExpanded] = useState(false);
   const [isScanPreviewExpanded, setIsScanPreviewExpanded] = useState(false);
+  // Save modal state
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [saveName, setSaveName] = useState(documentName || "");
+  // Rename modal state
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [renameName, setRenameName] = useState(documentName || "");
+
+  // Update saveName and renameName when documentName changes
+  useEffect(() => {
+    if (documentName) {
+      setSaveName(documentName);
+      setRenameName(documentName);
+    }
+  }, [documentName]);
+
+  const handleSaveClick = () => {
+    if (documentId && documentName) {
+      // Already saved before, just update
+      onSave?.(documentName);
+    } else {
+      // First time save, show modal
+      setSaveName(resume.basics?.name ? `${resume.basics.name}'s Resume` : "My Resume");
+      setIsSaveModalOpen(true);
+    }
+  };
+
+  const handleSaveConfirm = () => {
+    if (saveName.trim()) {
+      onSave?.(saveName.trim());
+      setIsSaveModalOpen(false);
+    }
+  };
+
+  const handleRenameClick = () => {
+    if (documentId && documentName) {
+      setRenameName(documentName);
+      setIsRenameModalOpen(true);
+    }
+  };
+
+  const handleRenameConfirm = () => {
+    if (renameName.trim() && onRename) {
+      onRename(renameName.trim());
+      setIsRenameModalOpen(false);
+    }
+  };
+
+  const router = useRouter();
 
   // Auto-detect and activate sections based on resume data
   useEffect(() => {
@@ -1244,28 +1306,148 @@ export default function ResumeEditor({
     <div className="h-full overflow-y-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Resume Builder</h1>
-          <p className="text-sm text-gray-500">AI-Powered Premium Resume Builder</p>
+        <div className="flex flex-col gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard")}
+            title="Home Page"
+            className="no-print"
+          >
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            Home Page
+          </Button>
+          <div>
+            {documentId && documentName ? (
+              <button
+                onClick={handleRenameClick}
+                className="text-left group flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 py-1 -ml-2 transition-colors"
+                title="Click to rename"
+              >
+                <h1 className="text-lg font-bold text-gray-900">
+                  {documentName}
+                  {hasUnsavedChanges && <span className="text-orange-500 ml-1">*</span>}
+                </h1>
+                <Pencil className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            ) : (
+              <h1 className="text-lg font-bold text-gray-900">
+                Resume Builder
+              </h1>
+            )}
+            <p className="text-xs text-gray-500">
+              {documentId ? "Click to rename" : "AI-Powered Premium Resume Builder"}
+            </p>
+          </div>
         </div>
-        <Button 
-          onClick={handleDownloadPDF} 
-          className="no-print"
-          disabled={isExportingPDF}
-        >
-          {isExportingPDF ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Exporting...
-            </>
-          ) : (
-            "Download PDF"
-          )}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button 
+            onClick={handleSaveClick} 
+            variant="outline"
+            className="no-print"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              "Save"
+            )}
+          </Button>
+          <Button 
+            onClick={handleDownloadPDF} 
+            className="no-print"
+            disabled={isExportingPDF}
+          >
+            {isExportingPDF ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Exporting...
+              </>
+            ) : (
+              "Download PDF"
+            )}
+          </Button>
+        </div>
       </div>
+
+      {/* Save Modal */}
+      <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Resume</DialogTitle>
+            <DialogDescription>
+              Give your resume a name to save it for later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="resume-name">Resume Name</Label>
+            <Input
+              id="resume-name"
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              placeholder="Enter a name for your resume"
+              className="mt-2"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveConfirm();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSaveModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveConfirm} disabled={!saveName.trim()}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Modal */}
+      <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Resume</DialogTitle>
+            <DialogDescription>
+              Enter a new name for your resume.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="rename-input">New Name</Label>
+            <Input
+              id="rename-input"
+              value={renameName}
+              onChange={(e) => setRenameName(e.target.value)}
+              placeholder="Enter new name"
+              className="mt-2"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRenameConfirm();
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRenameModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRenameConfirm} disabled={!renameName.trim()}>
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Separator />
 

@@ -205,60 +205,251 @@ export async function POST(request: NextRequest) {
     }
 
     // Post-process: Filter out any missingSkills that are actually in the resume
-    // This is a safety check in case AI didn't follow instructions
+    // Using advanced skill matching with synonyms and variations
     const existingSkillNames = (resume.skills || [])
-      .map(s => (s.name || "").toLowerCase())
+      .map(s => (s.name || "").toLowerCase().trim())
       .filter(Boolean);
     
-    // Extract core keywords from existing skills for fuzzy matching
-    const extractKeywords = (skill: string): string[] => {
-      const lower = skill.toLowerCase();
-      // Split by common separators and extract meaningful words
-      const words = lower.split(/[\s\/\-\(\)]+/).filter(w => w.length > 2);
-      // Also keep the full normalized version
-      const normalized = lower.replace(/[^a-z0-9]/g, '');
-      return [...words, normalized];
+    console.log("Existing skills for filtering:", existingSkillNames.join(", "));
+    
+    // Skill synonym and variation mapping
+    const skillSynonyms: Record<string, string[]> = {
+      // Python ecosystem
+      "python": ["python3", "python 3", "py"],
+      "scikit-learn": ["sklearn", "scikit learn", "sk-learn", "scikitlearn"],
+      "pandas": ["pd", "pandas dataframe"],
+      "numpy": ["np", "numerical python"],
+      "matplotlib": ["plt", "mpl"],
+      "seaborn": ["sns"],
+      "tensorflow": ["tf", "tensor flow", "tensorflow 2"],
+      "pytorch": ["torch", "py torch"],
+      "keras": ["tf.keras", "tensorflow keras"],
+      
+      // Data Science & ML
+      "machine learning": ["ml", "machine-learning", "machinelearning"],
+      "deep learning": ["dl", "deep-learning", "deeplearning", "neural networks"],
+      "natural language processing": ["nlp", "natural-language-processing", "text analytics"],
+      "computer vision": ["cv", "image processing", "image recognition"],
+      "xgboost": ["xgb", "extreme gradient boosting"],
+      "lightgbm": ["lgbm", "light gbm", "lgb"],
+      "catboost": ["cat boost"],
+      "random forest": ["rf", "randomforest"],
+      "decision tree": ["dt", "decision trees"],
+      "gradient boosting": ["gbm", "gradient-boosting", "boosting"],
+      "regression": ["linear regression", "logistic regression"],
+      "classification": ["classifier", "classifiers"],
+      "clustering": ["cluster analysis", "k-means", "kmeans"],
+      "feature engineering": ["feature extraction", "feature selection"],
+      "hyperparameter tuning": ["hyperparameter optimization", "grid search", "gridsearch"],
+      "cross validation": ["cross-validation", "cv", "k-fold"],
+      "a/b testing": ["ab testing", "a-b testing", "split testing", "ab test"],
+      "statistical analysis": ["statistics", "statistical modeling", "stats"],
+      
+      // Big Data & Data Engineering
+      "apache spark": ["spark", "pyspark", "spark sql"],
+      "apache kafka": ["kafka", "kafka streams"],
+      "apache airflow": ["airflow", "airflow dag"],
+      "apache hadoop": ["hadoop", "hdfs", "mapreduce"],
+      "apache hive": ["hive", "hiveql"],
+      "databricks": ["databricks workspace", "dbx"],
+      "snowflake": ["snowflake db", "snowflake data warehouse"],
+      "dbt": ["dbt core", "data build tool", "dbt cloud"],
+      "etl": ["extract transform load", "data pipeline", "data pipelines"],
+      "data warehouse": ["dwh", "data warehousing", "olap"],
+      "data lake": ["datalake", "data lakehouse"],
+      
+      // Databases
+      "sql": ["structured query language", "sql server", "t-sql", "pl/sql", "plsql"],
+      "postgresql": ["postgres", "psql", "pg"],
+      "mysql": ["my sql", "mariadb"],
+      "mongodb": ["mongo", "mongo db"],
+      "redis": ["redis cache", "redis db"],
+      "elasticsearch": ["elastic search", "es", "elk"],
+      "cassandra": ["apache cassandra"],
+      "neo4j": ["neo 4j", "graph database"],
+      
+      // Cloud Platforms
+      "amazon web services": ["aws", "amazon aws"],
+      "aws sagemaker": ["sagemaker", "sage maker"],
+      "aws s3": ["s3", "simple storage service"],
+      "aws ec2": ["ec2", "elastic compute"],
+      "aws lambda": ["lambda", "serverless"],
+      "aws redshift": ["redshift", "amazon redshift"],
+      "aws glue": ["glue", "aws glue etl"],
+      "google cloud platform": ["gcp", "google cloud"],
+      "google bigquery": ["bigquery", "bq"],
+      "google cloud storage": ["gcs", "cloud storage"],
+      "microsoft azure": ["azure", "azure cloud"],
+      "azure ml": ["azure machine learning", "azureml"],
+      
+      // DevOps & Tools
+      "docker": ["docker container", "containerization", "containers"],
+      "kubernetes": ["k8s", "kube", "container orchestration"],
+      "git": ["git version control", "version control"],
+      "github": ["github actions", "gh", "github ci/cd"],
+      "gitlab": ["gitlab ci", "gitlab ci/cd"],
+      "jenkins": ["jenkins ci", "jenkins pipeline"],
+      "ci/cd": ["cicd", "ci cd", "continuous integration", "continuous deployment"],
+      "mlops": ["ml ops", "machine learning operations"],
+      "linux": ["unix", "bash", "shell scripting", "ubuntu", "centos"],
+      "terraform": ["tf", "infrastructure as code", "iac"],
+      "ansible": ["ansible automation"],
+      
+      // BI & Visualization
+      "tableau": ["tableau desktop", "tableau server"],
+      "power bi": ["powerbi", "power-bi", "microsoft power bi"],
+      "looker": ["looker studio", "google looker"],
+      "metabase": ["meta base"],
+      "data visualization": ["data viz", "dataviz", "visualization"],
+      
+      // Programming Languages
+      "javascript": ["js", "es6", "ecmascript"],
+      "typescript": ["ts"],
+      "java": ["java 8", "java 11", "java 17", "jvm"],
+      "scala": ["scala lang"],
+      "r": ["r programming", "r language", "rstats"],
+      "golang": ["go", "go lang"],
+      "rust": ["rust lang"],
+      "c++": ["cpp", "c plus plus"],
+      "c#": ["csharp", "c sharp", "dotnet", ".net"],
+      
+      // APIs & Web
+      "rest api": ["restful", "rest", "restful api", "api"],
+      "graphql": ["graph ql"],
+      "fastapi": ["fast api"],
+      "flask": ["flask api"],
+      "django": ["django rest framework", "drf"],
+      
+      // Testing
+      "pytest": ["py test", "python testing"],
+      "unit testing": ["unit tests", "unittest"],
+      "test automation": ["automated testing", "test automation framework"],
+      
+      // Soft Skills
+      "communication": ["communication skills", "written communication", "verbal communication"],
+      "problem solving": ["problem-solving", "analytical thinking"],
+      "teamwork": ["team collaboration", "collaboration", "team player"],
+      "leadership": ["team leadership", "team lead", "leading teams"],
+      "project management": ["pm", "project planning"],
+      "agile": ["agile methodology", "scrum", "kanban", "agile/scrum"],
     };
     
-    const existingKeywords = new Set<string>();
-    for (const skill of existingSkillNames) {
-      for (const keyword of extractKeywords(skill)) {
-        existingKeywords.add(keyword);
+    // Build reverse mapping (synonym -> canonical name)
+    const synonymToCanonical: Map<string, string> = new Map();
+    for (const [canonical, synonyms] of Object.entries(skillSynonyms)) {
+      synonymToCanonical.set(canonical, canonical);
+      for (const syn of synonyms) {
+        synonymToCanonical.set(syn, canonical);
       }
     }
     
-    if (result.missingSkills && result.missingSkills.length > 0) {
-      result.missingSkills = result.missingSkills.filter(skill => {
-        const skillLower = (skill.name || "").toLowerCase();
-        const skillKeywords = extractKeywords(skillLower);
+    // Normalize skill name to canonical form
+    const normalizeSkill = (skill: string): string[] => {
+      const lower = skill.toLowerCase().trim();
+      const results: string[] = [lower];
+      
+      // Check if it's a known synonym
+      if (synonymToCanonical.has(lower)) {
+        results.push(synonymToCanonical.get(lower)!);
+      }
+      
+      // Also check each word
+      const words = lower.split(/[\s\/\-\(\),\.]+/).filter(w => w.length > 1);
+      for (const word of words) {
+        if (synonymToCanonical.has(word)) {
+          results.push(synonymToCanonical.get(word)!);
+        }
+        results.push(word);
+      }
+      
+      // Normalized version without special chars
+      results.push(lower.replace(/[^a-z0-9]/g, ''));
+      
+      return [...new Set(results)];
+    };
+    
+    // Build set of all existing skill variations
+    const existingSkillSet = new Set<string>();
+    for (const skill of existingSkillNames) {
+      for (const variation of normalizeSkill(skill)) {
+        existingSkillSet.add(variation);
+      }
+    }
+    
+    console.log("Normalized existing skills:", Array.from(existingSkillSet).slice(0, 30).join(", "), "...");
+    
+    // Check if a skill matches any existing skill
+    const skillExists = (skillName: string): boolean => {
+      const variations = normalizeSkill(skillName);
+      
+      // Check direct match with any variation
+      for (const v of variations) {
+        if (existingSkillSet.has(v)) {
+          return true;
+        }
+      }
+      
+      // Check substring match for longer terms
+      const skillNorm = skillName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      for (const existing of existingSkillSet) {
+        const existingNorm = existing.replace(/[^a-z0-9]/g, '');
         
-        // Check exact match
-        if (existingSkillNames.includes(skillLower)) return false;
-        
-        // Check if any keyword from the missing skill exists in existing skills
-        // e.g., "Airflow DAG Orchestration" contains "airflow" which is in "Apache Airflow"
-        for (const keyword of skillKeywords) {
-          if (keyword.length > 3 && existingKeywords.has(keyword)) {
-            console.log(`Filtering "${skill.name}" - keyword "${keyword}" found in existing skills`);
-            return false;
+        // Substring match (both directions)
+        if (existingNorm.length > 4 && skillNorm.length > 4) {
+          if (skillNorm.includes(existingNorm) || existingNorm.includes(skillNorm)) {
+            return true;
           }
         }
+      }
+      
+      return false;
+    };
+    
+    if (result.missingSkills && result.missingSkills.length > 0) {
+      const originalCount = result.missingSkills.length;
+      
+      // Step 1: Static filtering with synonym database
+      result.missingSkills = result.missingSkills.filter(skill => {
+        const skillName = skill.name || "";
         
-        // Check if existing skill contains the core of missing skill or vice versa
-        for (const existing of existingSkillNames) {
-          // "Apache Airflow" contains "airflow", "Airflow DAG..." also contains "airflow"
-          const existingNorm = existing.replace(/[^a-z0-9]/g, '');
-          const skillNorm = skillLower.replace(/[^a-z0-9]/g, '');
-          
-          // Check substring matches for longer strings
-          if (existingNorm.length > 5 && skillNorm.includes(existingNorm)) return false;
-          if (skillNorm.length > 5 && existingNorm.includes(skillNorm)) return false;
+        if (skillExists(skillName)) {
+          console.log(`Filtering "${skillName}" - matched with existing skill (static)`);
+          return false;
         }
         
         return true;
       });
       
-      console.log("Filtered missingSkills:", result.missingSkills.map(s => s.name).join(", ") || "None");
+      console.log(`After static filtering: ${originalCount} -> ${result.missingSkills.length}`);
+      
+      // Step 2: AI-powered semantic skill matching for remaining skills
+      if (result.missingSkills.length > 0 && existingSkillNames.length > 0) {
+        console.log("Running AI skill matching verification...");
+        
+        const aiFilteredSkills = await verifyMissingSkillsWithAI(
+          result.missingSkills.map(s => s.name),
+          existingSkillNames
+        );
+        
+        if (aiFilteredSkills) {
+          const beforeAI = result.missingSkills.length;
+          result.missingSkills = result.missingSkills.filter(skill => 
+            aiFilteredSkills.trulyMissing.includes(skill.name)
+          );
+          console.log(`After AI filtering: ${beforeAI} -> ${result.missingSkills.length}`);
+          console.log("AI matched skills:", aiFilteredSkills.matched.join(", ") || "None");
+        }
+      }
+      
+      console.log("Final missingSkills:", result.missingSkills.map(s => s.name).join(", ") || "None");
+      
+      // Recalculate score based on total filtered skills
+      const filteredCount = originalCount - result.missingSkills.length;
+      if (filteredCount > 0 && result.score < 90) {
+        const boost = Math.min(filteredCount * 4, 25);
+        result.score = Math.min(result.score + boost, 98);
+        console.log(`Score boosted by ${boost} points. New score: ${result.score}`);
+      }
     }
 
     return NextResponse.json(result);
@@ -268,6 +459,87 @@ export async function POST(request: NextRequest) {
       { error: error instanceof Error ? error.message : "Failed to calculate ATS score" },
       { status: 500 }
     );
+  }
+}
+
+// AI-powered skill matching verification
+async function verifyMissingSkillsWithAI(
+  missingSkills: string[],
+  existingSkills: string[]
+): Promise<{ trulyMissing: string[]; matched: string[] } | null> {
+  if (missingSkills.length === 0) return { trulyMissing: [], matched: [] };
+  
+  const prompt = `You are a technical skill matching expert. Determine if "missing skills" are actually covered by "existing skills" through:
+- Synonyms (sklearn = scikit-learn)
+- Abbreviations (k8s = Kubernetes, ML = Machine Learning)
+- Parent/child relationships (Python covers pandas, numpy)
+- Variations (XGBoost = xgboost = XGB)
+- Overlapping concepts (Statistical Analysis covers hypothesis testing)
+
+EXISTING SKILLS in resume:
+${existingSkills.join(", ")}
+
+MISSING SKILLS to verify:
+${missingSkills.join(", ")}
+
+For each missing skill, determine if it's TRULY MISSING or ALREADY COVERED by existing skills.
+
+Return ONLY this JSON (no markdown):
+{
+  "trulyMissing": ["skill1", "skill2"],
+  "matched": ["skill3", "skill4"],
+  "matchReasons": {
+    "skill3": "covered by existing_skill_name",
+    "skill4": "synonym of existing_skill_name"
+  }
+}
+
+Rules:
+- Be GENEROUS with matching - if there's reasonable overlap, consider it matched
+- "Python" covers basic Python libraries unless very specific ones are needed
+- "Machine Learning" or "ML" covers general ML concepts
+- "Data Analysis" covers basic statistical analysis
+- Cloud platform experience (AWS) often transfers to similar services
+- If someone has "Apache Spark", they likely know "PySpark" too`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }]
+    });
+
+    const responseText = message.content
+      .filter((block): block is Anthropic.TextBlock => block.type === "text")
+      .map(block => block.text)
+      .join("");
+
+    let cleanedResponse = responseText.trim();
+    if (cleanedResponse.startsWith("```json")) {
+      cleanedResponse = cleanedResponse.slice(7);
+    } else if (cleanedResponse.startsWith("```")) {
+      cleanedResponse = cleanedResponse.slice(3);
+    }
+    if (cleanedResponse.endsWith("```")) {
+      cleanedResponse = cleanedResponse.slice(0, -3);
+    }
+
+    const result = JSON.parse(cleanedResponse.trim());
+    
+    // Log match reasons
+    if (result.matchReasons) {
+      for (const [skill, reason] of Object.entries(result.matchReasons)) {
+        console.log(`AI Match: "${skill}" - ${reason}`);
+      }
+    }
+    
+    return {
+      trulyMissing: result.trulyMissing || [],
+      matched: result.matched || []
+    };
+  } catch (error) {
+    console.error("AI skill matching error:", error);
+    return null; // Fall back to static filtering only
   }
 }
 
@@ -372,5 +644,11 @@ Return ONLY this JSON (no markdown):
   "recommendations": ["..."]
 }
 
-Score: 90+=excellent, 75-89=good, 60-74=moderate, 40-59=weak, <40=poor`;
+Score Guidelines:
+- If ALL required skills are present in resume → score should be 85-95
+- If MOST required skills present, some preferred missing → score 70-84
+- If SOME required skills missing → score 50-69
+- If MANY required skills missing → score <50
+
+IMPORTANT: Give higher scores when skills match well. Don't penalize for minor keyword differences.`;
 }

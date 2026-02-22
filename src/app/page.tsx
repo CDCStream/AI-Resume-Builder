@@ -1,396 +1,260 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import ResumeEditor from "@/components/editor/ResumeEditor";
-import GettingStartedModal from "@/components/editor/GettingStartedModal";
-import LinkedInImportModal from "@/components/editor/LinkedInImportModal";
-import UploadResumeModal from "@/components/editor/UploadResumeModal";
-import ResumePaginator, { ResumePaginatorRef } from "@/components/preview/ResumePaginator";
-import { templates } from "@/components/templates";
-import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
-import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X } from "lucide-react";
-import { exportResumeToPDF } from "@/lib/utils/pdfExport";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { 
+  FileText, 
+  Sparkles, 
+  Target, 
+  Download, 
+  CheckCircle2, 
+  ArrowRight,
+  Zap,
+  Shield,
+  Globe
+} from "lucide-react";
 
-type ViewMode = "edit" | "page";
-
-interface HeatmapZone {
-  id: string;
-  name: string;
-  section: string;
-  attention: "high" | "medium" | "low" | "none";
-  timeSpent: number;
-}
-
-export default function Home() {
-  const [resume, setResume] = useState<Resume>(defaultResume);
-  const [selectedTemplate, setSelectedTemplate] = useState("professional-white");
-  const [scale, setScale] = useState(1);
-  const [showGettingStarted, setShowGettingStarted] = useState(true);
-  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("page");
-  const [isTextEditMode, setIsTextEditMode] = useState(false);
-  const [hasSelection, setHasSelection] = useState(false);
-  const [showEditModePopup, setShowEditModePopup] = useState(false);
-  const [showTextEditPopup, setShowTextEditPopup] = useState(false);
-  const [hasSeenEditModePopup, setHasSeenEditModePopup] = useState(false);
-  const [hasSeenTextEditPopup, setHasSeenTextEditPopup] = useState(false);
-  const [activeHeatmapZone, setActiveHeatmapZone] = useState<HeatmapZone | null>(null);
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
-  const paginatorRef = useRef<ResumePaginatorRef>(null);
-
-  const handleDownloadPDF = useCallback(async () => {
-    if (!previewRef.current || isExportingPDF) return;
-    
-    setIsExportingPDF(true);
-    try {
-      const resumeName = resume.basics?.name || "resume";
-      const filename = `${resumeName.replace(/\s+/g, "_")}_CV.pdf`;
-      await exportResumeToPDF(previewRef.current, { filename });
-    } catch (error) {
-      console.error("Failed to export PDF:", error);
-    } finally {
-      setIsExportingPDF(false);
-    }
-  }, [resume.basics?.name, isExportingPDF]);
-
-  // Show Edit Mode popup on first page load
-  useEffect(() => {
-    if (!hasSeenEditModePopup) {
-      const timer = setTimeout(() => {
-        setShowEditModePopup(true);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [hasSeenEditModePopup]);
-
-  const currentTemplate = templates.find((t) => t.id === selectedTemplate);
-  const TemplateComponent = currentTemplate?.component;
-
-  const handleSelectOption = (option: string) => {
-    switch (option) {
-      case "new":
-        setResume(emptyResume);
-        setShowGettingStarted(false);
-        break;
-      case "ai":
-        // TODO: Open AI assistance modal
-        setResume(emptyResume);
-        setShowGettingStarted(false);
-        break;
-      case "upload":
-        setShowGettingStarted(false);
-        setShowUploadModal(true);
-        break;
-      case "linkedin":
-        setShowGettingStarted(false);
-        setShowLinkedInModal(true);
-        return; // Don't close getting started yet
-      case "example":
-        setResume(defaultResume);
-        setShowGettingStarted(false);
-        break;
-    }
-  };
-
-  const handleLinkedInImport = (importedResume: Resume) => {
-    setResume(importedResume);
-    setShowLinkedInModal(false);
-  };
-
-  const handleUploadImport = (importedResume: Resume) => {
-    setResume(importedResume);
-    setShowUploadModal(false);
-  };
-
-  const handleElementSelect = useCallback((selected: boolean) => {
-    setHasSelection(selected);
-  }, []);
-
-  const A4_WIDTH = 794; // 210mm at 96dpi
-
-  useEffect(() => {
-    const updateScale = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth;
-        const targetWidth = containerWidth * 0.85;
-        const newScale = Math.min(targetWidth / A4_WIDTH, 1);
-        setScale(newScale);
-      }
-    };
-
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
-  }, []);
+export default function LandingPage() {
+  const router = useRouter();
 
   return (
-    <>
-      {/* Getting Started Modal */}
-      <GettingStartedModal
-        isOpen={showGettingStarted}
-        onClose={() => setShowGettingStarted(false)}
-        onSelectOption={handleSelectOption}
-      />
-
-      {/* LinkedIn Import Modal */}
-      <LinkedInImportModal
-        isOpen={showLinkedInModal}
-        onClose={() => setShowLinkedInModal(false)}
-        onImport={handleLinkedInImport}
-      />
-
-      {/* Upload Resume Modal */}
-      <UploadResumeModal
-        isOpen={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        onImport={handleUploadImport}
-      />
-
-      <div className="flex h-screen bg-gray-100">
-        {/* Left Panel - Editor */}
-        <div className="w-[480px] bg-white border-r border-gray-200 flex-shrink-0 no-print">
-          <ResumeEditor
-            resume={resume}
-            onResumeChange={setResume}
-            selectedTemplate={selectedTemplate}
-            onSelectTemplate={setSelectedTemplate}
-            onHeatmapZoneChange={setActiveHeatmapZone}
-            onDownloadPDF={handleDownloadPDF}
-            isExportingPDF={isExportingPDF}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header */}
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                ResumeAI
+              </span>
+            </div>
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Features
+              </a>
+              <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                How It Works
+              </a>
+              <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
+                My Documents
+              </Button>
+              <Button size="sm" onClick={() => router.push("/resume")}>
+                Create Resume
+              </Button>
+            </nav>
+            <Button className="md:hidden" size="sm" onClick={() => router.push("/resume")}>
+              Get Started
+            </Button>
+          </div>
         </div>
+      </header>
 
-        {/* Right Panel - Preview */}
-        <div ref={containerRef} className="flex-1 overflow-auto">
-          <div
-            className="py-8 flex justify-center print:scale-100 print:transform-none print:py-0"
-            style={{
-              transform: `scale(${scale})`,
-              transformOrigin: "top center",
-            }}
-          >
-            <div ref={previewRef} className="relative">
-              <ResumePaginator
-                ref={paginatorRef}
-                viewMode={viewMode}
-                isTextEditMode={isTextEditMode}
-                onElementSelect={handleElementSelect}
-          >
-            {TemplateComponent && <TemplateComponent resume={resume} />}
-              </ResumePaginator>
-              
-              {/* Zone Info Badge */}
-              {activeHeatmapZone && (
-                <div className="absolute top-4 right-4 pointer-events-none z-50">
-                  <div 
-                    className="px-4 py-2 rounded-xl shadow-2xl text-white text-sm font-semibold flex items-center gap-2"
-                    style={{
-                      background: activeHeatmapZone.attention === "high" 
-                        ? "rgb(34, 197, 94)"
-                        : activeHeatmapZone.attention === "medium"
-                        ? "rgb(234, 179, 8)"
-                        : activeHeatmapZone.attention === "low"
-                        ? "rgb(249, 115, 22)"
-                        : "rgb(239, 68, 68)",
-                    }}
-                  >
-                    <Eye className="w-5 h-5" />
-                    <div>
-                      <div>{activeHeatmapZone.name}</div>
-                      <div className="text-xs opacity-90">{activeHeatmapZone.timeSpent}s attention</div>
-                    </div>
-                  </div>
-                </div>
-              )}
+      {/* Hero Section */}
+      <section className="py-20 sm:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4" />
+              AI-Powered Resume Builder
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+              Build Your Perfect Resume{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                in Minutes
+              </span>
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Create ATS-optimized, professionally designed resumes with AI assistance. 
+              Stand out from the crowd and land your dream job.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                onClick={() => router.push("/resume")}
+              >
+                Create Your Resume
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="text-lg px-8 py-6"
+                onClick={() => router.push("/dashboard")}
+              >
+                View My Documents
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
+              No credit card required • Free to start
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Everything You Need to Succeed
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Our AI-powered tools help you create the perfect resume and cover letter for any job.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="p-6 rounded-2xl border border-gray-100 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+                <Sparkles className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">AI-Powered Writing</h3>
+              <p className="text-gray-600">
+                Get intelligent suggestions to improve your content, optimize for ATS, and highlight your achievements.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="p-6 rounded-2xl border border-gray-100 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4">
+                <Target className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">ATS Score Analysis</h3>
+              <p className="text-gray-600">
+                Check your resume's compatibility with Applicant Tracking Systems and get actionable improvements.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="p-6 rounded-2xl border border-gray-100 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Cover Letter Generator</h3>
+              <p className="text-gray-600">
+                Create tailored cover letters for each job application with AI that understands the job requirements.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="p-6 rounded-2xl border border-gray-100 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mb-4">
+                <Download className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">PDF Export</h3>
+              <p className="text-gray-600">
+                Download your resume as a perfectly formatted PDF, ready to submit to any employer.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="p-6 rounded-2xl border border-gray-100 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center mb-4">
+                <Globe className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">LinkedIn Import</h3>
+              <p className="text-gray-600">
+                Import your LinkedIn profile data and job postings to quickly create targeted applications.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="p-6 rounded-2xl border border-gray-100 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center mb-4">
+                <Zap className="w-6 h-6 text-cyan-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Real-time Preview</h3>
+              <p className="text-gray-600">
+                See your changes instantly with our live preview. Edit directly on the document for precise control.
+              </p>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Floating Controls - Outside of scaled container */}
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 no-print">
-          {/* Text Edit Controls (only in edit mode with selection) */}
-          {viewMode === "edit" && isTextEditMode && hasSelection && (
-            <div className="flex items-center gap-1 bg-white rounded-full shadow-xl border border-gray-200 p-1 mr-2">
-              <button
-                onClick={() => paginatorRef.current?.moveElement("up")}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                title="Reduce space above (Delete)"
-              >
-                <ChevronUp className="w-5 h-5 text-gray-700" />
-              </button>
-              <button
-                onClick={() => paginatorRef.current?.moveElement("down")}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                title="Add space below (Enter)"
-              >
-                <ChevronDown className="w-5 h-5 text-gray-700" />
-              </button>
+      {/* How It Works */}
+      <section id="how-it-works" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              How It Works
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Create your professional resume in three simple steps.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-blue-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">
+                1
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Enter Your Info</h3>
+              <p className="text-gray-600">
+                Fill in your details or import from LinkedIn. Our AI helps you write compelling content.
+              </p>
             </div>
-          )}
-
-          {/* Reset Margins Button (only in edit mode with text edit) */}
-          {viewMode === "edit" && isTextEditMode && (
-            <button
-              onClick={() => paginatorRef.current?.resetMargins()}
-              className="p-3 rounded-full shadow-xl transition-all duration-200 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 mr-2"
-              title="Reset to Default"
-            >
-              <RotateCcw className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* Edit Text Button (only in edit mode) */}
-          {viewMode === "edit" && (
-            <button
-              onClick={() => {
-                const newValue = !isTextEditMode;
-                setIsTextEditMode(newValue);
-                // Show popup on first text edit activation
-                if (newValue && !hasSeenTextEditPopup) {
-                  setShowTextEditPopup(true);
-                  setHasSeenTextEditPopup(true);
-                }
-              }}
-              className={`p-3 rounded-full shadow-xl transition-all duration-200 ${
-                isTextEditMode
-                  ? "bg-blue-500 hover:bg-blue-600 text-white ring-4 ring-blue-200"
-                  : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200"
-              }`}
-              title={isTextEditMode ? "Close Text Edit" : "Edit Text"}
-            >
-              <Type className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* Mode Toggle Button */}
-          <button
-            onClick={() => {
-              const newMode = viewMode === "edit" ? "page" : "edit";
-              setViewMode(newMode);
-              // Auto-activate text edit mode when switching to edit mode
-              if (newMode === "edit") {
-                setIsTextEditMode(true);
-                // Show popup on first text edit activation
-                if (!hasSeenTextEditPopup) {
-                  setShowTextEditPopup(true);
-                  setHasSeenTextEditPopup(true);
-                }
-              } else {
-                setIsTextEditMode(false);
-              }
-              setHasSelection(false);
-              // Close edit mode popup when switching
-              setShowEditModePopup(false);
-            }}
-            className={`p-3 rounded-full shadow-xl transition-all duration-200 flex items-center gap-2 ${
-              viewMode === "edit"
-                ? "bg-amber-500 hover:bg-amber-600 text-white"
-                : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200"
-            }`}
-            title={viewMode === "edit" ? "Switch to Preview Mode" : "Switch to Edit Mode"}
-          >
-            {viewMode === "edit" ? (
-              <>
-                <Eye className="w-5 h-5" />
-                <span className="text-sm font-medium pr-1">Preview</span>
-              </>
-            ) : (
-              <>
-                <Edit3 className="w-5 h-5" />
-                <span className="text-sm font-medium pr-1">Edit</span>
-              </>
-            )}
-          </button>
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-blue-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">
+                2
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Optimize with AI</h3>
+              <p className="text-gray-600">
+                Use AI suggestions to tailor your resume for specific jobs and improve ATS compatibility.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-blue-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4">
+                3
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Download & Apply</h3>
+              <p className="text-gray-600">
+                Export your polished resume as PDF and start applying to your dream jobs.
+              </p>
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Edit Mode Introduction Popup (shown on first page load) */}
-        {showEditModePopup && !showGettingStarted && (
-          <div className="fixed bottom-20 right-6 z-50 bg-gradient-to-br from-blue-600 to-blue-700 text-white text-sm rounded-xl px-5 py-4 shadow-2xl max-w-sm backdrop-blur-sm border border-blue-500 no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <button
-              onClick={() => {
-                setShowEditModePopup(false);
-                setHasSeenEditModePopup(true);
-              }}
-              className="absolute top-2 right-2 p-1 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <p className="font-semibold mb-2 flex items-center gap-2">
-              <Edit3 className="w-4 h-4" /> Edit Mode
-            </p>
-            <p className="text-blue-100 text-xs leading-relaxed mb-3">
-              Click the <strong className="text-white">Edit</strong> button to switch to Edit Mode.
-              In this mode, you can see page break lines and adjust text positioning across pages.
-            </p>
-            <button
-              onClick={() => {
-                setShowEditModePopup(false);
-                setHasSeenEditModePopup(true);
-              }}
-              className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Got it!
-            </button>
-          </div>
-        )}
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            Ready to Build Your Perfect Resume?
+          </h2>
+          <p className="text-lg text-blue-100 mb-8">
+            Join thousands of job seekers who have landed their dream jobs with ResumeAI.
+          </p>
+          <Button 
+            size="lg" 
+            className="text-lg px-8 py-6 bg-white text-blue-600 hover:bg-gray-100"
+            onClick={() => router.push("/resume")}
+          >
+            Get Started Free
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
+      </section>
 
-        {/* Text Edit Help Popup (shown on first text edit activation) */}
-        {showTextEditPopup && (
-          <div className="fixed bottom-20 right-6 z-50 bg-gray-900/95 text-white text-sm rounded-xl px-5 py-4 shadow-2xl max-w-sm backdrop-blur-sm border border-gray-700 no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <button
-              onClick={() => setShowTextEditPopup(false)}
-              className="absolute top-2 right-2 p-1 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <p className="font-semibold mb-2 flex items-center gap-2">
-              <Type className="w-4 h-4" /> Text Editing
+      {/* Footer */}
+      <footer className="py-12 bg-gray-900 text-gray-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-white">ResumeAI</span>
+            </div>
+            <p className="text-sm">
+              © 2026 ResumeAI. All rights reserved.
             </p>
-            <ul className="space-y-1.5 text-gray-300 text-xs">
-              <li>• Click on any section or line in the CV</li>
-              <li>• Selected items are highlighted with a blue border</li>
-              <li>
-                • <strong className="text-white">Enter</strong>: Add space below the selected item
-              </li>
-              <li>
-                • <strong className="text-white">Delete</strong>: Reduce space above the selected item
-              </li>
-              <li>• Use arrow buttons for the same actions</li>
-              <li>• Use the ↩️ button to reset all adjustments</li>
-            </ul>
-            <button
-              onClick={() => setShowTextEditPopup(false)}
-              className="mt-3 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Got it!
-            </button>
           </div>
-        )}
-
-        {/* Help tooltip for text edit mode (always visible when in text edit mode, after popup is dismissed) */}
-        {viewMode === "edit" && isTextEditMode && !showTextEditPopup && (
-          <div className="fixed bottom-20 right-6 z-50 bg-gray-900/95 text-white text-sm rounded-xl px-4 py-3 shadow-2xl max-w-xs backdrop-blur-sm border border-gray-700 no-print">
-            <p className="font-semibold mb-2 flex items-center gap-2">
-              <Type className="w-4 h-4" /> Text Editing
-            </p>
-            <ul className="space-y-1 text-gray-300 text-xs">
-              <li>• Click on any section or line in the CV</li>
-              <li>• Selected items are highlighted with a blue border</li>
-              <li>
-                • <strong className="text-white">Enter</strong>: Add space below
-              </li>
-              <li>
-                • <strong className="text-white">Delete</strong>: Reduce space above
-              </li>
-              <li>• Use arrow buttons for the same actions</li>
-              <li>• Use ↩️ button to reset all adjustments</li>
-            </ul>
-          </div>
-        )}
-      </div>
-    </>
+        </div>
+      </footer>
+    </div>
   );
 }

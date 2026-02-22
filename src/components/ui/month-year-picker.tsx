@@ -324,8 +324,10 @@ export function MonthYearPicker({
 interface DateRangeWithCurrentProps {
   startDate: string;
   endDate: string;
+  isCurrent?: boolean;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
+  onCurrentChange?: (isCurrent: boolean) => void;
   currentLabel?: string;
 }
 
@@ -367,17 +369,24 @@ export function DateRange({
 export function DateRangeWithCurrent({
   startDate,
   endDate,
+  isCurrent: isCurrentProp,
   onStartDateChange,
   onEndDateChange,
+  onCurrentChange,
   currentLabel = "Currently work here",
 }: DateRangeWithCurrentProps) {
-  const isCurrent = endDate === "Present";
+  const isCurrent = isCurrentProp ?? endDate === "Present";
 
   const handleCurrentToggle = () => {
-    if (isCurrent) {
-      onEndDateChange("");
+    const newIsCurrent = !isCurrent;
+    if (onCurrentChange) {
+      onCurrentChange(newIsCurrent);
     } else {
-      onEndDateChange("Present");
+      if (newIsCurrent) {
+        onEndDateChange("Present");
+      } else {
+        onEndDateChange("");
+      }
     }
   };
 

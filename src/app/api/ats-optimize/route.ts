@@ -37,7 +37,7 @@ async function withRetry<T>(
 
 export interface ATSOptimizeRequest {
   type: "quick" | "tailored";
-  field: "professionalTitle" | "professionalSummary" | "workExperience" | "education" | "project" | "skill" | "volunteer" | "award" | "certificate" | "skillsSuggestion";
+  field: "professionalTitle" | "professionalSummary" | "workExperience" | "education" | "project" | "skill" | "volunteer" | "award" | "certificate" | "skillsSuggestion" | "full_resume";
   currentValue: string;
   jobDescription?: string;
   context?: {
@@ -102,9 +102,10 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Calling Claude API...");
+    const maxTokens = field === "full_resume" ? 8192 : 4096;
     const message = await withRetry(() => anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: maxTokens,
       messages: [
         {
           role: "user",
@@ -130,7 +131,54 @@ export async function POST(request: NextRequest) {
     }
     cleanedResponse = cleanedResponse.trim();
 
-    const result: ATSOptimizeResponse = JSON.parse(cleanedResponse);
+    let result: ATSOptimizeResponse;
+    try {
+      result = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error("JSON parse error, attempting to fix truncated JSON...");
+      
+      // Try to fix truncated JSON by finding valid JSON structure
+      let fixedJson = cleanedResponse;
+      
+      // If JSON is truncated, try to close it properly
+      const openBraces = (fixedJson.match(/{/g) || []).length;
+      const closeBraces = (fixedJson.match(/}/g) || []).length;
+      const openBrackets = (fixedJson.match(/\[/g) || []).length;
+      const closeBrackets = (fixedJson.match(/]/g) || []).length;
+      
+      // Remove any incomplete string at the end
+      const lastCompleteStringEnd = fixedJson.lastIndexOf('",');
+      const lastObjectEnd = fixedJson.lastIndexOf('}');
+      const lastArrayEnd = fixedJson.lastIndexOf(']');
+      
+      if (lastCompleteStringEnd > lastObjectEnd && lastCompleteStringEnd > lastArrayEnd) {
+        fixedJson = fixedJson.substring(0, lastCompleteStringEnd + 1);
+      }
+      
+      // Close unclosed arrays and objects
+      for (let i = 0; i < openBrackets - closeBrackets; i++) {
+        fixedJson += "]";
+      }
+      for (let i = 0; i < openBraces - closeBraces; i++) {
+        fixedJson += "}";
+      }
+      
+      try {
+        result = JSON.parse(fixedJson);
+        console.log("Successfully fixed truncated JSON");
+      } catch (secondError) {
+        // Last resort: return a minimal valid response
+        console.error("Could not fix JSON, returning minimal response");
+        result = {
+          optimizedValue: currentValue,
+          changes: [{
+            before: "Original content",
+            after: "Optimization was too large to process completely",
+            reason: "The AI response was truncated. Please try optimizing smaller sections individually."
+          }]
+        };
+      }
+    }
 
     return NextResponse.json(result);
   } catch (error) {
@@ -225,7 +273,20 @@ Examples:
 - Mention the issuing organization clearly
 - Highlight key skills or knowledge validated
 - Include any notable achievements (scores, distinctions)
-- Use industry-standard terminology`
+- Use industry-standard terminology`,
+
+    full_resume: `Optimize this complete resume for ATS (Applicant Tracking Systems):
+- Use industry-standard terminology throughout
+- Ensure consistent formatting and structure
+- Include relevant keywords for the candidate's field
+- Use strong action verbs for all experience descriptions
+- Include quantifiable achievements where possible
+- Ensure professional titles are clear and searchable
+- Make the professional summary impactful and keyword-rich
+- Format skills with full names (no abbreviations)
+- Ensure all sections are ATS-scannable
+
+IMPORTANT: Return a summarized version with key changes. Focus on the most impactful improvements (top 5-10 changes). Do NOT return the entire optimized resume in the response to keep it concise.`
   };
 
   return `You are an expert resume writer and ATS optimization specialist.
@@ -357,7 +418,16 @@ function getTailoredOptimizePrompt(
 - Suggest missing skills that the candidate likely has based on their experience
 - Prioritize hard/technical skills over soft skills
 - Use industry-standard skill names
-- IMPORTANT: Skills are typically written in English. If the existing skills are in English, write ALL your response (including reasons) in English regardless of the job description language.`
+- IMPORTANT: Skills are typically written in English. If the existing skills are in English, write ALL your response (including reasons) in English regardless of the job description language.`,
+
+    full_resume: `Tailor this complete resume for the target job:
+- Align professional title and summary with job requirements
+- Emphasize relevant experience and skills mentioned in the job posting
+- Use exact terminology and keywords from the job description
+- Reorder or emphasize achievements that match job requirements
+- Suggest additional skills from the job posting
+
+IMPORTANT: Return a summarized version with key changes. Focus on the most impactful improvements (top 5-10 changes). Do NOT return the entire optimized resume in the response to keep it concise.`
   };
 
   return `You are an expert resume writer and ATS optimization specialist.
