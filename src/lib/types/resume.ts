@@ -66,6 +66,7 @@ export interface Education {
   score?: string;
   courses?: string[];
   isCurrent?: boolean;
+  summary?: string;
 }
 
 export interface Award {
@@ -81,6 +82,7 @@ export interface Certificate {
   endDate?: string;
   issuer?: string;
   url?: string;
+  summary?: string;
 }
 
 export interface Publication {

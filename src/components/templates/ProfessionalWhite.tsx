@@ -36,13 +36,13 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
       case "experience":
         if (!work || work.length === 0) return null;
         return (
-          <section key="experience" className="mb-6" data-section="experience">
+          <section key="experience" className="mb-6" data-section="experience" data-splittable="true">
             <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
               Experience
             </h2>
             <div className="space-y-4">
               {work.map((job, index) => (
-                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                <div key={index} className="resume-item">
                   <div className="flex justify-between items-start mb-1">
                     <div>
                       <h3 className="font-semibold text-gray-900">{job.position}</h3>
@@ -108,13 +108,13 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
       case "education":
         if (!education || education.length === 0) return null;
         return (
-          <section key="education" className="mb-6" data-section="education">
+          <section key="education" className="mb-6" data-section="education" data-splittable="true">
             <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
               Education
             </h2>
             <div className="space-y-3">
               {education.map((edu, index) => (
-                <div key={index} className="resume-item" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                <div key={index} className="resume-item">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
@@ -163,7 +163,7 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
       case "skills":
         if (!skills || skills.length === 0) return null;
         return (
-          <section key="skills" className="mb-6" data-section="skills">
+          <section key="skills" className="mb-6" data-section="skills" data-splittable="true">
             <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
               Skills
             </h2>
@@ -252,7 +252,7 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
       case "references":
         if (!references || references.length === 0) return null;
         return (
-          <section key="references" className="mb-6" data-section="references">
+          <section key="references" className="mb-6" data-section="references" data-splittable="true">
             <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
               References
             </h2>

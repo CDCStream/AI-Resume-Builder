@@ -4,12 +4,22 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import ResumeEditor from "@/components/editor/ResumeEditor";
 import GettingStartedModal from "@/components/editor/GettingStartedModal";
 import LinkedInImportModal from "@/components/editor/LinkedInImportModal";
+import UploadResumeModal from "@/components/editor/UploadResumeModal";
 import ResumePaginator, { ResumePaginatorRef } from "@/components/preview/ResumePaginator";
 import { templates } from "@/components/templates";
 import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
 import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X } from "lucide-react";
+import { exportResumeToPDF } from "@/lib/utils/pdfExport";
 
 type ViewMode = "edit" | "page";
+
+interface HeatmapZone {
+  id: string;
+  name: string;
+  section: string;
+  attention: "high" | "medium" | "low" | "none";
+  timeSpent: number;
+}
 
 export default function Home() {
   const [resume, setResume] = useState<Resume>(defaultResume);
@@ -17,6 +27,7 @@ export default function Home() {
   const [scale, setScale] = useState(1);
   const [showGettingStarted, setShowGettingStarted] = useState(true);
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("page");
   const [isTextEditMode, setIsTextEditMode] = useState(false);
   const [hasSelection, setHasSelection] = useState(false);
@@ -24,9 +35,26 @@ export default function Home() {
   const [showTextEditPopup, setShowTextEditPopup] = useState(false);
   const [hasSeenEditModePopup, setHasSeenEditModePopup] = useState(false);
   const [hasSeenTextEditPopup, setHasSeenTextEditPopup] = useState(false);
+  const [activeHeatmapZone, setActiveHeatmapZone] = useState<HeatmapZone | null>(null);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const paginatorRef = useRef<ResumePaginatorRef>(null);
+
+  const handleDownloadPDF = useCallback(async () => {
+    if (!previewRef.current || isExportingPDF) return;
+    
+    setIsExportingPDF(true);
+    try {
+      const resumeName = resume.basics?.name || "resume";
+      const filename = `${resumeName.replace(/\s+/g, "_")}_CV.pdf`;
+      await exportResumeToPDF(previewRef.current, { filename });
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+    } finally {
+      setIsExportingPDF(false);
+    }
+  }, [resume.basics?.name, isExportingPDF]);
 
   // Show Edit Mode popup on first page load
   useEffect(() => {
@@ -53,8 +81,8 @@ export default function Home() {
         setShowGettingStarted(false);
         break;
       case "upload":
-        // TODO: Open file upload dialog
         setShowGettingStarted(false);
+        setShowUploadModal(true);
         break;
       case "linkedin":
         setShowGettingStarted(false);
@@ -70,6 +98,11 @@ export default function Home() {
   const handleLinkedInImport = (importedResume: Resume) => {
     setResume(importedResume);
     setShowLinkedInModal(false);
+  };
+
+  const handleUploadImport = (importedResume: Resume) => {
+    setResume(importedResume);
+    setShowUploadModal(false);
   };
 
   const handleElementSelect = useCallback((selected: boolean) => {
@@ -109,6 +142,13 @@ export default function Home() {
         onImport={handleLinkedInImport}
       />
 
+      {/* Upload Resume Modal */}
+      <UploadResumeModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onImport={handleUploadImport}
+      />
+
       <div className="flex h-screen bg-gray-100">
         {/* Left Panel - Editor */}
         <div className="w-[480px] bg-white border-r border-gray-200 flex-shrink-0 no-print">
@@ -117,6 +157,9 @@ export default function Home() {
             onResumeChange={setResume}
             selectedTemplate={selectedTemplate}
             onSelectTemplate={setSelectedTemplate}
+            onHeatmapZoneChange={setActiveHeatmapZone}
+            onDownloadPDF={handleDownloadPDF}
+            isExportingPDF={isExportingPDF}
           />
         </div>
 
@@ -129,15 +172,39 @@ export default function Home() {
               transformOrigin: "top center",
             }}
           >
-            <div ref={previewRef}>
+            <div ref={previewRef} className="relative">
               <ResumePaginator
                 ref={paginatorRef}
                 viewMode={viewMode}
                 isTextEditMode={isTextEditMode}
                 onElementSelect={handleElementSelect}
-              >
-                {TemplateComponent && <TemplateComponent resume={resume} />}
+          >
+            {TemplateComponent && <TemplateComponent resume={resume} />}
               </ResumePaginator>
+              
+              {/* Zone Info Badge */}
+              {activeHeatmapZone && (
+                <div className="absolute top-4 right-4 pointer-events-none z-50">
+                  <div 
+                    className="px-4 py-2 rounded-xl shadow-2xl text-white text-sm font-semibold flex items-center gap-2"
+                    style={{
+                      background: activeHeatmapZone.attention === "high" 
+                        ? "rgb(34, 197, 94)"
+                        : activeHeatmapZone.attention === "medium"
+                        ? "rgb(234, 179, 8)"
+                        : activeHeatmapZone.attention === "low"
+                        ? "rgb(249, 115, 22)"
+                        : "rgb(239, 68, 68)",
+                    }}
+                  >
+                    <Eye className="w-5 h-5" />
+                    <div>
+                      <div>{activeHeatmapZone.name}</div>
+                      <div className="text-xs opacity-90">{activeHeatmapZone.timeSpent}s attention</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

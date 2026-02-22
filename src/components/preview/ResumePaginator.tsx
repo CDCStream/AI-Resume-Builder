@@ -94,22 +94,78 @@ function getElementKey(element: HTMLElement, content: HTMLElement): string {
   return `section-${sectionIndex}`;
 }
 
+// Check if element is inside a grid container
+function isInGridContainer(element: HTMLElement): boolean {
+  const parent = element.parentElement;
+  if (!parent) return false;
+  const display = window.getComputedStyle(parent).display;
+  return display === "grid" || display === "inline-grid";
+}
+
+// Get the number of columns in a grid
+function getGridColumns(gridContainer: HTMLElement): number {
+  const style = window.getComputedStyle(gridContainer);
+  const columns = style.gridTemplateColumns;
+  if (!columns || columns === "none") return 1;
+  return columns.split(" ").length;
+}
+
 // Find next sibling element (resume-item or section)
+// For grid layouts (like Skills), we need to find the item that's visually below
 function getNextElement(element: HTMLElement, content: HTMLElement): HTMLElement | null {
-  // If it's a resume-item, find next resume-item (any, not just in same section)
+  // If it's a resume-item, find next resume-item
   if (element.classList.contains("resume-item")) {
-    const allItems = Array.from(content.querySelectorAll(".resume-item"));
-    const currentIndex = allItems.indexOf(element);
-    if (currentIndex >= 0 && currentIndex < allItems.length - 1) {
-      return allItems[currentIndex + 1] as HTMLElement;
-    }
-    // No more items, find next section
     const parentSection = element.closest("section");
+    const gridContainer = element.parentElement;
+    
+    // Check if this is in a grid layout (like Skills section)
+    if (gridContainer && isInGridContainer(element)) {
+      const gridItems = Array.from(gridContainer.querySelectorAll(".resume-item"));
+      const currentIndex = gridItems.indexOf(element);
+      const columns = getGridColumns(gridContainer);
+      
+      // Find the item that's on the next row (same column position or next available)
+      const nextRowIndex = currentIndex + columns;
+      
+      if (nextRowIndex < gridItems.length) {
+        // There's an item in the next row
+        return gridItems[nextRowIndex] as HTMLElement;
+      } else {
+        // No more rows in this grid, find next section
+        if (parentSection) {
+          const sections = Array.from(content.querySelectorAll("section"));
+          const sectionIndex = sections.indexOf(parentSection);
+          if (sectionIndex >= 0 && sectionIndex < sections.length - 1) {
+            return sections[sectionIndex + 1] as HTMLElement;
+          }
+        }
+        return null;
+      }
+    }
+    
+    // Regular (non-grid) resume-item handling
+    // First, check if there's a next item WITHIN THE SAME SECTION
     if (parentSection) {
+      const sectionItems = Array.from(parentSection.querySelectorAll(".resume-item"));
+      const currentIndexInSection = sectionItems.indexOf(element);
+      
+      if (currentIndexInSection >= 0 && currentIndexInSection < sectionItems.length - 1) {
+        // There's another item in this section
+        return sectionItems[currentIndexInSection + 1] as HTMLElement;
+      }
+      
+      // This is the last item in the section, find next section
       const sections = Array.from(content.querySelectorAll("section"));
       const sectionIndex = sections.indexOf(parentSection);
       if (sectionIndex >= 0 && sectionIndex < sections.length - 1) {
         return sections[sectionIndex + 1] as HTMLElement;
+      }
+    } else {
+      // No parent section, use global item list
+      const allItems = Array.from(content.querySelectorAll(".resume-item"));
+      const currentIndex = allItems.indexOf(element);
+      if (currentIndex >= 0 && currentIndex < allItems.length - 1) {
+        return allItems[currentIndex + 1] as HTMLElement;
       }
     }
     return null;
@@ -126,16 +182,45 @@ function getNextElement(element: HTMLElement, content: HTMLElement): HTMLElement
 }
 
 // Find previous sibling element (for moving element up - reducing its margin)
+// For grid layouts, find the item that's visually above
 function getPrevElement(element: HTMLElement, content: HTMLElement): HTMLElement | null {
   // If it's a resume-item, find previous resume-item
   if (element.classList.contains("resume-item")) {
+    const parentSection = element.closest("section");
+    const gridContainer = element.parentElement;
+    
+    // Check if this is in a grid layout (like Skills section)
+    if (gridContainer && isInGridContainer(element)) {
+      const gridItems = Array.from(gridContainer.querySelectorAll(".resume-item"));
+      const currentIndex = gridItems.indexOf(element);
+      const columns = getGridColumns(gridContainer);
+      
+      // Find the item that's on the previous row (same column position)
+      const prevRowIndex = currentIndex - columns;
+      
+      if (prevRowIndex >= 0) {
+        // There's an item in the previous row
+        return gridItems[prevRowIndex] as HTMLElement;
+      } else {
+        // No previous rows in this grid, find previous section
+        if (parentSection) {
+          const sections = Array.from(content.querySelectorAll("section"));
+          const sectionIndex = sections.indexOf(parentSection);
+          if (sectionIndex > 0) {
+            return sections[sectionIndex - 1] as HTMLElement;
+          }
+        }
+        return null;
+      }
+    }
+    
+    // Regular (non-grid) resume-item handling
     const allItems = Array.from(content.querySelectorAll(".resume-item"));
     const currentIndex = allItems.indexOf(element);
     if (currentIndex > 0) {
       return allItems[currentIndex - 1] as HTMLElement;
     }
     // No previous items, find previous section
-    const parentSection = element.closest("section");
     if (parentSection) {
       const sections = Array.from(content.querySelectorAll("section"));
       const sectionIndex = sections.indexOf(parentSection);
@@ -407,7 +492,7 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
                 }}
               />
               <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">
-                Sayfa {i + 2} Başlangıcı
+                Page {i + 2} Start
               </div>
             </div>
           ))}

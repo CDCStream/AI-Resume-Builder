@@ -27,6 +27,7 @@ export const defaultTheme: ThemeConfig = {
   dotEmptyClass: "bg-gray-300",
   tagClass: "px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700",
   cardClass: "",
+  allowExperienceSplit: true,
 };
 
 export function useOrderedSections(resume: Resume) {
@@ -59,11 +60,11 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "experience":
       if (!work || work.length === 0) return null;
       return (
-        <section key="experience" className="mb-6" data-section="experience" data-splittable={t.allowExperienceSplit ? "true" : undefined}>
+        <section key="experience" className="mb-6" data-section="experience" data-splittable={t.allowExperienceSplit !== false ? "true" : undefined}>
           <h2 className={t.headingClass}>Experience</h2>
           <div className="space-y-4">
             {work.map((job, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={t.allowExperienceSplit ? {} : { breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={t.allowExperienceSplit === false ? { breakInside: 'avoid', pageBreakInside: 'avoid' } : {}}>
                 <div className="flex justify-between items-start mb-1">
                   <div>
                     <h3 className="font-semibold text-gray-900">{job.position}</h3>
@@ -95,7 +96,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "internships":
       if (!internships || internships.length === 0) return null;
       return (
-        <section key="internships" className="mb-6" data-section="internships">
+        <section key="internships" className="mb-6" data-section="internships" data-splittable="true">
           <h2 className={t.headingClass}>Internships</h2>
           <div className="space-y-4">
             {internships.map((intern, index) => (
@@ -122,7 +123,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "education":
       if (!education || education.length === 0) return null;
       return (
-        <section key="education" className="mb-6" data-section="education">
+        <section key="education" className="mb-6" data-section="education" data-splittable="true">
           <h2 className={t.headingClass}>Education</h2>
           <div className="space-y-3">
             {education.map((edu, index) => (
@@ -149,7 +150,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "awards":
       if (!awards || awards.length === 0) return null;
       return (
-        <section key="awards" className="mb-6" data-section="awards">
+        <section key="awards" className="mb-6" data-section="awards" data-splittable="true">
           <h2 className={t.headingClass}>Awards</h2>
           <div className="space-y-3">
             {awards.map((award, index) => (
@@ -170,27 +171,36 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
 
     case "skills":
       if (!skills || skills.length === 0) return null;
+      const filteredSkills = skills.filter(skill => skill.name);
+      const skillRows: typeof filteredSkills[] = [];
+      for (let i = 0; i < filteredSkills.length; i += 2) {
+        skillRows.push(filteredSkills.slice(i, i + 2));
+      }
       return (
-        <section key="skills" className="mb-6" data-section="skills">
+        <section key="skills" className="mb-6" data-section="skills" data-splittable="true">
           <h2 className={t.headingClass}>Skills</h2>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-            {skills.filter(skill => skill.name).map((skill, index) => {
-              const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
-              const filledDots = levelMap[skill.level || "Intermediate"] || 3;
-              return (
-                <div key={index} className="resume-item">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">{skill.name}</span>
-                    <span className={t.subTextClass}>{skill.level || "Intermediate"}</span>
-                  </div>
-                  <div className="flex gap-1 mt-1">
-                    {[1, 2, 3, 4, 5].map((dot) => (
-                      <div key={dot} className={`w-2 h-2 rounded-full ${dot <= filledDots ? t.dotFilledClass : t.dotEmptyClass}`} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="space-y-3">
+            {skillRows.map((row, rowIndex) => (
+              <div key={rowIndex} className="resume-item grid grid-cols-2 gap-x-8" data-skill-row={rowIndex}>
+                {row.map((skill, colIndex) => {
+                  const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
+                  const filledDots = levelMap[skill.level || "Intermediate"] || 3;
+                  return (
+                    <div key={colIndex} className="pb-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">{skill.name}</span>
+                        <span className={t.subTextClass}>{skill.level || "Intermediate"}</span>
+                      </div>
+                      <div className="flex gap-1 mt-1">
+                        {[1, 2, 3, 4, 5].map((dot) => (
+                          <div key={dot} className={`w-2 h-2 rounded-full ${dot <= filledDots ? t.dotFilledClass : t.dotEmptyClass}`} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </section>
       );
@@ -207,7 +217,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "courses":
       if (!courses || courses.length === 0) return null;
       return (
-        <section key="courses" className="mb-6" data-section="courses">
+        <section key="courses" className="mb-6" data-section="courses" data-splittable="true">
           <h2 className={t.headingClass}>Courses</h2>
           <div className="space-y-3">
             {courses.map((course, index) => (
@@ -245,7 +255,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "references":
       if (!references || references.length === 0) return null;
       return (
-        <section key="references" className="mb-6" data-section="references">
+        <section key="references" className="mb-6" data-section="references" data-splittable="true">
           <h2 className={t.headingClass}>References</h2>
           <div className="grid grid-cols-2 gap-4">
             {references.map((ref, index) => (
@@ -264,7 +274,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "publications":
       if (!publications || publications.length === 0) return null;
       return (
-        <section key="publications" className="mb-6" data-section="publications">
+        <section key="publications" className="mb-6" data-section="publications" data-splittable="true">
           <h2 className={t.headingClass}>Publications</h2>
           <div className="space-y-3">
             {publications.map((pub, index) => (
@@ -282,7 +292,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "projects":
       if (!projects || projects.length === 0 || !projects.some(p => p.name)) return null;
       return (
-        <section key="projects" className="mb-6" data-section="projects">
+        <section key="projects" className="mb-6" data-section="projects" data-splittable="true">
           <h2 className={t.headingClass}>Projects</h2>
           <div className="space-y-3">
             {projects.filter(p => p.name).map((project, index) => (
@@ -304,7 +314,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "certifications":
       if (!certificates || certificates.length === 0 || !certificates.some(c => c.name)) return null;
       return (
-        <section key="certifications" className="mb-6" data-section="certifications">
+        <section key="certifications" className="mb-6" data-section="certifications" data-splittable="true">
           <h2 className={t.headingClass}>Certifications</h2>
           <div className="space-y-3">
             {certificates.filter(c => c.name).map((cert, index) => (
@@ -325,7 +335,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "volunteering":
       if (!volunteer || volunteer.length === 0 || !volunteer.some(v => v.organization)) return null;
       return (
-        <section key="volunteering" className="mb-6" data-section="volunteering">
+        <section key="volunteering" className="mb-6" data-section="volunteering" data-splittable="true">
           <h2 className={t.headingClass}>Volunteering</h2>
           <div className="space-y-3">
             {volunteer.filter(v => v.organization).map((vol, index) => (

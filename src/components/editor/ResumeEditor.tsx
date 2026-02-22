@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Resume, SectionType, defaultSectionOrder } from "@/lib/types/resume";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,10 @@ import {
 import TemplateSelector from "./TemplateSelector";
 import { DateRangeWithCurrent, MonthYearPicker } from "@/components/ui/month-year-picker";
 import { PhotoPositionModal } from "./PhotoPositionModal";
+import ATSOptimizeButtons from "./ATSOptimizeButtons";
+import ATSScorePanel from "./ATSScorePanel";
+import ProfessionATSPanel from "./ProfessionATSPanel";
+import ResumeScanPreview from "./ResumeScanPreview";
 import { useRef, useState, useEffect } from "react";
 
 type AdditionalSection =
@@ -40,11 +44,22 @@ type AdditionalSection =
   | "industryExpertise"
   | "custom";
 
+interface HeatmapZone {
+  id: string;
+  name: string;
+  section: string;
+  attention: "high" | "medium" | "low" | "none";
+  timeSpent: number;
+}
+
 interface ResumeEditorProps {
   resume: Resume;
   onResumeChange: (resume: Resume) => void;
   selectedTemplate: string;
   onSelectTemplate: (templateId: string) => void;
+  onHeatmapZoneChange?: (zone: HeatmapZone | null) => void;
+  onDownloadPDF?: () => void;
+  isExportingPDF?: boolean;
 }
 
 // Collapsible section types
@@ -61,6 +76,9 @@ export default function ResumeEditor({
   onResumeChange,
   selectedTemplate,
   onSelectTemplate,
+  onHeatmapZoneChange,
+  onDownloadPDF,
+  isExportingPDF,
 }: ResumeEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Using array to maintain insertion order
@@ -71,6 +89,10 @@ export default function ResumeEditor({
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   // Delete confirmation modal state
   const [sectionToDelete, setSectionToDelete] = useState<AdditionalSection | null>(null);
+  // ATS Score panel states
+  const [isATSScoreExpanded, setIsATSScoreExpanded] = useState(false);
+  const [isProfessionATSExpanded, setIsProfessionATSExpanded] = useState(false);
+  const [isScanPreviewExpanded, setIsScanPreviewExpanded] = useState(false);
 
   // Auto-detect and activate sections based on resume data
   useEffect(() => {
@@ -385,8 +407,12 @@ export default function ResumeEditor({
     });
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPDF = () => {
+    if (onDownloadPDF) {
+      onDownloadPDF();
+    } else {
+      window.print();
+    }
   };
 
   // Section render functions for ordered rendering
@@ -538,7 +564,42 @@ export default function ResumeEditor({
               </button>
             </div>
             <div className="space-y-2"><Label className="text-xs">Project Name</Label><Input value={project.name || ""} onChange={(e) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], name: e.target.value }; onResumeChange({ ...resume, projects: newProjects }); }} placeholder="e.g. E-commerce Platform" /></div>
-            <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={project.description || ""} onChange={(e) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], description: e.target.value }; onResumeChange({ ...resume, projects: newProjects }); }} placeholder="Briefly describe the project" rows={2} /></div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Description</Label>
+                <ATSOptimizeButtons
+                  field="project"
+                  fieldLabel={project.name || "Project"}
+                  currentValue={project.description || ""}
+                  context={{
+                    name: resume.basics?.name,
+                    currentTitle: resume.basics?.label,
+                    skills: resume.skills?.flatMap(s => s.keywords || []),
+                  }}
+                  onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                    const newProjects = [...(resume.projects || [])];
+                    newProjects[index] = { ...newProjects[index], description: newValue };
+                    let updatedResume = { ...resume, projects: newProjects };
+                    if (suggestedSkills && suggestedSkills.length > 0) {
+                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
+                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      if (newSkills.length > 0) {
+                        updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
+                      }
+                    }
+                    if (suggestedLanguages && suggestedLanguages.length > 0) {
+                      const existingLangNames = new Set(resume.languages?.map(l => l.language?.toLowerCase()) || []);
+                      const newLangs = suggestedLanguages.filter(l => !existingLangNames.has(l.language.toLowerCase()));
+                      if (newLangs.length > 0) {
+                        updatedResume.languages = [...(resume.languages || []), ...newLangs];
+                      }
+                    }
+                    onResumeChange(updatedResume);
+                  }}
+                />
+              </div>
+              <Textarea value={project.description || ""} onChange={(e) => { const newProjects = [...(resume.projects || [])]; newProjects[index] = { ...newProjects[index], description: e.target.value }; onResumeChange({ ...resume, projects: newProjects }); }} placeholder="Briefly describe the project" rows={2} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs">Start Date</Label>
@@ -615,9 +676,54 @@ export default function ResumeEditor({
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Description</Label>
+                <ATSOptimizeButtons
+                  field="certificate"
+                  fieldLabel={cert.name || "Certificate"}
+                  currentValue={cert.summary || ""}
+                  context={{
+                    name: resume.basics?.name,
+                    currentTitle: resume.basics?.label,
+                    skills: resume.skills?.flatMap(s => s.keywords || []),
+                  }}
+                  onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                    const newCerts = [...(resume.certificates || [])];
+                    newCerts[index] = { ...newCerts[index], summary: newValue };
+                    let updatedResume = { ...resume, certificates: newCerts };
+                    if (suggestedSkills && suggestedSkills.length > 0) {
+                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
+                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      if (newSkills.length > 0) {
+                        updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
+                      }
+                    }
+                    if (suggestedLanguages && suggestedLanguages.length > 0) {
+                      const existingLangNames = new Set(resume.languages?.map(l => l.language?.toLowerCase()) || []);
+                      const newLangs = suggestedLanguages.filter(l => !existingLangNames.has(l.language.toLowerCase()));
+                      if (newLangs.length > 0) {
+                        updatedResume.languages = [...(resume.languages || []), ...newLangs];
+                      }
+                    }
+                    onResumeChange(updatedResume);
+                  }}
+                />
+              </div>
+              <Textarea
+                value={cert.summary || ""}
+                onChange={(e) => {
+                  const newCerts = [...(resume.certificates || [])];
+                  newCerts[index] = { ...newCerts[index], summary: e.target.value };
+                  onResumeChange({ ...resume, certificates: newCerts });
+                }}
+                placeholder="Describe the skills validated by this certification..."
+                rows={2}
+              />
+            </div>
           </div>
         ))}
-        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, certificates: [...(resume.certificates || []), { name: "", issuer: "", date: "", endDate: "" }] }); }}>+ Add Certification</Button>
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, certificates: [...(resume.certificates || []), { name: "", issuer: "", date: "", endDate: "", summary: "" }] }); }}>+ Add Certification</Button>
       </CardContent>}
     </Card>
   );
@@ -658,9 +764,54 @@ export default function ResumeEditor({
                 placeholder="Select award date"
               />
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Description</Label>
+                <ATSOptimizeButtons
+                  field="award"
+                  fieldLabel={award.title || "Award"}
+                  currentValue={award.summary || ""}
+                  context={{
+                    name: resume.basics?.name,
+                    currentTitle: resume.basics?.label,
+                    skills: resume.skills?.flatMap(s => s.keywords || []),
+                  }}
+                  onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                    const newAwards = [...(resume.awards || [])];
+                    newAwards[index] = { ...newAwards[index], summary: newValue };
+                    let updatedResume = { ...resume, awards: newAwards };
+                    if (suggestedSkills && suggestedSkills.length > 0) {
+                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
+                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      if (newSkills.length > 0) {
+                        updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
+                      }
+                    }
+                    if (suggestedLanguages && suggestedLanguages.length > 0) {
+                      const existingLangNames = new Set(resume.languages?.map(l => l.language?.toLowerCase()) || []);
+                      const newLangs = suggestedLanguages.filter(l => !existingLangNames.has(l.language.toLowerCase()));
+                      if (newLangs.length > 0) {
+                        updatedResume.languages = [...(resume.languages || []), ...newLangs];
+                      }
+                    }
+                    onResumeChange(updatedResume);
+                  }}
+                />
+              </div>
+              <Textarea
+                value={award.summary || ""}
+                onChange={(e) => {
+                  const newAwards = [...(resume.awards || [])];
+                  newAwards[index] = { ...newAwards[index], summary: e.target.value };
+                  onResumeChange({ ...resume, awards: newAwards });
+                }}
+                placeholder="Describe the significance of this award..."
+                rows={2}
+              />
+            </div>
           </div>
         ))}
-        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, awards: [...(resume.awards || []), { title: "", awarder: "", date: "" }] }); }}>+ Add Award</Button>
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, awards: [...(resume.awards || []), { title: "", awarder: "", date: "", summary: "" }] }); }}>+ Add Award</Button>
       </CardContent>}
     </Card>
   );
@@ -726,7 +877,42 @@ export default function ResumeEditor({
               <div className="space-y-2"><Label className="text-xs">Organization</Label><Input value={vol.organization || ""} onChange={(e) => { const newVols = [...(resume.volunteer || [])]; newVols[index] = { ...newVols[index], organization: e.target.value }; onResumeChange({ ...resume, volunteer: newVols }); }} placeholder="e.g. Red Cross" /></div>
               <div className="space-y-2"><Label className="text-xs">Position</Label><Input value={vol.position || ""} onChange={(e) => { const newVols = [...(resume.volunteer || [])]; newVols[index] = { ...newVols[index], position: e.target.value }; onResumeChange({ ...resume, volunteer: newVols }); }} placeholder="e.g. Volunteer" /></div>
             </div>
-            <div className="space-y-2"><Label className="text-xs">Summary</Label><Textarea value={vol.summary || ""} onChange={(e) => { const newVols = [...(resume.volunteer || [])]; newVols[index] = { ...newVols[index], summary: e.target.value }; onResumeChange({ ...resume, volunteer: newVols }); }} placeholder="Describe your volunteer work" rows={2} /></div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Summary</Label>
+                <ATSOptimizeButtons
+                  field="volunteer"
+                  fieldLabel={vol.organization || "Volunteer Experience"}
+                  currentValue={vol.summary || ""}
+                  context={{
+                    name: resume.basics?.name,
+                    currentTitle: resume.basics?.label,
+                    skills: resume.skills?.flatMap(s => s.keywords || []),
+                  }}
+                  onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                    const newVols = [...(resume.volunteer || [])];
+                    newVols[index] = { ...newVols[index], summary: newValue };
+                    let updatedResume = { ...resume, volunteer: newVols };
+                    if (suggestedSkills && suggestedSkills.length > 0) {
+                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
+                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      if (newSkills.length > 0) {
+                        updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
+                      }
+                    }
+                    if (suggestedLanguages && suggestedLanguages.length > 0) {
+                      const existingLangNames = new Set(resume.languages?.map(l => l.language?.toLowerCase()) || []);
+                      const newLangs = suggestedLanguages.filter(l => !existingLangNames.has(l.language.toLowerCase()));
+                      if (newLangs.length > 0) {
+                        updatedResume.languages = [...(resume.languages || []), ...newLangs];
+                      }
+                    }
+                    onResumeChange(updatedResume);
+                  }}
+                />
+              </div>
+              <Textarea value={vol.summary || ""} onChange={(e) => { const newVols = [...(resume.volunteer || [])]; newVols[index] = { ...newVols[index], summary: e.target.value }; onResumeChange({ ...resume, volunteer: newVols }); }} placeholder="Describe your volunteer work" rows={2} />
+            </div>
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, volunteer: [...(resume.volunteer || []), { organization: "", position: "", summary: "" }] }); }}>+ Add Volunteering</Button>
@@ -1062,10 +1248,50 @@ export default function ResumeEditor({
           <h1 className="text-2xl font-bold text-gray-900">Resume Builder</h1>
           <p className="text-sm text-gray-500">AI-Powered Premium Resume Builder</p>
         </div>
-        <Button onClick={handlePrint} className="no-print">
-          Download PDF
+        <Button 
+          onClick={handleDownloadPDF} 
+          className="no-print"
+          disabled={isExportingPDF}
+        >
+          {isExportingPDF ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Exporting...
+            </>
+          ) : (
+            "Download PDF"
+          )}
         </Button>
       </div>
+
+      <Separator />
+
+      {/* ATS Score Panel - LinkedIn Job */}
+      <ATSScorePanel
+        resume={resume}
+        onResumeChange={onResumeChange}
+        isExpanded={isATSScoreExpanded}
+        onToggleExpand={() => setIsATSScoreExpanded(!isATSScoreExpanded)}
+      />
+
+      {/* ATS Score Panel - Profession */}
+      <ProfessionATSPanel
+        resume={resume}
+        onResumeChange={onResumeChange}
+        isExpanded={isProfessionATSExpanded}
+        onToggleExpand={() => setIsProfessionATSExpanded(!isProfessionATSExpanded)}
+      />
+
+      {/* Resume Scan Preview - 6-Second Analysis */}
+      <ResumeScanPreview
+        resume={resume}
+        isExpanded={isScanPreviewExpanded}
+        onToggleExpand={() => setIsScanPreviewExpanded(!isScanPreviewExpanded)}
+        onHighlightZone={onHeatmapZoneChange}
+      />
 
       <Separator />
 
@@ -1117,9 +1343,11 @@ export default function ResumeEditor({
                   </div>
                   <button
                     onClick={removePhoto}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10"
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
                   >
-                    Ã—
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 </div>
               ) : (
@@ -1201,7 +1429,43 @@ export default function ResumeEditor({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="label">Professional Title</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="label">Professional Title</Label>
+                <ATSOptimizeButtons
+                  field="professionalTitle"
+                  fieldLabel="Professional Title"
+                  currentValue={resume.basics?.label || ""}
+                  context={{
+                    name: resume.basics?.name,
+                    skills: resume.skills?.map(s => s.name || "").filter(Boolean),
+                  }}
+                  onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                    updateBasics("label", newValue);
+                    if (suggestedSkills && suggestedSkills.length > 0) {
+                      const existingSkillNames = (resume.skills || []).map(s => s.name?.toLowerCase());
+                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.includes(s.name.toLowerCase()));
+                      if (newSkills.length > 0) {
+                        onResumeChange({
+                          ...resume,
+                          basics: { ...resume.basics, label: newValue },
+                          skills: [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level }))],
+                        });
+                      }
+                    }
+                    if (suggestedLanguages && suggestedLanguages.length > 0) {
+                      const existingLangNames = (resume.languages || []).map(l => l.language?.toLowerCase());
+                      const newLangs = suggestedLanguages.filter(l => !existingLangNames.includes(l.language.toLowerCase()));
+                      if (newLangs.length > 0) {
+                        onResumeChange({
+                          ...resume,
+                          basics: { ...resume.basics, label: newValue },
+                          languages: [...(resume.languages || []), ...newLangs],
+                        });
+                      }
+                    }
+                  }}
+                />
+              </div>
               <Input
                 id="label"
                 value={resume.basics?.label || ""}
@@ -1379,11 +1643,46 @@ export default function ResumeEditor({
               </button>
             </div>
 
-            {/* AI Suggestions Button */}
-            <button className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
-              Pre-written phrases
-              <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">+</span>
-            </button>
+            {/* ATS Optimize Buttons */}
+            <ATSOptimizeButtons
+              field="professionalSummary"
+              fieldLabel="Professional Summary"
+              currentValue={resume.basics?.summary || ""}
+              context={{
+                name: resume.basics?.name,
+                currentTitle: resume.basics?.label,
+                skills: resume.skills?.map(s => s.name || "").filter(Boolean),
+                experience: resume.work?.map(w => ({
+                  position: w.position || "",
+                  company: w.name || "",
+                  summary: w.summary || "",
+                })),
+              }}
+              onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                let updatedResume = { ...resume, basics: { ...resume.basics, summary: newValue } };
+                if (suggestedSkills && suggestedSkills.length > 0) {
+                  const existingSkillNames = (resume.skills || []).map(s => s.name?.toLowerCase());
+                  const newSkills = suggestedSkills.filter(s => !existingSkillNames.includes(s.name.toLowerCase()));
+                  if (newSkills.length > 0) {
+                    updatedResume = {
+                      ...updatedResume,
+                      skills: [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level }))],
+                    };
+                  }
+                }
+                if (suggestedLanguages && suggestedLanguages.length > 0) {
+                  const existingLangNames = (resume.languages || []).map(l => l.language?.toLowerCase());
+                  const newLangs = suggestedLanguages.filter(l => !existingLangNames.includes(l.language.toLowerCase()));
+                  if (newLangs.length > 0) {
+                    updatedResume = {
+                      ...updatedResume,
+                      languages: [...(resume.languages || []), ...newLangs],
+                    };
+                  }
+                }
+                onResumeChange(updatedResume);
+              }}
+            />
           </div>
 
           {/* Text Area */}
@@ -1504,7 +1803,45 @@ export default function ResumeEditor({
                 currentLabel="Currently work here"
               />
               <div className="space-y-2">
-                <Label className="text-xs">Description</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Description</Label>
+                  <ATSOptimizeButtons
+                    field="workExperience"
+                    fieldLabel={`${job.position || "Work"} Experience`}
+                    currentValue={job.summary || ""}
+                    context={{
+                      name: resume.basics?.name,
+                      currentTitle: job.position,
+                      skills: resume.skills?.map(s => s.name || "").filter(Boolean),
+                    }}
+                    onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                      const newWork = [...(resume.work || [])];
+                      newWork[index] = { ...newWork[index], summary: newValue };
+                      let updatedResume = { ...resume, work: newWork };
+                      if (suggestedSkills && suggestedSkills.length > 0) {
+                        const existingSkillNames = (resume.skills || []).map(s => s.name?.toLowerCase());
+                        const newSkills = suggestedSkills.filter(s => !existingSkillNames.includes(s.name.toLowerCase()));
+                        if (newSkills.length > 0) {
+                          updatedResume = {
+                            ...updatedResume,
+                            skills: [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level }))],
+                          };
+                        }
+                      }
+                      if (suggestedLanguages && suggestedLanguages.length > 0) {
+                        const existingLangNames = (resume.languages || []).map(l => l.language?.toLowerCase());
+                        const newLangs = suggestedLanguages.filter(l => !existingLangNames.includes(l.language.toLowerCase()));
+                        if (newLangs.length > 0) {
+                          updatedResume = {
+                            ...updatedResume,
+                            languages: [...(resume.languages || []), ...newLangs],
+                          };
+                        }
+                      }
+                      onResumeChange(updatedResume);
+                    }}
+                  />
+                </div>
                 <Textarea
                   value={job.summary || ""}
                   onChange={(e) => {
@@ -1625,6 +1962,51 @@ export default function ResumeEditor({
                 }}
                 currentLabel="Currently study here"
               />
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Description</Label>
+                  <ATSOptimizeButtons
+                    field="education"
+                    fieldLabel={edu.institution || "Education"}
+                    currentValue={edu.summary || ""}
+                    context={{
+                      name: resume.basics?.name,
+                      currentTitle: resume.basics?.label,
+                      skills: resume.skills?.flatMap(s => s.keywords || []),
+                    }}
+                    onApply={(newValue, suggestedSkills, suggestedLanguages) => {
+                      const newEducation = [...(resume.education || [])];
+                      newEducation[index] = { ...newEducation[index], summary: newValue };
+                      let updatedResume = { ...resume, education: newEducation };
+                      if (suggestedSkills && suggestedSkills.length > 0) {
+                        const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
+                        const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                        if (newSkills.length > 0) {
+                          updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
+                        }
+                      }
+                      if (suggestedLanguages && suggestedLanguages.length > 0) {
+                        const existingLangNames = new Set(resume.languages?.map(l => l.language?.toLowerCase()) || []);
+                        const newLangs = suggestedLanguages.filter(l => !existingLangNames.has(l.language.toLowerCase()));
+                        if (newLangs.length > 0) {
+                          updatedResume.languages = [...(resume.languages || []), ...newLangs];
+                        }
+                      }
+                      onResumeChange(updatedResume);
+                    }}
+                  />
+                </div>
+                <Textarea
+                  value={edu.summary || ""}
+                  onChange={(e) => {
+                    const newEducation = [...(resume.education || [])];
+                    newEducation[index] = { ...newEducation[index], summary: e.target.value };
+                    onResumeChange({ ...resume, education: newEducation });
+                  }}
+                  placeholder="Describe relevant coursework, thesis, projects, or achievements..."
+                  rows={3}
+                />
+              </div>
             </div>
           ))}
           <Button
@@ -1644,14 +2026,44 @@ export default function ResumeEditor({
 
       {/* Skills */}
       <Card>
-        <button
-          type="button"
-          className="flex flex-row items-center justify-between w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors rounded-t-xl"
-          onClick={() => toggleCollapse("skills")}
-        >
-          <h3 className="text-lg font-semibold">Skills</h3>
-          <CollapseButton section="skills" />
-        </button>
+        <div className="flex flex-row items-center justify-between w-full px-6 py-4">
+          <button
+            type="button"
+            className="flex flex-row items-center gap-2 text-left hover:bg-gray-50 transition-colors rounded-lg px-2 py-1 -mx-2"
+            onClick={() => toggleCollapse("skills")}
+          >
+            <h3 className="text-lg font-semibold">Skills</h3>
+            <CollapseButton section="skills" />
+          </button>
+          <ATSOptimizeButtons
+            field="skillsSuggestion"
+            fieldLabel="Skills"
+            currentValue={resume.skills?.map(s => s.name).filter(Boolean).join(", ") || ""}
+            showOnlyTailored={true}
+            context={{
+              name: resume.basics?.name,
+              currentTitle: resume.basics?.label,
+              skills: resume.skills?.flatMap(s => s.keywords || []),
+              experience: resume.work?.map(w => ({
+                position: w.position || "",
+                company: w.name || "",
+                summary: w.summary || "",
+              })),
+            }}
+            onApply={(_, suggestedSkills) => {
+              if (suggestedSkills && suggestedSkills.length > 0) {
+                const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
+                const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                if (newSkills.length > 0) {
+                  onResumeChange({
+                    ...resume,
+                    skills: [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))],
+                  });
+                }
+              }
+            }}
+          />
+        </div>
         {!isCollapsed("skills") && <CardContent className="space-y-4">
           {resume.skills?.map((skill, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">
@@ -1678,7 +2090,23 @@ export default function ResumeEditor({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs">Skill</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Skill</Label>
+                    <ATSOptimizeButtons
+                      field="skill"
+                      fieldLabel={skill.name || "Skill"}
+                      currentValue={skill.name || ""}
+                      context={{
+                        name: resume.basics?.name,
+                        currentTitle: resume.basics?.label,
+                      }}
+                      onApply={(newValue) => {
+                        const newSkills = [...(resume.skills || [])];
+                        newSkills[index] = { ...newSkills[index], name: newValue };
+                        onResumeChange({ ...resume, skills: newSkills });
+                      }}
+                    />
+                  </div>
                   <Input
                     value={skill.name || ""}
                     onChange={(e) => {
