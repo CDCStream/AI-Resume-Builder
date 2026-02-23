@@ -10,7 +10,7 @@ interface TemplateProps {
 }
 
 export default function ModernGrid({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
   const theme: ThemeConfig = { headingClass: "text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3", textClass: "text-sm text-gray-600", subTextClass: "text-xs text-gray-500", accentColor: "#4F46E5", dotFilledClass: "bg-indigo-500", dotEmptyClass: "bg-indigo-200", tagClass: "text-sm text-indigo-600 bg-indigo-50 px-3 py-1 rounded" };
 const orderedSections = useOrderedSections(resume);

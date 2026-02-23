@@ -10,7 +10,7 @@ interface TemplateProps {
 }
 
 export default function MinimalistElegant({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
   const theme: ThemeConfig = { headingClass: "text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-3", textClass: "text-sm text-gray-600", subTextClass: "text-xs text-gray-400", accentColor: "#9CA3AF", dotFilledClass: "bg-gray-500", dotEmptyClass: "bg-gray-200", tagClass: "text-sm text-gray-500 border border-gray-300 px-3 py-1 rounded-full" };
 const orderedSections = useOrderedSections(resume);

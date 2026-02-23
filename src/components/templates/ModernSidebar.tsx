@@ -10,7 +10,7 @@ interface TemplateProps {
 }
 
 export default function ModernSidebar({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
   const theme: ThemeConfig = { headingClass: "text-sm font-semibold text-slate-700 uppercase tracking-wider mb-3", textClass: "text-sm text-gray-600", subTextClass: "text-xs text-gray-500", accentColor: "#475569", dotFilledClass: "bg-slate-600", dotEmptyClass: "bg-slate-200", tagClass: "text-sm text-slate-600 bg-slate-100 px-3 py-1 rounded" };
 const orderedSections = useOrderedSections(resume);

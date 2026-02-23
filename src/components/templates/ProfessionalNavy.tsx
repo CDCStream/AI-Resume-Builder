@@ -10,7 +10,7 @@ interface TemplateProps {
 }
 
 export default function ProfessionalNavy({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
   const theme: ThemeConfig = { headingClass: "text-sm font-semibold text-blue-900 uppercase tracking-wider mb-3", textClass: "text-sm text-gray-600", subTextClass: "text-xs text-gray-500", accentColor: "#1E3A5F", dotFilledClass: "bg-blue-900", dotEmptyClass: "bg-blue-200", tagClass: "text-sm text-blue-800 bg-blue-50 px-3 py-1 rounded" };
 const orderedSections = useOrderedSections(resume);

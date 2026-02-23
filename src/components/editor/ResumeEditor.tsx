@@ -114,6 +114,10 @@ export default function ResumeEditor({
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renameName, setRenameName] = useState(documentName || "");
 
+  // Drag state for main section cards
+  const [draggedSection, setDraggedSection] = useState<SectionType | null>(null);
+  const [dropTargetSection, setDropTargetSection] = useState<SectionType | null>(null);
+
   // Update saveName and renameName when documentName changes
   useEffect(() => {
     if (documentName) {
@@ -229,6 +233,7 @@ export default function ResumeEditor({
     if (resume.basics?.summary) sections.push("summary");
     if (resume.work && resume.work.length > 0) sections.push("experience");
     if (resume.internships && resume.internships.length > 0) sections.push("internships");
+    if (resume.activities && resume.activities.length > 0) sections.push("activities");
     if (resume.education && resume.education.length > 0) sections.push("education");
     if (resume.awards && resume.awards.length > 0) sections.push("awards");
     if (resume.skills && resume.skills.length > 0) sections.push("skills");
@@ -256,6 +261,54 @@ export default function ResumeEditor({
       sectionOrder: newOrder,
     });
   };
+
+  // Get current section order
+  const currentSectionOrder = resume.sectionOrder || defaultSectionOrder;
+
+  // Drag handlers for main section cards
+  const handleCardDragStart = (section: SectionType) => {
+    setDraggedSection(section);
+  };
+
+  const handleCardDragEnd = () => {
+    if (draggedSection && dropTargetSection && draggedSection !== dropTargetSection) {
+      const newOrder = [...currentSectionOrder];
+      const draggedIndex = newOrder.indexOf(draggedSection);
+      const targetIndex = newOrder.indexOf(dropTargetSection);
+      
+      if (draggedIndex !== -1 && targetIndex !== -1) {
+        newOrder.splice(draggedIndex, 1);
+        newOrder.splice(targetIndex, 0, draggedSection);
+        handleSectionOrderChange(newOrder);
+      }
+    }
+    setDraggedSection(null);
+    setDropTargetSection(null);
+  };
+
+  const handleCardDragOver = (e: React.DragEvent, section: SectionType) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedSection && draggedSection !== section) {
+      setDropTargetSection(section);
+    }
+  };
+
+  const handleCardDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  // Helper to create drag props for section cards
+  const getDragProps = (section: SectionType) => ({
+    draggable: true,
+    onDragStart: () => handleCardDragStart(section),
+    onDragEnd: handleCardDragEnd,
+    onDragOver: (e: React.DragEvent) => handleCardDragOver(e, section),
+    onDrop: handleCardDrop,
+    className: `transition-all duration-200 ${
+      draggedSection === section ? "opacity-50 scale-[0.98]" : ""
+    } ${dropTargetSection === section && draggedSection !== section ? "ring-2 ring-blue-500 ring-offset-2 rounded-xl" : ""}`,
+  });
 
   const sectionNames: Record<AdditionalSection, string> = {
     languages: "Languages",
@@ -1968,16 +2021,46 @@ export default function ResumeEditor({
         </CardContent>
       </Card>
 
+      {/* Section Order Manager - Drag to reorder sections */}
+      <SectionOrderManager
+        sectionOrder={resume.sectionOrder || defaultSectionOrder}
+        activeSections={getActiveSectionsForOrder()}
+        onOrderChange={handleSectionOrderChange}
+      />
+
       {/* Work Experience */}
-      <Card>
-        <button
-          type="button"
-          className="flex flex-row items-center justify-between w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors rounded-t-xl"
-          onClick={() => toggleCollapse("work")}
-        >
-          <h3 className="text-lg font-semibold">Work Experience</h3>
-          <CollapseButton section="work" />
-        </button>
+      <div {...getDragProps("experience")}>
+        <Card className="group">
+          <div className="flex items-stretch">
+            {/* Drag Handle */}
+            <div 
+              className="w-8 flex items-center justify-center bg-gray-50 border-r border-gray-100 cursor-grab active:cursor-grabbing hover:bg-blue-50 transition-colors rounded-l-xl"
+              title="Drag to reorder"
+            >
+              <div className="flex flex-col gap-0.5">
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="flex-1 flex flex-row items-center justify-between text-left px-6 py-4 hover:bg-gray-50 transition-colors"
+              onClick={() => toggleCollapse("work")}
+            >
+              <h3 className="text-lg font-semibold">Work Experience</h3>
+              <CollapseButton section="work" />
+            </button>
+          </div>
         {!isCollapsed("work") && <CardContent className="space-y-4">
           {resume.work?.map((job, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">
@@ -2129,18 +2212,42 @@ export default function ResumeEditor({
             + Add Experience
           </Button>
         </CardContent>}
-      </Card>
+        </Card>
+      </div>
 
       {/* Education */}
-      <Card>
-        <button
-          type="button"
-          className="flex flex-row items-center justify-between w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors rounded-t-xl"
-          onClick={() => toggleCollapse("education")}
-        >
-          <h3 className="text-lg font-semibold">Education</h3>
-          <CollapseButton section="education" />
-        </button>
+      <div {...getDragProps("education")}>
+        <Card className="group">
+          <div className="flex items-stretch">
+            {/* Drag Handle */}
+            <div 
+              className="w-8 flex items-center justify-center bg-gray-50 border-r border-gray-100 cursor-grab active:cursor-grabbing hover:bg-blue-50 transition-colors rounded-l-xl"
+              title="Drag to reorder"
+            >
+              <div className="flex flex-col gap-0.5">
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="flex-1 flex flex-row items-center justify-between text-left px-6 py-4 hover:bg-gray-50 transition-colors"
+              onClick={() => toggleCollapse("education")}
+            >
+              <h3 className="text-lg font-semibold">Education</h3>
+              <CollapseButton section="education" />
+            </button>
+          </div>
         {!isCollapsed("education") && <CardContent className="space-y-4">
           {resume.education?.map((edu, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-3">
@@ -2283,49 +2390,73 @@ export default function ResumeEditor({
             + Add Education
           </Button>
         </CardContent>}
-      </Card>
+        </Card>
+      </div>
 
       {/* Skills */}
-      <Card>
-        <div className="flex flex-row items-center justify-between w-full px-6 py-4">
-          <button
-            type="button"
-            className="flex flex-row items-center gap-2 text-left hover:bg-gray-50 transition-colors rounded-lg px-2 py-1 -mx-2"
-            onClick={() => toggleCollapse("skills")}
-          >
-            <h3 className="text-lg font-semibold">Skills</h3>
-            <CollapseButton section="skills" />
-          </button>
-          <ATSOptimizeButtons
-            field="skillsSuggestion"
-            fieldLabel="Skills"
-            currentValue={resume.skills?.map(s => s.name).filter(Boolean).join(", ") || ""}
-            showOnlyTailored={true}
-            context={{
-              name: resume.basics?.name,
-              currentTitle: resume.basics?.label,
-              skills: resume.skills?.flatMap(s => s.keywords || []),
-              experience: resume.work?.map(w => ({
-                position: w.position || "",
-                company: w.name || "",
-                summary: w.summary || "",
-              })),
-            }}
-            onApply={(_, suggestedSkills) => {
-              if (suggestedSkills && suggestedSkills.length > 0) {
-                const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
-                const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
-                if (newSkills.length > 0) {
-                  onResumeChange({
-                    ...resume,
-                    skills: [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))],
-                  });
-                }
-              }
-            }}
-          />
-        </div>
-        {!isCollapsed("skills") && <CardContent className="space-y-4">
+      <div {...getDragProps("skills")}>
+        <Card className="group">
+          <div className="flex items-stretch">
+            {/* Drag Handle */}
+            <div 
+              className="w-8 flex items-center justify-center bg-gray-50 border-r border-gray-100 cursor-grab active:cursor-grabbing hover:bg-blue-50 transition-colors rounded-l-xl"
+              title="Drag to reorder"
+            >
+              <div className="flex flex-col gap-0.5">
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-400"></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-row items-center justify-between px-6 py-4">
+              <button
+                type="button"
+                className="flex flex-row items-center gap-2 text-left hover:bg-gray-50 transition-colors rounded-lg px-2 py-1 -mx-2"
+                onClick={() => toggleCollapse("skills")}
+              >
+                <h3 className="text-lg font-semibold">Skills</h3>
+                <CollapseButton section="skills" />
+              </button>
+              <ATSOptimizeButtons
+                field="skillsSuggestion"
+                fieldLabel="Skills"
+                currentValue={resume.skills?.map(s => s.name).filter(Boolean).join(", ") || ""}
+                showOnlyTailored={true}
+                context={{
+                  name: resume.basics?.name,
+                  currentTitle: resume.basics?.label,
+                  skills: resume.skills?.flatMap(s => s.keywords || []),
+                  experience: resume.work?.map(w => ({
+                    position: w.position || "",
+                    company: w.name || "",
+                    summary: w.summary || "",
+                  })),
+                }}
+                onApply={(_, suggestedSkills) => {
+                  if (suggestedSkills && suggestedSkills.length > 0) {
+                    const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
+                    const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                    if (newSkills.length > 0) {
+                      onResumeChange({
+                        ...resume,
+                        skills: [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))],
+                      });
+                    }
+                  }
+                }}
+              />
+            </div>
+          </div>
+          {!isCollapsed("skills") && <CardContent className="space-y-4">
           {resume.skills?.map((skill, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">
               <div className="flex items-center justify-between">
@@ -2416,14 +2547,8 @@ export default function ResumeEditor({
             + Add one more skill
           </Button>
         </CardContent>}
-      </Card>
-
-      {/* Section Order Manager */}
-      <SectionOrderManager
-        sectionOrder={resume.sectionOrder || defaultSectionOrder}
-        activeSections={getActiveSectionsForOrder()}
-        onOrderChange={handleSectionOrderChange}
-      />
+        </Card>
+      </div>
 
       {/* Render Additional Sections in Order */}
       {activeSections.map((section) => renderSection(section))}

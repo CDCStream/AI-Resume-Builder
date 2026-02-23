@@ -10,9 +10,9 @@ interface TemplateProps {
 }
 
 export default function CreativeGradient({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
-  const theme: ThemeConfig = { headingClass: "text-lg font-bold text-cyan-400 mb-3", textClass: "text-sm text-slate-200 font-medium", subTextClass: "text-xs text-slate-400", accentColor: "#22D3EE", dotFilledClass: "bg-cyan-400", dotEmptyClass: "bg-slate-600", tagClass: "text-sm bg-slate-700 text-cyan-300 px-3 py-1 rounded-full font-medium" };
+  const theme: ThemeConfig = { headingClass: "text-lg font-bold text-cyan-400 mb-3", textClass: "text-sm text-slate-200 font-medium", subTextClass: "text-xs text-slate-400", accentColor: "#22D3EE", dotFilledClass: "bg-cyan-400", dotEmptyClass: "bg-slate-600", tagClass: "text-sm bg-slate-700 text-cyan-300 px-3 py-1 rounded-full font-medium", titleClass: "font-semibold text-cyan-300" };
 const orderedSections = useOrderedSections(resume);
 
 

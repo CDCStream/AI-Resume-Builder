@@ -10,7 +10,7 @@ interface TemplateProps {
 }
 
 export default function CreativeBold({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
   const theme: ThemeConfig = { headingClass: "text-2xl font-black text-orange-600 mb-4", textClass: "text-sm text-gray-600", subTextClass: "text-xs text-gray-500", accentColor: "#F97316", dotFilledClass: "bg-orange-500", dotEmptyClass: "bg-orange-200", tagClass: "text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium", cardClass: "bg-white p-4 rounded-lg shadow-sm", allowExperienceSplit: true };
 const orderedSections = useOrderedSections(resume);

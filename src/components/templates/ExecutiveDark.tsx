@@ -10,9 +10,9 @@ interface TemplateProps {
 }
 
 export default function ExecutiveDark({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
-  const theme: ThemeConfig = { headingClass: "text-sm font-semibold text-amber-400 uppercase tracking-wider mb-3", textClass: "text-sm text-gray-300", subTextClass: "text-xs text-gray-400", accentColor: "#F59E0B", dotFilledClass: "bg-amber-400", dotEmptyClass: "bg-gray-600", tagClass: "text-sm text-amber-300 bg-gray-700 px-3 py-1 rounded" };
+  const theme: ThemeConfig = { headingClass: "text-sm font-semibold text-amber-400 uppercase tracking-wider mb-3", textClass: "text-sm text-gray-300", subTextClass: "text-xs text-gray-400", accentColor: "#F59E0B", dotFilledClass: "bg-amber-400", dotEmptyClass: "bg-gray-600", tagClass: "text-sm text-amber-300 bg-gray-700 px-3 py-1 rounded", titleClass: "font-semibold text-amber-200", cardClass: "bg-zinc-800/50 p-3 rounded-lg" };
 const orderedSections = useOrderedSections(resume);
 
 

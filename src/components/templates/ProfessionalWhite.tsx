@@ -10,7 +10,7 @@ interface TemplateProps {
 }
 
 export default function ProfessionalWhite({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
   // Get section order (use default if not set)
   const orderedSections = useMemo(() => {
@@ -99,6 +99,34 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
                   {intern.summary && (
                     <p className="text-sm text-gray-600 mt-1">{intern.summary}</p>
                   )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "activities":
+        if (!activities || activities.length === 0) return null;
+        return (
+          <section key="activities" className="mb-6" data-section="activities" data-splittable="true">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">
+              Extra-curricular Activities
+            </h2>
+            <div className="space-y-3">
+              {activities.map((activity, index) => (
+                <div key={index} className="resume-item">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{activity.name}</h3>
+                      {activity.role && <p className="text-sm text-gray-600">{activity.role}</p>}
+                      {activity.description && <p className="text-sm text-gray-600 mt-1">{activity.description}</p>}
+                    </div>
+                    {(activity.startDate || activity.endDate) && (
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {formatDate(activity.startDate)} — {formatDate(activity.endDate) || "Present"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

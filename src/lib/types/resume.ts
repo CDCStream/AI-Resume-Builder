@@ -197,13 +197,13 @@ export interface IndustryExpertise {
 
 export type SectionType =
   | "summary" | "experience" | "education" | "skills" | "languages"
-  | "courses" | "internships" | "hobbies" | "references" | "awards"
+  | "courses" | "internships" | "activities" | "hobbies" | "references" | "awards"
   | "volunteering" | "certifications" | "projects" | "publications"
   | "strengths" | "industryExpertise" | "philosophy" | "books"
   | "socialLinks" | "custom";
 
 export const defaultSectionOrder: SectionType[] = [
-  "summary", "experience", "internships", "education", "awards",
+  "summary", "experience", "internships", "education", "activities", "awards",
   "skills", "languages", "courses", "hobbies", "references",
   "publications", "projects", "certifications", "volunteering",
   "strengths", "industryExpertise", "philosophy", "books",

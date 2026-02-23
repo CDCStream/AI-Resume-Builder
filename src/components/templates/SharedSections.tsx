@@ -14,6 +14,7 @@ export interface ThemeConfig {
   dotEmptyClass: string;
   tagClass: string;
   cardClass?: string;
+  titleClass?: string;    // for item titles (job position, school name, etc.)
   /** If true, experience items won't have break-inside:avoid, allowing page splits within experience */
   allowExperienceSplit?: boolean;
 }
@@ -22,6 +23,7 @@ export const defaultTheme: ThemeConfig = {
   headingClass: "text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3",
   textClass: "text-sm text-gray-600",
   subTextClass: "text-xs text-gray-500",
+  titleClass: "font-semibold text-gray-900",
   accentColor: "#3B82F6",
   dotFilledClass: "bg-blue-500",
   dotEmptyClass: "bg-gray-300",
@@ -45,7 +47,9 @@ export function renderSections(
 }
 
 function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig): ReactNode {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
+
+  const tc = t.titleClass || "font-semibold text-gray-900";
 
   switch (sectionType) {
     case "summary":
@@ -67,7 +71,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start mb-1">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{job.position}</h3>
+                    <h3 className={tc}>{job.position}</h3>
                     <p className={t.textClass}>
                       {job.name}
                       {(job.city || job.country) && <span className={t.subTextClass}> · {[job.city, job.country].filter(Boolean).join(", ")}</span>}
@@ -82,7 +86,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
                   <ul className="mt-2 space-y-1">
                     {job.highlights.map((h, idx) => (
                       <li key={idx} className={`${t.textClass} flex items-start`}>
-                        <span className="mr-2 text-gray-400">•</span>{h}
+                        <span className="mr-2" style={{ color: t.accentColor }}>•</span>{h}
                       </li>
                     ))}
                   </ul>
@@ -103,7 +107,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start mb-1">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{intern.position}</h3>
+                    <h3 className={tc}>{intern.position}</h3>
                     <p className={t.textClass}>
                       {intern.company}
                       {(intern.city || intern.country) && <span className={t.subTextClass}> · {[intern.city, intern.country].filter(Boolean).join(", ")}</span>}
@@ -120,6 +124,32 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
         </section>
       );
 
+    case "activities":
+      if (!activities || activities.length === 0) return null;
+      return (
+        <section key="activities" className="mb-6" data-section="activities" data-splittable="true">
+          <h2 className={t.headingClass}>Extra-curricular Activities</h2>
+          <div className="space-y-3">
+            {activities.map((activity, index) => (
+              <div key={index} className={`resume-item ${t.cardClass || ""}`}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className={tc}>{activity.name}</h3>
+                    {activity.role && <p className={t.textClass}>{activity.role}</p>}
+                    {activity.description && <p className={`${t.textClass} mt-1`}>{activity.description}</p>}
+                  </div>
+                  {(activity.startDate || activity.endDate) && (
+                    <span className={`${t.subTextClass} whitespace-nowrap`}>
+                      {formatDate(activity.startDate)} — {formatDate(activity.endDate) || "Present"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+
     case "education":
       if (!education || education.length === 0) return null;
       return (
@@ -130,7 +160,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
+                    <h3 className={tc}>{edu.institution}</h3>
                     <p className={t.textClass}>
                       {edu.studyType && <span className="font-medium">{edu.studyType}</span>}
                       {edu.studyType && edu.area && " • "}
@@ -157,7 +187,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{award.title}</h3>
+                    <h3 className={tc}>{award.title}</h3>
                     {award.awarder && <p className={t.textClass}>{award.awarder}</p>}
                     {award.summary && <p className={`${t.textClass} mt-1`}>{award.summary}</p>}
                   </div>
@@ -188,7 +218,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
                   return (
                     <div key={colIndex} className="pb-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">{skill.name}</span>
+                        <span className={`text-sm ${tc}`}>{skill.name}</span>
                         <span className={t.subTextClass}>{skill.level || "Intermediate"}</span>
                       </div>
                       <div className="flex gap-1 mt-1">
@@ -224,7 +254,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{course.name}</h3>
+                    <h3 className={tc}>{course.name}</h3>
                     {course.institution && <p className={t.textClass}>{course.institution}</p>}
                   </div>
                   {(course.startDate || course.endDate) && (
@@ -259,11 +289,11 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>References</h2>
           <div className="grid grid-cols-2 gap-4">
             {references.map((ref, index) => (
-              <div key={index} className="resume-item p-3 border border-gray-200 rounded-lg" >
-                <h3 className="font-semibold text-gray-900">{ref.name}</h3>
+              <div key={index} className={`resume-item p-3 rounded-lg ${t.cardClass || "border border-gray-200"}`} >
+                <h3 className={tc}>{ref.name}</h3>
                 {ref.role && <p className={t.textClass}>{ref.role}</p>}
                 {ref.company && <p className={t.subTextClass}>{ref.company}</p>}
-                {ref.email && <p className="text-xs text-blue-500">{ref.email}</p>}
+                {ref.email && <p className="text-xs" style={{ color: t.accentColor }}>{ref.email}</p>}
                 {ref.phone && <p className={t.subTextClass}>{ref.phone}</p>}
               </div>
             ))}
@@ -279,7 +309,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <div className="space-y-3">
             {publications.map((pub, index) => (
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
-                <h3 className="font-semibold text-gray-900 text-sm">{pub.name}</h3>
+                <h3 className={`${tc} text-sm`}>{pub.name}</h3>
                 {pub.publisher && <p className={t.textClass}>{pub.publisher}</p>}
                 {pub.releaseDate && <p className={t.subTextClass}>{formatDate(pub.releaseDate)}</p>}
                 {pub.summary && <p className={`${t.textClass} mt-1`}>{pub.summary}</p>}
@@ -297,14 +327,14 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <div className="space-y-3">
             {projects.filter(p => p.name).map((project, index) => (
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
-                <h3 className="font-semibold text-gray-900 text-sm">{project.name}</h3>
+                <h3 className={`${tc} text-sm`}>{project.name}</h3>
                 {(project.startDate || project.endDate) && (
                   <p className={`${t.subTextClass} mt-1`}>
                     {formatDate(project.startDate)} {project.endDate ? `— ${formatDate(project.endDate)}` : ""}
                   </p>
                 )}
                 {project.description && <p className={`${t.textClass} mt-1`}>{project.description}</p>}
-                {project.url && <a href={project.url} className="text-xs text-blue-500 mt-1 block">{project.url}</a>}
+                {project.url && <a href={project.url} className="text-xs mt-1 block" style={{ color: t.accentColor }}>{project.url}</a>}
               </div>
             ))}
           </div>
@@ -319,7 +349,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <div className="space-y-3">
             {certificates.filter(c => c.name).map((cert, index) => (
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
-                <h3 className="font-semibold text-gray-900 text-sm">{cert.name}</h3>
+                <h3 className={`${tc} text-sm`}>{cert.name}</h3>
                 {cert.issuer && <p className={t.textClass}>{cert.issuer}</p>}
                 {(cert.date || cert.endDate) && (
                   <p className={`${t.subTextClass} mt-1`}>
@@ -342,7 +372,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
               <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{vol.organization}</h3>
+                    <h3 className={tc}>{vol.organization}</h3>
                     {vol.position && <p className={t.textClass}>{vol.position}</p>}
                     {vol.summary && <p className={`${t.textClass} mt-1`}>{vol.summary}</p>}
                   </div>
@@ -365,9 +395,9 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Strengths</h2>
           <div className="grid grid-cols-2 gap-3">
             {strengths.filter(s => s.name).map((strength, index) => (
-              <div key={index} className="resume-item p-3 bg-gray-50 rounded-lg" >
-                <h3 className="font-semibold text-gray-900 text-sm">{strength.name}</h3>
-                {strength.description && <p className="text-xs text-gray-600 mt-1">{strength.description}</p>}
+              <div key={index} className={`resume-item p-3 rounded-lg ${t.cardClass || "bg-gray-50"}`} >
+                <h3 className={`${tc} text-sm`}>{strength.name}</h3>
+                {strength.description && <p className={`${t.subTextClass} mt-1`}>{strength.description}</p>}
               </div>
             ))}
           </div>
@@ -394,9 +424,9 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
       return (
         <section key="philosophy" className="mb-6" data-section="philosophy">
           <h2 className={t.headingClass}>Life Philosophy</h2>
-          <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600">
-            &ldquo;{philosophy.quote}&rdquo;
-            {philosophy.author && <cite className="block text-sm text-gray-500 mt-1 not-italic">— {philosophy.author}</cite>}
+          <blockquote className="border-l-4 pl-4 italic" style={{ borderColor: t.accentColor }}>
+            <span className={t.textClass}>&ldquo;{philosophy.quote}&rdquo;</span>
+            {philosophy.author && <cite className={`block text-sm mt-1 not-italic ${t.subTextClass}`}>— {philosophy.author}</cite>}
           </blockquote>
         </section>
       );
@@ -409,9 +439,9 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <div className="grid grid-cols-2 gap-3">
             {books.filter(b => b.title).map((book, index) => (
               <div key={index} className="resume-item flex gap-2" >
-                <span className="text-gray-400">📚</span>
+                <span>📚</span>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{book.title}</p>
+                  <p className={`text-sm font-medium ${tc}`}>{book.title}</p>
                   {book.author && <p className={t.subTextClass}>{book.author}</p>}
                 </div>
               </div>

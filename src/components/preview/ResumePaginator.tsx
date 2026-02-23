@@ -19,44 +19,8 @@ const A4_WIDTH_PX = 794;
 const BUFFER = 48;
 const PAGE_PADDING = 40; // Padding at top/bottom of each page
 
-// Find the best break point before a given Y position
-// Returns the Y position where we should break (at a line boundary)
-function findBestBreakPoint(content: HTMLElement, maxY: number): number {
-  // Get all text-containing elements
-  const textElements = content.querySelectorAll('p, li, span, div');
-  let bestBreakY = maxY;
-  
-  // Find the last element that ends before maxY
-  for (const el of Array.from(textElements)) {
-    const rect = el.getBoundingClientRect();
-    const contentRect = content.getBoundingClientRect();
-    const elementTop = rect.top - contentRect.top;
-    const elementBottom = rect.bottom - contentRect.top;
-    
-    // If this element crosses the page boundary
-    if (elementTop < maxY && elementBottom > maxY) {
-      // Try to find line breaks within this element
-      const computedStyle = window.getComputedStyle(el);
-      const lineHeight = parseFloat(computedStyle.lineHeight) || parseFloat(computedStyle.fontSize) * 1.5;
-      
-      if (lineHeight > 0) {
-        // Calculate which line the break falls on
-        const linesBeforeBreak = Math.floor((maxY - elementTop) / lineHeight);
-        const breakAtLine = elementTop + (linesBeforeBreak * lineHeight);
-        
-        // Only use this if it gives us at least one line on this page
-        if (linesBeforeBreak >= 1) {
-          bestBreakY = Math.min(bestBreakY, breakAtLine);
-        } else {
-          // Push entire element to next page
-          bestBreakY = Math.min(bestBreakY, elementTop - 10);
-        }
-      }
-    }
-  }
-  
-  return Math.max(0, bestBreakY);
-}
+// Safety margin to fully include the last visible line (prevents sub-pixel clipping)
+const LINE_SAFETY_PX = 3;
 
 // Component to render page content with smart clipping
 interface PageContentProps {
@@ -85,7 +49,8 @@ function PageContent({ children, pageIndex, totalPages, pageBreaks, calculatedMa
   // Calculate the Y range for this page
   const startY = pageIndex === 0 ? 0 : pageBreaks[pageIndex - 1];
   const endY = pageIndex < pageBreaks.length ? pageBreaks[pageIndex] : totalContentHeight;
-  const clipHeight = Math.min(endY - startY, A4_HEIGHT_PX);
+  // Clip to actual content range but never exceed A4 page height
+  const clipHeight = Math.min(Math.ceil(endY - startY), A4_HEIGHT_PX);
 
   useLayoutEffect(() => {
     if (!contentRef.current) return;
@@ -395,8 +360,9 @@ function getPrevElement(element: HTMLElement, content: HTMLElement): HTMLElement
   return null;
 }
 
-// Get actual line positions within a text element using Range API
-function getLinePositions(element: HTMLElement, contentEl: HTMLElement): number[] {
+// Collect all rendered line boundaries inside an element using Range API.
+// Returns array of { top, bottom } relative to contentEl.
+function getRenderedLines(element: HTMLElement, contentEl: HTMLElement): { top: number; bottom: number }[] {
   const textNodes: Text[] = [];
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   let node: Node | null;
@@ -405,118 +371,133 @@ function getLinePositions(element: HTMLElement, contentEl: HTMLElement): number[
       textNodes.push(node as Text);
     }
   }
-  
   if (textNodes.length === 0) return [];
-  
+
   const contentRect = contentEl.getBoundingClientRect();
-  const range = document.createRange();
-  range.setStart(textNodes[0], 0);
-  range.setEnd(textNodes[textNodes.length - 1], textNodes[textNodes.length - 1].length!);
-  
-  const rects = range.getClientRects();
-  const lineBottoms: number[] = [];
-  let lastTop = -999;
-  
-  for (let i = 0; i < rects.length; i++) {
-    const rect = rects[i];
-    if (rect.width < 1 || rect.height < 1) continue;
-    const relTop = rect.top - contentRect.top;
-    const relBottom = rect.bottom - contentRect.top;
-    
-    // New line if top position changed significantly
-    if (Math.abs(relTop - lastTop) > 3) {
-      lineBottoms.push(Math.floor(relBottom));
-      lastTop = relTop;
+  const lines: { top: number; bottom: number }[] = [];
+  let prevTop = -Infinity;
+
+  for (const tn of textNodes) {
+    const range = document.createRange();
+    for (let i = 0; i < tn.length; i++) {
+      range.setStart(tn, i);
+      range.setEnd(tn, Math.min(i + 1, tn.length));
+      const rects = range.getClientRects();
+      for (let r = 0; r < rects.length; r++) {
+        const rect = rects[r];
+        if (rect.width < 1 || rect.height < 1) continue;
+        const relTop = rect.top - contentRect.top;
+        const relBottom = rect.bottom - contentRect.top;
+        if (relTop - prevTop > 2) {
+          lines.push({ top: relTop, bottom: relBottom });
+          prevTop = relTop;
+        } else if (lines.length > 0) {
+          lines[lines.length - 1].bottom = Math.max(lines[lines.length - 1].bottom, relBottom);
+        }
+      }
     }
   }
-  
-  return lineBottoms;
+  return lines;
 }
 
-// Calculate smart page breaks that don't cut through text lines
+// Calculate smart page breaks that never cut through text lines.
+// Uses getBoundingClientRect exclusively for consistent measurements.
 function calculateSmartPageBreaks(content: HTMLElement, totalHeight: number): number[] {
   const breaks: number[] = [];
   let currentPageStart = 0;
-  
+  const contentRect = content.getBoundingClientRect();
+
+  // Pre-collect all leaf text elements and their positions via getBoundingClientRect
+  const leafElements: { el: HTMLElement; top: number; bottom: number }[] = [];
+  const allEls = content.querySelectorAll('p, li, span, h1, h2, h3, h4, h5, h6');
+  for (const el of Array.from(allEls)) {
+    const htmlEl = el as HTMLElement;
+    const hasDirectText = Array.from(htmlEl.childNodes).some(
+      n => n.nodeType === Node.TEXT_NODE && n.textContent?.trim()
+    );
+    if (!hasDirectText && htmlEl.children.length > 0) continue;
+    const rect = htmlEl.getBoundingClientRect();
+    if (rect.height < 5) continue;
+    leafElements.push({
+      el: htmlEl,
+      top: rect.top - contentRect.top,
+      bottom: rect.bottom - contentRect.top,
+    });
+  }
+
   while (currentPageStart + A4_HEIGHT_PX < totalHeight) {
     const idealBreak = currentPageStart + A4_HEIGHT_PX;
     let bestBreak = idealBreak;
-    
-    // Find ALL text elements and check if any cross the break point
-    const textElements = content.querySelectorAll('p, li, div, span, h1, h2, h3, h4, h5, h6');
-    
-    // Collect all elements that cross the break point
-    const crossingElements: HTMLElement[] = [];
-    
-    for (const el of Array.from(textElements)) {
-      const htmlEl = el as HTMLElement;
-      
-      // Skip containers without direct text
-      const hasDirectText = Array.from(htmlEl.childNodes).some(
-        node => node.nodeType === Node.TEXT_NODE && node.textContent?.trim()
-      );
-      if (!hasDirectText && htmlEl.children.length > 0) continue;
-      if (htmlEl.offsetHeight < 10) continue;
-      
-      const top = getOffsetRelativeTo(htmlEl, content);
-      const bottom = top + htmlEl.offsetHeight;
-      
-      // Check if this element crosses the break point
-      if (top < idealBreak && bottom > idealBreak) {
-        crossingElements.push(htmlEl);
-      }
-    }
-    
-    if (crossingElements.length > 0) {
-      // Try to find exact line boundaries using Range API
-      let foundExactBreak = false;
-      
-      for (const el of crossingElements) {
-        const lineBottoms = getLinePositions(el, content);
-        
-        if (lineBottoms.length > 0) {
-          // Find the last line bottom that's before the ideal break
-          let bestLineBottom = -1;
-          for (const lb of lineBottoms) {
-            if (lb <= idealBreak && lb > bestLineBottom) {
-              bestLineBottom = lb;
-            }
+
+    // Find elements that cross the ideal break point
+    const crossing = leafElements.filter(
+      e => e.top < idealBreak - LINE_SAFETY_PX && e.bottom > idealBreak
+    );
+
+    if (crossing.length > 0) {
+      let resolved = false;
+
+      for (const ce of crossing) {
+        const lines = getRenderedLines(ce.el, content);
+        if (lines.length === 0) continue;
+
+        // Find the last line whose bottom fits entirely before the ideal break
+        let lastFittingBottom = -1;
+        for (const line of lines) {
+          if (line.bottom + LINE_SAFETY_PX <= idealBreak) {
+            lastFittingBottom = line.bottom;
           }
-          
-          if (bestLineBottom > currentPageStart + 100 && bestLineBottom <= idealBreak) {
-            bestBreak = bestLineBottom;
-            foundExactBreak = true;
+        }
+
+        if (lastFittingBottom > currentPageStart + 50) {
+          // Break right after the last fully-visible line (with safety buffer)
+          bestBreak = Math.ceil(lastFittingBottom) + LINE_SAFETY_PX;
+          resolved = true;
+          break;
+        }
+
+        // If no line fits, push to the top of this element
+        if (ce.top > currentPageStart + 50) {
+          bestBreak = Math.floor(ce.top) - LINE_SAFETY_PX;
+          resolved = true;
+          break;
+        }
+      }
+
+      // Fallback: use line-height estimation
+      if (!resolved) {
+        const ce = crossing[0];
+        const style = window.getComputedStyle(ce.el);
+        let lh = parseFloat(style.lineHeight);
+        if (isNaN(lh) || lh === 0) lh = (parseFloat(style.fontSize) || 14) * 1.5;
+        const padding = parseFloat(style.paddingTop) || 0;
+        const textStart = ce.top + padding;
+        const fullLines = Math.floor((idealBreak - textStart) / lh);
+        if (fullLines >= 1) {
+          bestBreak = Math.floor(textStart + fullLines * lh) + LINE_SAFETY_PX;
+        }
+        if (bestBreak <= currentPageStart + 50) bestBreak = idealBreak;
+      }
+    } else {
+      // No element crosses the break - check for non-text block elements (images, etc.)
+      const blockEls = content.querySelectorAll('.resume-item, section, header, div');
+      for (const el of Array.from(blockEls)) {
+        const rect = (el as HTMLElement).getBoundingClientRect();
+        const top = rect.top - contentRect.top;
+        const bottom = rect.bottom - contentRect.top;
+        if (top < idealBreak && bottom > idealBreak && bottom - top < A4_HEIGHT_PX * 0.5) {
+          if (top > currentPageStart + 50) {
+            bestBreak = Math.floor(top) - LINE_SAFETY_PX;
             break;
           }
         }
       }
-      
-      // Fallback: use computed line height
-      if (!foundExactBreak) {
-        const el = crossingElements[0];
-        const top = getOffsetRelativeTo(el, content);
-        const computedStyle = window.getComputedStyle(el);
-        let lineHeight = parseFloat(computedStyle.lineHeight);
-        if (isNaN(lineHeight) || lineHeight === 0) {
-          lineHeight = (parseFloat(computedStyle.fontSize) || 14) * 1.5;
-        }
-        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-        const textStart = top + paddingTop;
-        const linesBeforeBreak = Math.floor((idealBreak - textStart) / lineHeight);
-        
-        if (linesBeforeBreak >= 1) {
-          bestBreak = Math.floor(textStart + linesBeforeBreak * lineHeight);
-          if (bestBreak <= currentPageStart + 100) {
-            bestBreak = idealBreak;
-          }
-        }
-      }
     }
-    
+
     breaks.push(bestBreak);
     currentPageStart = bestBreak;
   }
-  
+
   return breaks;
 }
 

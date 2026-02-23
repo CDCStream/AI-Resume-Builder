@@ -10,7 +10,7 @@ interface TemplateProps {
 }
 
 export default function ProfessionalTeal({ resume }: TemplateProps) {
-  const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
   const theme: ThemeConfig = { 
     headingClass: "text-sm font-semibold text-teal-700 uppercase tracking-wider mb-3 pb-1 border-b border-teal-200", 

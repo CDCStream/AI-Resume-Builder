@@ -73,8 +73,8 @@ export const templates: Template[] = [
     name: "Modern Accent",
     category: "Modern",
     component: ModernAccent,
-    description: "Rose gradient accent",
-    color: "#f43f5e",
+    description: "Emerald accent design",
+    color: "#059669",
   },
 
   // Creative Templates
