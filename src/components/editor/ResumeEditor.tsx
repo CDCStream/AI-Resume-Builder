@@ -1765,6 +1765,85 @@ export default function ResumeEditor({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="medium" className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42c1.87 0 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/>
+                </svg>
+                Medium <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+              </Label>
+              <Input
+                id="medium"
+                value={resume.basics?.profiles?.find(p => p.network === "Medium")?.url || ""}
+                onChange={(e) => {
+                  const profiles = [...(resume.basics?.profiles || [])];
+                  const mediumIndex = profiles.findIndex(p => p.network === "Medium");
+                  if (mediumIndex >= 0) {
+                    if (e.target.value) {
+                      profiles[mediumIndex] = { ...profiles[mediumIndex], url: e.target.value };
+                    } else {
+                      profiles.splice(mediumIndex, 1);
+                    }
+                  } else if (e.target.value) {
+                    profiles.push({ network: "Medium", url: e.target.value });
+                  }
+                  onResumeChange({
+                    ...resume,
+                    basics: { ...resume.basics, profiles }
+                  });
+                }}
+                placeholder="https://medium.com/@username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="website" className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                Website <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+              </Label>
+              <Input
+                id="website"
+                value={resume.basics?.url || ""}
+                onChange={(e) => {
+                  onResumeChange({
+                    ...resume,
+                    basics: { ...resume.basics, url: e.target.value }
+                  });
+                }}
+                placeholder="https://yourwebsite.com"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label htmlFor="birthDate" className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2"/>
+                <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2"/>
+                <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2"/>
+                <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2"/>
+              </svg>
+              Birth Date <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+            </Label>
+            <Input
+              id="birthDate"
+              type="date"
+              value={resume.basics?.birthDate || ""}
+              onChange={(e) => {
+                onResumeChange({
+                  ...resume,
+                  basics: { ...resume.basics, birthDate: e.target.value }
+                });
+              }}
+            />
+          </div>
+
         </CardContent>}
       </Card>
 

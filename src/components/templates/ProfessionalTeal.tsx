@@ -12,9 +12,32 @@ interface TemplateProps {
 export default function ProfessionalTeal({ resume }: TemplateProps) {
   const { basics, work, education, skills, languages, courses, customSections, internships, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
-  const theme: ThemeConfig = { headingClass: "text-sm font-semibold text-teal-700 uppercase tracking-wider mb-3 pb-1 border-b border-teal-200", textClass: "text-sm text-gray-600", subTextClass: "text-xs text-gray-500", accentColor: "#0D9488", dotFilledClass: "bg-teal-500", dotEmptyClass: "bg-teal-200", tagClass: "text-sm text-teal-700 bg-teal-50 px-3 py-1 rounded-full" };
-const orderedSections = useOrderedSections(resume);
+  const theme: ThemeConfig = { 
+    headingClass: "text-sm font-semibold text-teal-700 uppercase tracking-wider mb-3 pb-1 border-b border-teal-200", 
+    textClass: "text-sm text-gray-600 leading-[1.6]", 
+    subTextClass: "text-xs text-gray-500", 
+    accentColor: "#0D9488", 
+    dotFilledClass: "bg-teal-500", 
+    dotEmptyClass: "bg-teal-200", 
+    tagClass: "text-sm text-teal-700 bg-teal-50 px-3 py-1 rounded-full" 
+  };
+  const orderedSections = useOrderedSections(resume);
 
+  // Custom Summary render for this template with explicit line-height
+  const renderSummary = () => {
+    if (!basics?.summary) return null;
+    return (
+      <section key="summary" className="mb-6" data-section="summary" data-splittable="true">
+        <h2 className={theme.headingClass}>Summary</h2>
+        <p className="text-sm text-gray-600 leading-[22px]" style={{ lineHeight: '22px' }}>
+          {basics.summary}
+        </p>
+      </section>
+    );
+  };
+
+  // Filter out summary from orderedSections since we render it separately
+  const sectionsWithoutSummary = orderedSections.filter(s => s !== 'summary');
 
   return (
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none">
@@ -37,10 +60,41 @@ const orderedSections = useOrderedSections(resume);
             <h1 className="text-3xl font-bold mb-1">{basics?.name || "Your Name"}</h1>
             <p className="text-teal-100 text-lg mb-4">{basics?.label || "Professional Title"}</p>
             <div className="flex flex-wrap gap-4 text-sm text-teal-50">
-              {basics?.email && <span>✉ {basics.email}</span>}
-              {basics?.phone && <span>☎ {basics.phone}</span>}
+              {basics?.email && (
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  {basics.email}
+                </span>
+              )}
+              {basics?.phone && (
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  </svg>
+                  {basics.phone}
+                </span>
+              )}
               {basics?.location?.city && (
-                <span>📍 {basics.location.city}{basics.location.region && `, ${basics.location.region}`}</span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                  </svg>
+                  {basics.location.address && `${basics.location.address}, `}
+                  {basics.location.city}{basics.location.region && `, ${basics.location.region}`}
+                </span>
+              )}
+              {basics?.birthDate && (
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  {formatDate(basics.birthDate)}
+                </span>
               )}
             </div>
             {(basics?.profiles?.find(p => p.network === "LinkedIn")?.url || basics?.profiles?.find(p => p.network === "GitHub")?.url) && (
@@ -57,6 +111,22 @@ const orderedSections = useOrderedSections(resume);
                     {basics.profiles.find(p => p.network === "GitHub")?.url?.replace(/^https?:\/\/(www\.)?/, "")}
                   </span>
                 )}
+                {basics?.profiles?.find(p => p.network === "Medium")?.url && (
+                  <span className="flex items-center gap-1 text-teal-100">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42c1.87 0 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
+                    {basics.profiles.find(p => p.network === "Medium")?.url?.replace(/^https?:\/\/(www\.)?/, "")}
+                  </span>
+                )}
+                {basics?.url && (
+                  <span className="flex items-center gap-1 text-teal-100">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="2" y1="12" x2="22" y2="12"/>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                    {basics.url.replace(/^https?:\/\/(www\.)?/, "")}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -64,7 +134,10 @@ const orderedSections = useOrderedSections(resume);
       </header>
 
       <div className="p-8">
-        {renderSections(resume, orderedSections, theme)}
+        {/* Render Summary first with custom styling */}
+        {renderSummary()}
+        {/* Render other sections */}
+        {renderSections(resume, sectionsWithoutSummary, theme)}
       </div>
     </div>
   );

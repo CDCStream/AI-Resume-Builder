@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
-import { PDFDocument } from "pdf-lib";
-
-const A4_WIDTH_PX = 794;
-const A4_HEIGHT_PX = 1122;
 
 interface PageData {
   html: string;
@@ -16,6 +12,7 @@ interface RequestBody {
   filename: string;
   totalPages: number;
   backgroundColor?: string;
+  useNativePdf?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -23,9 +20,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: RequestBody = await request.json();
-    const { pagesData, styles, filename = "resume.pdf", totalPages, backgroundColor = "#ffffff" } = body;
-
-    console.log(`Background color: ${backgroundColor}`);
+    const { pagesData, styles, filename = "resume.pdf", backgroundColor = "#ffffff" } = body;
 
     if (!pagesData || pagesData.length === 0) {
       return NextResponse.json(
@@ -34,7 +29,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Generating PDF with ${totalPages} pages`);
+    // Combine all HTML content
+    const combinedHtml = pagesData
+      .sort((a, b) => a.pageIndex - b.pageIndex)
+      .map(p => p.html)
+      .join("");
+
+    console.log(`Generating PDF with native Puppeteer PDF...`);
 
     browser = await puppeteer.launch({
       headless: true,
@@ -46,126 +47,115 @@ export async function POST(request: NextRequest) {
       ],
     });
 
-    const screenshots: Buffer[] = [];
+    const page = await browser.newPage();
 
-    for (let i = 0; i < pagesData.length; i++) {
-      const { html, pageIndex } = pagesData[i];
-      const translateY = pageIndex * A4_HEIGHT_PX;
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            ${styles}
+            
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background: ${backgroundColor} !important;
+            }
+            
+            .resume-page {
+              width: 210mm !important;
+              min-height: auto !important;
+              max-height: none !important;
+              page-break-after: auto !important;
+              box-shadow: none !important;
+            }
+            
+            /* Keep section headers with their content */
+            section h2,
+            section h3 {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+            }
+            
+            /* Keep job/education title header with at least some content below */
+            .resume-item > div:first-child {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+            }
+            
+            /* Prevent breaking inside individual list items (highlights) */
+            .resume-item li {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+            
+            /* Prevent orphans and widows - keep at least 2 lines together */
+            p, li {
+              orphans: 2;
+              widows: 2;
+            }
+            
+            /* Make text wrap at line boundaries for cleaner page breaks */
+            .resume-item p,
+            .resume-item .description,
+            .resume-item .summary {
+              line-height: 1.6;
+              display: block;
+            }
+            
+            /* Wrap each line in its own box model context */
+            .resume-item p {
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+            }
+            
+            .no-print {
+              display: none !important;
+            }
+            
+            @page {
+              size: A4;
+              margin: 0;
+            }
+          </style>
+        </head>
+        <body>
+          ${combinedHtml}
+        </body>
+      </html>
+    `;
 
-      console.log(`Rendering page ${pageIndex + 1}/${totalPages}, translateY: -${translateY}px`);
+    await page.setContent(fullHtml, {
+      waitUntil: "networkidle0",
+      timeout: 30000,
+    });
 
-      const page = await browser.newPage();
+    // Use Puppeteer's native PDF generation which respects CSS page-break rules
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: {
+        top: "0",
+        right: "0",
+        bottom: "0",
+        left: "0",
+      },
+      preferCSSPageSize: true,
+    });
 
-      await page.setViewport({
-        width: A4_WIDTH_PX,
-        height: A4_HEIGHT_PX,
-        deviceScaleFactor: 2,
-      });
-
-      const fullHtml = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              ${styles}
-              
-              * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              
-              html, body {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: ${backgroundColor} !important;
-                width: ${A4_WIDTH_PX}px !important;
-                height: ${A4_HEIGHT_PX}px !important;
-                overflow: hidden !important;
-              }
-              
-              .pdf-page-container {
-                width: ${A4_WIDTH_PX}px !important;
-                height: ${A4_HEIGHT_PX}px !important;
-                overflow: hidden !important;
-                position: relative !important;
-                background: ${backgroundColor} !important;
-              }
-              
-              .pdf-content-wrapper {
-                width: ${A4_WIDTH_PX}px !important;
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                transform: translateY(-${translateY}px) !important;
-              }
-              
-              .no-print {
-                display: none !important;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="pdf-page-container">
-              <div class="pdf-content-wrapper">
-                ${html}
-              </div>
-            </div>
-          </body>
-        </html>
-      `;
-
-      await page.setContent(fullHtml, {
-        waitUntil: "networkidle0",
-        timeout: 30000,
-      });
-
-      const screenshot = await page.screenshot({
-        type: "png",
-        clip: {
-          x: 0,
-          y: 0,
-          width: A4_WIDTH_PX,
-          height: A4_HEIGHT_PX,
-        },
-      });
-
-      screenshots.push(Buffer.from(screenshot));
-      console.log(`Page ${pageIndex + 1} captured`);
-
-      await page.close();
-    }
-
+    await page.close();
     await browser.close();
     browser = null;
 
-    console.log(`Captured ${screenshots.length} screenshots, creating PDF...`);
+    console.log(`PDF generated successfully, size: ${pdfBuffer.length} bytes`);
 
-    const pdfDoc = await PDFDocument.create();
-
-    // A4 size in points (72 points per inch, A4 is 8.27 x 11.69 inches)
-    const pageWidth = 595.28;
-    const pageHeight = 841.89;
-
-    for (let i = 0; i < screenshots.length; i++) {
-      const pngImage = await pdfDoc.embedPng(screenshots[i]);
-      const pdfPage = pdfDoc.addPage([pageWidth, pageHeight]);
-      
-      pdfPage.drawImage(pngImage, {
-        x: 0,
-        y: 0,
-        width: pageWidth,
-        height: pageHeight,
-      });
-
-      console.log(`Added page ${i + 1} to PDF`);
-    }
-
-    const pdfBytes = await pdfDoc.save();
-
-    console.log(`PDF generated successfully, size: ${pdfBytes.length} bytes`);
-
-    return new NextResponse(Buffer.from(pdfBytes), {
+    return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

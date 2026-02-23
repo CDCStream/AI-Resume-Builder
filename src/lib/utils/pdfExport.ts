@@ -1,7 +1,5 @@
 "use client";
 
-const A4_HEIGHT_PX = 1122;
-
 interface ExportOptions {
   filename?: string;
 }
@@ -91,21 +89,14 @@ export async function exportResumeToPDF(
   tempDiv.querySelectorAll(".no-print").forEach(el => el.remove());
   fullContentHtml = tempDiv.innerHTML;
 
-  // Calculate actual number of pages based on content height
-  const contentHeight = hiddenContent?.scrollHeight || visiblePages[0].querySelector(".page-content")?.scrollHeight || A4_HEIGHT_PX;
-  const calculatedPages = Math.ceil(contentHeight / A4_HEIGHT_PX);
-  const actualPageCount = Math.min(visiblePages.length, calculatedPages);
+  console.log(`Sending content to PDF API for native generation...`);
 
-  console.log(`Content height: ${contentHeight}px, Calculated pages: ${calculatedPages}, Using: ${actualPageCount} pages`);
-
-  const pagesData: { html: string; pageIndex: number }[] = [];
-
-  for (let i = 0; i < actualPageCount; i++) {
-    pagesData.push({
-      html: fullContentHtml,
-      pageIndex: i,
-    });
-  }
+  // Send single page with full content - API will use native PDF generation
+  // which automatically handles page breaks properly
+  const pagesData = [{
+    html: fullContentHtml,
+    pageIndex: 0,
+  }];
 
   const response = await fetch("/api/generate-pdf", {
     method: "POST",
@@ -116,7 +107,7 @@ export async function exportResumeToPDF(
       pagesData,
       styles,
       filename,
-      totalPages: actualPageCount,
+      totalPages: 1, // Not used anymore, API handles pagination
       backgroundColor,
     }),
   });

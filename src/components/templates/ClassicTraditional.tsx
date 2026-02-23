@@ -2,6 +2,7 @@
 
 import { Resume, SectionType, defaultSectionOrder } from "@/lib/types/resume";
 import { renderSections, useOrderedSections, ThemeConfig } from "./SharedSections";
+import { formatDate } from "./utils";
 
 interface TemplateProps {
   resume: Resume;
@@ -21,7 +22,24 @@ export default function ClassicTraditional({ resume }: TemplateProps) {
           {basics?.email && <span>{basics.email}</span>}
           {basics?.phone && <span>{basics.phone}</span>}
           {basics?.location?.city && <span>{basics.location.city}{basics.location.region && `, ${basics.location.region}`}</span>}
+          {basics?.birthDate && <span>{formatDate(basics.birthDate)}</span>}
         </div>
+        {(basics?.profiles?.find(p => p.network === "LinkedIn")?.url || basics?.profiles?.find(p => p.network === "GitHub")?.url || basics?.profiles?.find(p => p.network === "Medium")?.url || basics?.url) && (
+          <div className="flex justify-center flex-wrap gap-6 text-sm mt-2">
+            {basics?.profiles?.find(p => p.network === "LinkedIn")?.url && (
+              <span className="text-blue-600">{basics.profiles.find(p => p.network === "LinkedIn")?.url?.replace(/^https?:\/\/(www\.)?/, "")}</span>
+            )}
+            {basics?.profiles?.find(p => p.network === "GitHub")?.url && (
+              <span className="text-gray-600">{basics.profiles.find(p => p.network === "GitHub")?.url?.replace(/^https?:\/\/(www\.)?/, "")}</span>
+            )}
+            {basics?.profiles?.find(p => p.network === "Medium")?.url && (
+              <span className="text-gray-600">{basics.profiles.find(p => p.network === "Medium")?.url?.replace(/^https?:\/\/(www\.)?/, "")}</span>
+            )}
+            {basics?.url && (
+              <span className="text-gray-600">{basics.url.replace(/^https?:\/\/(www\.)?/, "")}</span>
+            )}
+          </div>
+        )}
       </header>
 
       {renderSections(resume, orderedSections, theme)}

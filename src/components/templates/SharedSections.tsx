@@ -51,7 +51,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
     case "summary":
       if (!basics?.summary) return null;
       return (
-        <section key="summary" className="mb-6" data-section="summary">
+        <section key="summary" className="mb-6" data-section="summary" data-splittable="true">
           <h2 className={t.headingClass}>Summary</h2>
           <p className={`${t.textClass} leading-relaxed`}>{basics.summary}</p>
         </section>
@@ -64,7 +64,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Experience</h2>
           <div className="space-y-4">
             {work.map((job, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={t.allowExperienceSplit === false ? { breakInside: 'avoid', pageBreakInside: 'avoid' } : {}}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start mb-1">
                   <div>
                     <h3 className="font-semibold text-gray-900">{job.position}</h3>
@@ -100,7 +100,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Internships</h2>
           <div className="space-y-4">
             {internships.map((intern, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start mb-1">
                   <div>
                     <h3 className="font-semibold text-gray-900">{intern.position}</h3>
@@ -127,7 +127,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Education</h2>
           <div className="space-y-3">
             {education.map((edu, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-gray-900">{edu.institution}</h3>
@@ -154,7 +154,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Awards</h2>
           <div className="space-y-3">
             {awards.map((award, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-gray-900">{award.title}</h3>
@@ -181,7 +181,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Skills</h2>
           <div className="space-y-3">
             {skillRows.map((row, rowIndex) => (
-              <div key={rowIndex} className="resume-item grid grid-cols-2 gap-x-8" data-skill-row={rowIndex}>
+              <div key={rowIndex} className="resume-item grid grid-cols-2 gap-x-8" data-skill-row={rowIndex} >
                 {row.map((skill, colIndex) => {
                   const levelMap: Record<string, number> = { "Expert": 5, "Advanced": 4, "Intermediate": 3, "Beginner": 2, "Basic": 1 };
                   const filledDots = levelMap[skill.level || "Intermediate"] || 3;
@@ -221,7 +221,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Courses</h2>
           <div className="space-y-3">
             {courses.map((course, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-gray-900">{course.name}</h3>
@@ -259,7 +259,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>References</h2>
           <div className="grid grid-cols-2 gap-4">
             {references.map((ref, index) => (
-              <div key={index} className="resume-item p-3 border border-gray-200 rounded-lg" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className="resume-item p-3 border border-gray-200 rounded-lg" >
                 <h3 className="font-semibold text-gray-900">{ref.name}</h3>
                 {ref.role && <p className={t.textClass}>{ref.role}</p>}
                 {ref.company && <p className={t.subTextClass}>{ref.company}</p>}
@@ -278,7 +278,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Publications</h2>
           <div className="space-y-3">
             {publications.map((pub, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <h3 className="font-semibold text-gray-900 text-sm">{pub.name}</h3>
                 {pub.publisher && <p className={t.textClass}>{pub.publisher}</p>}
                 {pub.releaseDate && <p className={t.subTextClass}>{formatDate(pub.releaseDate)}</p>}
@@ -296,7 +296,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Projects</h2>
           <div className="space-y-3">
             {projects.filter(p => p.name).map((project, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <h3 className="font-semibold text-gray-900 text-sm">{project.name}</h3>
                 {(project.startDate || project.endDate) && (
                   <p className={`${t.subTextClass} mt-1`}>
@@ -318,7 +318,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Certifications</h2>
           <div className="space-y-3">
             {certificates.filter(c => c.name).map((cert, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <h3 className="font-semibold text-gray-900 text-sm">{cert.name}</h3>
                 {cert.issuer && <p className={t.textClass}>{cert.issuer}</p>}
                 {(cert.date || cert.endDate) && (
@@ -339,7 +339,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Volunteering</h2>
           <div className="space-y-3">
             {volunteer.filter(v => v.organization).map((vol, index) => (
-              <div key={index} className={`resume-item ${t.cardClass || ""}`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <div key={index} className={`resume-item ${t.cardClass || ""}`} >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-gray-900">{vol.organization}</h3>
@@ -365,7 +365,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Strengths</h2>
           <div className="grid grid-cols-2 gap-3">
             {strengths.filter(s => s.name).map((strength, index) => (
-              <div key={index} className="resume-item p-3 bg-gray-50 rounded-lg">
+              <div key={index} className="resume-item p-3 bg-gray-50 rounded-lg" >
                 <h3 className="font-semibold text-gray-900 text-sm">{strength.name}</h3>
                 {strength.description && <p className="text-xs text-gray-600 mt-1">{strength.description}</p>}
               </div>
@@ -408,7 +408,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
           <h2 className={t.headingClass}>Books</h2>
           <div className="grid grid-cols-2 gap-3">
             {books.filter(b => b.title).map((book, index) => (
-              <div key={index} className="resume-item flex gap-2">
+              <div key={index} className="resume-item flex gap-2" >
                 <span className="text-gray-400">📚</span>
                 <div>
                   <p className="text-sm font-medium text-gray-900">{book.title}</p>

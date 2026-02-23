@@ -157,6 +157,31 @@
   min-height: var(--page-total-height, 1122px);
 }
 
+/* Prevent orphaned headings - keep section headings with content */
+.resume-page section h2 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Keep job/education title header with at least some content below */
+.resume-item > div:first-child {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Prevent breaking inside individual highlights/bullet points */
+.resume-item li {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Prevent widows and orphans - keep at least 2 lines together */
+.resume-page p,
+.resume-page li {
+  orphans: 2;
+  widows: 2;
+}
+
 /* Print styles - hide no-print elements */
 @media print {
   .no-print {

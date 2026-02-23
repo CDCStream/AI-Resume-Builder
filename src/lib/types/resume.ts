@@ -32,6 +32,7 @@ export interface Basics {
   summary?: string;
   location?: Location;
   profiles?: Profile[];
+  birthDate?: string;
 }
 
 export interface Work {
