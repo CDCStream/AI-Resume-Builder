@@ -37,8 +37,8 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Retry wrapper for API calls
 async function withRetry<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 2000
+  maxRetries: number = 5,
+  baseDelay: number = 3000
 ): Promise<T> {
   let lastError: Error | unknown;
   
@@ -47,15 +47,18 @@ async function withRetry<T>(
       return await fn();
     } catch (error) {
       lastError = error;
-      const isRetryable = error instanceof Error && 
-        ('status' in error && ((error as { status: number }).status === 529 || (error as { status: number }).status === 503 || (error as { status: number }).status === 500));
+      const status = error instanceof Error && 'status' in error 
+        ? (error as { status: number }).status 
+        : 0;
+      const isRetryable = status === 529 || status === 503 || status === 500 || status === 429;
       
       if (!isRetryable || attempt === maxRetries) {
         throw error;
       }
       
-      const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff: 2s, 4s, 8s
-      console.log(`API overloaded (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
+      const jitter = Math.random() * 1000;
+      const delay = baseDelay * Math.pow(2, attempt - 1) + jitter;
+      console.log(`API error ${status} (attempt ${attempt}/${maxRetries}), retrying in ${Math.round(delay)}ms...`);
       await sleep(delay);
     }
   }
@@ -63,15 +66,19 @@ async function withRetry<T>(
   throw lastError;
 }
 
+const PRIMARY_MODEL = "claude-sonnet-4-6";
+const FALLBACK_MODEL = "claude-sonnet-4-20250514";
+const FINAL_FALLBACK_MODEL = "claude-sonnet-4-5-20250514";
+
 // Parse resume using Claude AI
-async function parseResumeWithAI(text: string): Promise<Resume> {
-  console.log("=== Starting AI Parse ===");
+async function parseResumeWithAI(text: string, model: string = PRIMARY_MODEL): Promise<Resume> {
+  console.log(`=== Starting AI Parse (model: ${model}) ===`);
   console.log("Text length:", text.length);
   console.log("First 500 chars:", text.substring(0, 500));
 
   try {
     const message = await withRetry(() => anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: 8192,
       messages: [
         {
@@ -225,12 +232,12 @@ Parse the above resume and return the complete JSON object:`
 }
 
 // Simpler AI parsing prompt for retry
-async function parseResumeWithAISimple(text: string): Promise<Resume> {
-  console.log("=== Starting Simple AI Parse ===");
+async function parseResumeWithAISimple(text: string, model: string = PRIMARY_MODEL): Promise<Resume> {
+  console.log(`=== Starting Simple AI Parse (model: ${model}) ===`);
 
   try {
     const message = await withRetry(() => anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: 8192,
       messages: [
         {
@@ -460,49 +467,96 @@ export async function POST(request: NextRequest) {
       resume = parseResumeTextFallback(text);
       parseMethod = "fallback-no-api-key";
     } else {
-      // First attempt with AI
+      // First attempt with primary model
       try {
-        console.log("Attempt 1: Parsing with Claude AI...");
-        resume = await parseResumeWithAI(text);
+        console.log(`Attempt 1: Parsing with ${PRIMARY_MODEL}...`);
+        resume = await parseResumeWithAI(text, PRIMARY_MODEL);
         parseMethod = "ai-attempt-1";
         
-        // Validate the result
         validationResult = validateParsedResume(resume, text);
         
         if (!validationResult.isValid) {
           console.log("AI parsing result is incomplete, trying again with simpler prompt...");
-          
-          // Second attempt with a more direct prompt
           try {
-            resume = await parseResumeWithAISimple(text);
+            resume = await parseResumeWithAISimple(text, PRIMARY_MODEL);
             parseMethod = "ai-attempt-2-simple";
             validationResult = validateParsedResume(resume, text);
           } catch (retryError) {
             console.error("Retry also failed:", retryError);
           }
         }
-        
-        // If still not valid, use fallback
-        if (!validationResult.isValid) {
-          console.log("AI parsing still incomplete (score: " + validationResult.score + "), enhancing with fallback...");
-          const fallbackResume = parseResumeTextFallback(text);
-          
-          // Merge: use AI results but fill in missing basics from fallback
-          if (!resume.basics?.name && fallbackResume.basics?.name) {
-            resume.basics = { ...resume.basics, name: fallbackResume.basics.name };
-          }
-          if (!resume.basics?.email && fallbackResume.basics?.email) {
-            resume.basics = { ...resume.basics, email: fallbackResume.basics.email };
-          }
-          if (!resume.basics?.phone && fallbackResume.basics?.phone) {
-            resume.basics = { ...resume.basics, phone: fallbackResume.basics.phone };
-          }
-          parseMethod += "+fallback-enhanced";
-        }
       } catch (aiError) {
-        console.error("AI parsing failed completely:", aiError);
-        resume = parseResumeTextFallback(text);
-        parseMethod = "fallback-after-error";
+        const isOverloaded = aiError instanceof Error && 'status' in aiError &&
+          ((aiError as { status: number }).status === 529 || (aiError as { status: number }).status === 503);
+
+        if (isOverloaded) {
+          console.log(`Primary model overloaded, trying fallback model: ${FALLBACK_MODEL}...`);
+          try {
+            resume = await parseResumeWithAI(text, FALLBACK_MODEL);
+            parseMethod = "ai-fallback-model";
+            validationResult = validateParsedResume(resume, text);
+
+            if (!validationResult.isValid) {
+              try {
+                resume = await parseResumeWithAISimple(text, FALLBACK_MODEL);
+                parseMethod = "ai-fallback-model-simple";
+                validationResult = validateParsedResume(resume, text);
+              } catch (retryError) {
+                console.error("Fallback simple retry also failed:", retryError);
+              }
+            }
+          } catch (fallbackError) {
+            const fallbackStatus = fallbackError instanceof Error && 'status' in fallbackError
+              ? (fallbackError as { status: number }).status : 0;
+            if (fallbackStatus === 529 || fallbackStatus === 503) {
+              console.log(`Fallback model also overloaded, trying final fallback: ${FINAL_FALLBACK_MODEL}...`);
+              try {
+                resume = await parseResumeWithAI(text, FINAL_FALLBACK_MODEL);
+                parseMethod = "ai-final-fallback-model";
+                validationResult = validateParsedResume(resume, text);
+
+                if (!validationResult.isValid) {
+                  try {
+                    resume = await parseResumeWithAISimple(text, FINAL_FALLBACK_MODEL);
+                    parseMethod = "ai-final-fallback-model-simple";
+                    validationResult = validateParsedResume(resume, text);
+                  } catch (retryError) {
+                    console.error("Final fallback simple retry also failed:", retryError);
+                  }
+                }
+              } catch (finalFallbackError) {
+                console.error("Final fallback model also failed:", finalFallbackError);
+                resume = parseResumeTextFallback(text);
+                parseMethod = "fallback-after-all-models-failed";
+              }
+            } else {
+              console.error("Fallback model failed (non-overload):", fallbackError);
+              resume = parseResumeTextFallback(text);
+              parseMethod = "fallback-after-all-models-failed";
+            }
+          }
+        } else {
+          console.error("AI parsing failed completely:", aiError);
+          resume = parseResumeTextFallback(text);
+          parseMethod = "fallback-after-error";
+        }
+      }
+
+      // If still not valid, enhance with regex fallback
+      if (!validationResult.isValid) {
+        console.log("AI parsing still incomplete (score: " + validationResult.score + "), enhancing with fallback...");
+        const fallbackResume = parseResumeTextFallback(text);
+        
+        if (!resume.basics?.name && fallbackResume.basics?.name) {
+          resume.basics = { ...resume.basics, name: fallbackResume.basics.name };
+        }
+        if (!resume.basics?.email && fallbackResume.basics?.email) {
+          resume.basics = { ...resume.basics, email: fallbackResume.basics.email };
+        }
+        if (!resume.basics?.phone && fallbackResume.basics?.phone) {
+          resume.basics = { ...resume.basics, phone: fallbackResume.basics.phone };
+        }
+        parseMethod += "+fallback-enhanced";
       }
     }
 

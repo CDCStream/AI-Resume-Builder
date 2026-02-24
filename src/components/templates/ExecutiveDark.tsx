@@ -17,9 +17,9 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-zinc-900 text-zinc-100 shadow-lg print:shadow-none">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-zinc-900 text-zinc-100 shadow-lg">
       {/* Header */}
-      <header className="p-10 border-b border-zinc-700">
+      <header className="border-b border-zinc-700" style={{ padding: '40px' }}>
         <div className="flex items-start gap-6">
           {basics?.image && (
             <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-amber-500">
@@ -117,7 +117,7 @@ const orderedSections = useOrderedSections(resume);
 
       <div className="flex">
         {/* Main content */}
-        <main className="flex-1 p-10">
+        <main className="flex-1" style={{ padding: '40px' }}>
           {renderSections(resume, orderedSections, theme)}
         </main>
       </div>

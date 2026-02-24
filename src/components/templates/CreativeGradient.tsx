@@ -17,12 +17,12 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg print:shadow-none overflow-hidden">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg overflow-hidden">
       {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-purple-500/20 to-pink-500/20 rounded-full blur-3xl"></div>
 
-      <div className="relative p-10">
+      <div className="relative" style={{ padding: '40px' }}>
         {/* Header */}
         <header className="text-center mb-10">
           {basics?.image && (

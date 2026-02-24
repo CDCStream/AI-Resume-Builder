@@ -515,7 +515,8 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
   };
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-12 font-['Inter',sans-serif] text-gray-800 shadow-lg print:shadow-none print:p-8">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg">
+      <div style={{ padding: '40px 48px', fontFamily: "'Inter', sans-serif", color: '#1f2937' }}>
       {/* Header */}
       <header className="mb-8 border-b border-gray-200 pb-6">
         <div className="flex items-start gap-6">
@@ -620,6 +621,7 @@ export default function ProfessionalWhite({ resume }: TemplateProps) {
 
       {/* Render sections in order */}
       {orderedSections.map((sectionType) => renderSection(sectionType))}
+      </div>
     </div>
   );
 }

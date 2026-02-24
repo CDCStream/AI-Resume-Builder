@@ -7,10 +7,14 @@ const anthropic = new Anthropic({
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const PRIMARY_MODEL = "claude-sonnet-4-6";
+const FALLBACK_MODEL = "claude-sonnet-4-20250514";
+const FINAL_FALLBACK_MODEL = "claude-sonnet-4-5-20250514";
+
 async function withRetry<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 2000
+  maxRetries: number = 5,
+  baseDelay: number = 3000
 ): Promise<T> {
   let lastError: Error | unknown;
   
@@ -19,15 +23,18 @@ async function withRetry<T>(
       return await fn();
     } catch (error) {
       lastError = error;
-      const isRetryable = error instanceof Error && 
-        ('status' in error && ((error as { status: number }).status === 529 || (error as { status: number }).status === 503 || (error as { status: number }).status === 500));
+      const status = error instanceof Error && 'status' in error
+        ? (error as { status: number }).status
+        : 0;
+      const isRetryable = status === 529 || status === 503 || status === 500 || status === 429;
       
       if (!isRetryable || attempt === maxRetries) {
         throw error;
       }
       
-      const delay = baseDelay * Math.pow(2, attempt - 1);
-      console.log(`API overloaded (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
+      const jitter = Math.random() * 1000;
+      const delay = baseDelay * Math.pow(2, attempt - 1) + jitter;
+      console.log(`API error ${status} (attempt ${attempt}/${maxRetries}), retrying in ${Math.round(delay)}ms...`);
       await sleep(delay);
     }
   }
@@ -123,17 +130,43 @@ export async function POST(request: NextRequest) {
     // Log current skills being analyzed
     const currentSkills = resume.skills?.map(s => s.name).filter(Boolean) || [];
     console.log("Analyzing with skills:", currentSkills.join(", ") || "None");
-    console.log("Calling Claude API for ATS Score analysis...");
-    const message = await withRetry(() => anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8192,
-      messages: [
-        {
-          role: "user",
-          content: prompt
+    let message: Anthropic.Message;
+    try {
+      console.log(`Calling Claude API (${PRIMARY_MODEL}) for ATS Score analysis...`);
+      message = await withRetry(() => anthropic.messages.create({
+        model: PRIMARY_MODEL,
+        max_tokens: 8192,
+        messages: [{ role: "user", content: prompt }]
+      }));
+    } catch (primaryError) {
+      const status = primaryError instanceof Error && 'status' in primaryError
+        ? (primaryError as { status: number }).status : 0;
+      if (status === 529 || status === 503) {
+        console.log(`Primary model overloaded, trying fallback: ${FALLBACK_MODEL}...`);
+        try {
+          message = await withRetry(() => anthropic.messages.create({
+            model: FALLBACK_MODEL,
+            max_tokens: 8192,
+            messages: [{ role: "user", content: prompt }]
+          }));
+        } catch (fallbackError) {
+          const fbStatus = fallbackError instanceof Error && 'status' in fallbackError
+            ? (fallbackError as { status: number }).status : 0;
+          if (fbStatus === 529 || fbStatus === 503) {
+            console.log(`Fallback model also overloaded, trying final fallback: ${FINAL_FALLBACK_MODEL}...`);
+            message = await withRetry(() => anthropic.messages.create({
+              model: FINAL_FALLBACK_MODEL,
+              max_tokens: 8192,
+              messages: [{ role: "user", content: prompt }]
+            }));
+          } else {
+            throw fallbackError;
+          }
         }
-      ]
-    }));
+      } else {
+        throw primaryError;
+      }
+    }
     console.log("Claude API response received, stop_reason:", message.stop_reason);
 
     const responseText = message.content

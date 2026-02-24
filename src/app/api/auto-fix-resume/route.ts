@@ -5,6 +5,32 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 5,
+  baseDelay: number = 3000
+): Promise<T> {
+  let lastError: Error | unknown;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      const status = error instanceof Error && 'status' in error
+        ? (error as { status: number }).status : 0;
+      const isRetryable = status === 529 || status === 503 || status === 500 || status === 429;
+      if (!isRetryable || attempt === maxRetries) throw error;
+      const jitter = Math.random() * 1000;
+      const delay = baseDelay * Math.pow(2, attempt - 1) + jitter;
+      console.log(`API error ${status} (attempt ${attempt}/${maxRetries}), retrying in ${Math.round(delay)}ms...`);
+      await sleep(delay);
+    }
+  }
+  throw lastError;
+}
+
 interface AutoFixRequest {
   resumeData: {
     basics?: {
@@ -128,16 +154,34 @@ Return ONLY valid JSON, no additional text.`;
 
     console.log("Calling Claude for auto-fix...");
     
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
-    });
+    let message;
+    try {
+      message = await withRetry(() => anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ]
+      }));
+    } catch (err) {
+      const st = err instanceof Error && 'status' in err ? (err as { status: number }).status : 0;
+      if (st === 529 || st === 503) {
+        console.log("Primary model overloaded, trying claude-sonnet-4-5-20250514...");
+        message = await withRetry(() => anthropic.messages.create({
+          model: "claude-sonnet-4-5-20250514",
+          max_tokens: 4096,
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ]
+        }));
+      } else throw err;
+    }
 
     const responseText = message.content
       .filter((block): block is Anthropic.TextBlock => block.type === "text")

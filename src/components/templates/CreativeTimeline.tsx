@@ -17,9 +17,9 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-violet-50 to-white shadow-lg print:shadow-none overflow-hidden">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-gradient-to-br from-violet-50 to-white shadow-lg overflow-hidden" style={{ padding: '32px' }}>
       {/* Header with gradient */}
-      <header className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-8 relative">
+      <header className="bg-gradient-to-r from-violet-600 to-purple-600 text-white relative" style={{ margin: '-32px -32px 0 -32px', padding: '32px' }}>
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
         <div className="relative flex items-start gap-6">
           {basics?.image && (
@@ -111,7 +111,7 @@ const orderedSections = useOrderedSections(resume);
         </div>
       </header>
 
-      <div className="p-8">
+      <div style={{ marginTop: '24px' }}>
         {renderSections(resume, orderedSections, theme)}
       </div>
     </div>

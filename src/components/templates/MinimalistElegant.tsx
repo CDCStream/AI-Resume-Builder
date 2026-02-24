@@ -17,7 +17,7 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-12 shadow-lg print:shadow-none font-['Georgia',serif]">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg font-['Georgia',serif]" style={{ padding: '48px' }}>
       {/* Header */}
       <header className="text-center mb-10 pb-6 border-b border-gray-200">
         {basics?.image && (

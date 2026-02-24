@@ -17,7 +17,7 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-14 shadow-lg print:shadow-none">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg" style={{ padding: '56px' }}>
       {/* Header - Left aligned, minimal */}
       <header className="mb-10 flex items-start gap-6">
         {basics?.image && (

@@ -17,7 +17,7 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-gray-50 p-8 shadow-lg print:shadow-none">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-gray-50 shadow-lg" style={{ padding: '32px' }}>
       {/* Header Card */}
       <header className="bg-white rounded-2xl p-6 shadow-sm mb-6">
         <div className="flex items-center gap-6">

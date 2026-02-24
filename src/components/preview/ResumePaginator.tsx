@@ -20,7 +20,7 @@ const BUFFER = 48;
 const PAGE_PADDING = 40; // Padding at top/bottom of each page
 
 // Safety margin to fully include the last visible line (prevents sub-pixel clipping)
-const LINE_SAFETY_PX = 3;
+const LINE_SAFETY_PX = 5;
 
 // Component to render page content with smart clipping
 interface PageContentProps {
@@ -49,8 +49,9 @@ function PageContent({ children, pageIndex, totalPages, pageBreaks, calculatedMa
   // Calculate the Y range for this page
   const startY = pageIndex === 0 ? 0 : pageBreaks[pageIndex - 1];
   const endY = pageIndex < pageBreaks.length ? pageBreaks[pageIndex] : totalContentHeight;
-  // Clip to actual content range but never exceed A4 page height
-  const clipHeight = Math.min(Math.ceil(endY - startY), A4_HEIGHT_PX);
+  const isLastPage = pageIndex === totalPages - 1;
+  // Last page: use full page height to prevent clipping the last line
+  const clipHeight = isLastPage ? A4_HEIGHT_PX : Math.min(Math.ceil(endY - startY), A4_HEIGHT_PX);
 
   useLayoutEffect(() => {
     if (!contentRef.current) return;
@@ -431,7 +432,7 @@ function calculateSmartPageBreaks(content: HTMLElement, totalHeight: number): nu
 
     // Find elements that cross the ideal break point
     const crossing = leafElements.filter(
-      e => e.top < idealBreak - LINE_SAFETY_PX && e.bottom > idealBreak
+      e => e.top < idealBreak && e.bottom > idealBreak - LINE_SAFETY_PX
     );
 
     if (crossing.length > 0) {
@@ -494,6 +495,108 @@ function calculateSmartPageBreaks(content: HTMLElement, totalHeight: number): nu
       }
     }
 
+    // Final validation: ensure bestBreak doesn't cut through ANY text line.
+    // Instead of moving break before the cut line (which cascades), find the
+    // last fully-fitting line across ALL leaf elements and break right after it.
+    for (let pass = 0; pass < 3; pass++) {
+      let didAdjust = false;
+      for (const le of leafElements) {
+        if (le.top >= bestBreak || le.bottom <= bestBreak) continue;
+
+        const lines = getRenderedLines(le.el, content);
+        for (const line of lines) {
+          if (line.top < bestBreak && line.bottom > bestBreak) {
+            // Find the last line in this element that fits entirely
+            let lastFitBottom = -1;
+            for (const l of lines) {
+              if (l.bottom <= bestBreak) lastFitBottom = l.bottom;
+            }
+            if (lastFitBottom > currentPageStart + 50) {
+              bestBreak = Math.ceil(lastFitBottom);
+            } else if (le.top > currentPageStart + 50) {
+              bestBreak = Math.floor(le.top) - LINE_SAFETY_PX;
+            }
+            didAdjust = true;
+            break;
+          }
+        }
+        if (didAdjust) break;
+      }
+      if (!didAdjust) break;
+    }
+
+    // Ensure no .resume-item shows only its border/padding without any text content
+    const allItems = content.querySelectorAll('.resume-item');
+    for (const item of Array.from(allItems)) {
+      const rect = (item as HTMLElement).getBoundingClientRect();
+      const itemTop = rect.top - contentRect.top;
+      const itemBottom = rect.bottom - contentRect.top;
+
+      if (itemTop < bestBreak && itemBottom > bestBreak && itemTop > currentPageStart + 50) {
+        const lines = getRenderedLines(item as HTMLElement, content);
+        const hasVisibleLine = lines.some(
+          l => l.top >= itemTop && l.bottom <= bestBreak
+        );
+
+        if (!hasVisibleLine) {
+          bestBreak = Math.floor(itemTop) - LINE_SAFETY_PX;
+        }
+      }
+    }
+
+    // Prevent orphaned section headings (heading visible but no content below it on same page)
+    const allSections = content.querySelectorAll('section');
+    for (const section of Array.from(allSections)) {
+      const heading = section.querySelector('h2, h3') as HTMLElement;
+      if (!heading) continue;
+      const headingRect = heading.getBoundingClientRect();
+      const headingTop = headingRect.top - contentRect.top;
+      const headingBottom = headingRect.bottom - contentRect.top;
+
+      if (headingTop >= currentPageStart && headingBottom <= bestBreak && headingTop > currentPageStart + 50) {
+        const sectionRect = section.getBoundingClientRect();
+        const sectionBottom = sectionRect.bottom - contentRect.top;
+
+        if (sectionBottom > bestBreak) {
+          const contentEls = section.querySelectorAll('.resume-item, p, li');
+          const hasVisibleContent = Array.from(contentEls).some(el => {
+            const r = (el as HTMLElement).getBoundingClientRect();
+            const elBottom = r.bottom - contentRect.top;
+            return r.top - contentRect.top >= headingBottom && elBottom <= bestBreak;
+          });
+
+          if (!hasVisibleContent) {
+            bestBreak = Math.floor(headingTop) - LINE_SAFETY_PX;
+          }
+        }
+      }
+    }
+
+    // Final safety: re-check ALL leaf text lines one more time
+    for (let pass = 0; pass < 3; pass++) {
+      let didFinalAdj = false;
+      for (const le of leafElements) {
+        if (le.top >= bestBreak || le.bottom <= bestBreak) continue;
+        const lines = getRenderedLines(le.el, content);
+        let lastFitBottom = -1;
+        let hasCrossing = false;
+        for (const line of lines) {
+          if (line.bottom <= bestBreak) lastFitBottom = line.bottom;
+          if (line.top < bestBreak && line.bottom > bestBreak) hasCrossing = true;
+        }
+        if (hasCrossing) {
+          if (lastFitBottom > currentPageStart + 50) {
+            bestBreak = Math.ceil(lastFitBottom);
+          } else if (le.top > currentPageStart + 50) {
+            bestBreak = Math.floor(le.top) - LINE_SAFETY_PX;
+          }
+          didFinalAdj = true;
+        }
+        if (didFinalAdj) break;
+      }
+      if (!didFinalAdj) break;
+    }
+
     breaks.push(bestBreak);
     currentPageStart = bestBreak;
   }
@@ -516,7 +619,6 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
     useEffect(() => {
       // Always recalculate when switching to page mode
       if (viewMode === "page") {
-        // Small delay to ensure DOM is updated
         const timer = setTimeout(() => {
           setRecalcKey(prev => prev + 1);
         }, 100);
@@ -524,6 +626,17 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
       }
       prevViewModeRef.current = viewMode;
     }, [viewMode]);
+
+    // Recalculate after fonts are fully loaded to prevent text reflow issues
+    useEffect(() => {
+      let cancelled = false;
+      document.fonts.ready.then(() => {
+        if (!cancelled) {
+          setRecalcKey(prev => prev + 1);
+        }
+      });
+      return () => { cancelled = true; };
+    }, []);
 
     const [calculatedMargins, setCalculatedMargins] = useState<Map<string, number>>(new Map());
 
@@ -539,6 +652,15 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
       content.querySelectorAll(".resume-item").forEach((item) => {
         (item as HTMLElement).style.marginTop = "";
       });
+
+      // Ensure .resume-page has overflow visible for accurate measurement
+      const resumePage = content.querySelector('.resume-page') as HTMLElement;
+      if (resumePage) {
+        resumePage.style.overflow = 'visible';
+        resumePage.style.minHeight = 'auto';
+        resumePage.style.maxHeight = 'none';
+        resumePage.style.height = 'auto';
+      }
 
       void content.offsetHeight;
 

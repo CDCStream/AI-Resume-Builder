@@ -49,6 +49,8 @@ function ResumeEditorContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedState, setLastSavedState] = useState<string>("");
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const paginatorRef = useRef<ResumePaginatorRef>(null);
@@ -106,6 +108,43 @@ function ResumeEditorContent() {
       setIsSaving(false);
     }
   }, [currentDocument, resume, selectedTemplate, router]);
+
+  // Auto-save: debounce 2s after changes, only if document was saved before
+  useEffect(() => {
+    if (!currentDocument || !hasUnsavedChanges) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      setAutoSaveStatus("saving");
+      try {
+        const updated = updateResume(currentDocument.id, {
+          name: currentDocument.name,
+          resumeData: resume,
+          templateId: selectedTemplate,
+        });
+        if (updated) {
+          setCurrentDocument(updated);
+        }
+        const savedState = JSON.stringify({ resume, selectedTemplate });
+        setLastSavedState(savedState);
+        setHasUnsavedChanges(false);
+        setAutoSaveStatus("saved");
+        setTimeout(() => setAutoSaveStatus("idle"), 2000);
+      } catch (error) {
+        console.error("Auto-save failed:", error);
+        setAutoSaveStatus("idle");
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [resume, selectedTemplate, currentDocument, hasUnsavedChanges]);
 
   // Handle rename
   const handleRename = useCallback((newName: string) => {
@@ -248,6 +287,7 @@ function ResumeEditorContent() {
             onRename={handleRename}
             isSaving={isSaving}
             hasUnsavedChanges={hasUnsavedChanges}
+            autoSaveStatus={autoSaveStatus}
           />
         </div>
 

@@ -17,9 +17,9 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none flex">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg flex">
       {/* Navy Sidebar */}
-      <aside className="w-72 bg-navy-900 bg-[#1e3a5f] text-white p-6">
+      <aside className="w-72 bg-navy-900 bg-[#1e3a5f] text-white" style={{ padding: '24px' }}>
         <div className="mb-8 text-center">
           {basics?.image ? (
             <div className="w-28 h-28 rounded-full mx-auto mb-4 overflow-hidden border-4 border-white/30">
@@ -167,7 +167,7 @@ const orderedSections = useOrderedSections(resume);
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
+      <main className="flex-1" style={{ padding: '32px' }}>
         {renderSections(resume, orderedSections, theme)}
       </main>
     </div>

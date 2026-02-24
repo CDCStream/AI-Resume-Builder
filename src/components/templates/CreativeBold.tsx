@@ -17,9 +17,9 @@ const orderedSections = useOrderedSections(resume);
 
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-amber-50 shadow-lg print:shadow-none">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-amber-50 shadow-lg">
       {/* Header */}
-      <header className="bg-orange-600 text-white p-10 relative overflow-hidden">
+      <header className="bg-orange-600 text-white relative overflow-hidden" style={{ padding: '40px' }}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500 rounded-full -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-700 rounded-full translate-y-1/2 -translate-x-1/2"></div>
         <div className="relative flex items-start gap-6">
@@ -114,7 +114,7 @@ const orderedSections = useOrderedSections(resume);
         </div>
       </header>
 
-      <div className="p-8">
+      <div style={{ padding: '32px' }}>
         {renderSections(resume, orderedSections, theme)}
       </div>
     </div>

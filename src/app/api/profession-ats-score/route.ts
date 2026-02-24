@@ -248,16 +248,34 @@ export async function POST(request: NextRequest) {
     console.log("Analyzing with skills:", currentSkills.join(", ") || "None");
     console.log("Calling Claude API for Profession ATS Score analysis...");
     
-    const message = await withRetry(() => anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8192,
-      messages: [
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
-    }));
+    let message;
+    try {
+      message = await withRetry(() => anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8192,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ]
+      }));
+    } catch (err) {
+      const st = err instanceof Error && 'status' in err ? (err as { status: number }).status : 0;
+      if (st === 529 || st === 503) {
+        console.log("Primary model overloaded, trying claude-sonnet-4-5-20250514...");
+        message = await withRetry(() => anthropic.messages.create({
+          model: "claude-sonnet-4-5-20250514",
+          max_tokens: 8192,
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ]
+        }));
+      } else throw err;
+    }
     console.log("Claude API response received, stop_reason:", message.stop_reason);
 
     const responseText = message.content

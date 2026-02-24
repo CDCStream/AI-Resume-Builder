@@ -14,8 +14,8 @@ export default function ModernAccent({ resume }: TemplateProps) {
   const orderedSections = useOrderedSections(resume);
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none">
-      <header className="p-10 border-b-4 border-emerald-500">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg">
+      <header className="border-b-4 border-emerald-500" style={{ padding: '40px' }}>
         <div className="flex items-start gap-6">
           {basics?.image && (
             <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-emerald-200">
@@ -98,7 +98,7 @@ export default function ModernAccent({ resume }: TemplateProps) {
         </div>
       </header>
 
-      <div className="p-10">
+      <div style={{ padding: '40px' }}>
         {renderSections(resume, orderedSections, theme)}
       </div>
     </div>

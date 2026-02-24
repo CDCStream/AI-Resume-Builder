@@ -25,7 +25,7 @@ import ProfessionATSPanel from "./ProfessionATSPanel";
 import ResumeScanPreview from "./ResumeScanPreview";
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Pencil } from "lucide-react";
+import { LayoutDashboard, Pencil, Check } from "lucide-react";
 
 type AdditionalSection =
   | "languages"
@@ -68,6 +68,7 @@ interface ResumeEditorProps {
   onRename?: (newName: string) => void;
   isSaving?: boolean;
   hasUnsavedChanges?: boolean;
+  autoSaveStatus?: "idle" | "saving" | "saved";
 }
 
 // Collapsible section types
@@ -93,6 +94,7 @@ export default function ResumeEditor({
   onRename,
   isSaving,
   hasUnsavedChanges,
+  autoSaveStatus,
 }: ResumeEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Using array to maintain insertion order
@@ -1387,8 +1389,23 @@ export default function ResumeEditor({
                 Resume Builder
               </h1>
             )}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 flex items-center gap-2">
               {documentId ? "Click to rename" : "AI-Powered Premium Resume Builder"}
+              {autoSaveStatus === "saving" && (
+                <span className="flex items-center gap-1 text-blue-500 animate-pulse">
+                  <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Auto-saving...
+                </span>
+              )}
+              {autoSaveStatus === "saved" && (
+                <span className="flex items-center gap-1 text-green-600">
+                  <Check className="h-3 w-3" />
+                  Auto-saved
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -2294,7 +2311,7 @@ export default function ResumeEditor({
                 <div className="space-y-1">
                   <Label className="text-xs">Degree</Label>
                   <div className="flex flex-wrap gap-1">
-                    {["High School", "Associate", "Bachelor's Degree", "Master", "PhD"].map((degree) => (
+                    {["High School", "Associate", "Bachelor's Degree", "Master's Degree", "PhD"].map((degree) => (
                       <button
                         key={degree}
                         type="button"

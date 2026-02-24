@@ -40,9 +40,9 @@ export default function ProfessionalTeal({ resume }: TemplateProps) {
   const sectionsWithoutSummary = orderedSections.filter(s => s !== 'summary');
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg print:shadow-none">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg">
       {/* Teal Header */}
-      <header className="bg-teal-600 text-white p-8">
+      <header className="bg-teal-600 text-white" style={{ padding: '32px' }}>
         <div className="flex items-start gap-6">
           {basics?.image && (
             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/30">
@@ -133,7 +133,7 @@ export default function ProfessionalTeal({ resume }: TemplateProps) {
         </div>
       </header>
 
-      <div className="p-8">
+      <div style={{ padding: '32px' }}>
         {/* Render Summary first with custom styling */}
         {renderSummary()}
         {/* Render other sections */}

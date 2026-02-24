@@ -103,16 +103,34 @@ export async function POST(request: NextRequest) {
 
     console.log("Calling Claude API...");
     const maxTokens = field === "full_resume" ? 8192 : 4096;
-    const message = await withRetry(() => anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: maxTokens,
-      messages: [
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
-    }));
+    let message;
+    try {
+      message = await withRetry(() => anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: maxTokens,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ]
+      }));
+    } catch (err) {
+      const st = err instanceof Error && 'status' in err ? (err as { status: number }).status : 0;
+      if (st === 529 || st === 503) {
+        console.log("Primary model overloaded, trying claude-sonnet-4-5-20250514...");
+        message = await withRetry(() => anthropic.messages.create({
+          model: "claude-sonnet-4-5-20250514",
+          max_tokens: maxTokens,
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ]
+        }));
+      } else throw err;
+    }
     console.log("Claude API response received");
 
     const responseText = message.content

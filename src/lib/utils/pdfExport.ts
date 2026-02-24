@@ -4,21 +4,26 @@ interface ExportOptions {
   filename?: string;
 }
 
+interface BackgroundExportInfo {
+  type: 'none' | 'fullpage' | 'sidebar';
+  bgColor: string;
+  bgImage?: string;
+  sidebarWidth?: number;
+  sidebarColor?: string;
+}
+
 export async function exportResumeToPDF(
   previewElement: HTMLElement,
   options: ExportOptions = {}
 ): Promise<void> {
   const { filename = "resume.pdf" } = options;
 
-  // Get visible resume pages only (exclude hidden measurement div)
   const allResumePages = previewElement.querySelectorAll(".resume-page");
   const visiblePages: HTMLElement[] = [];
-  
+
   for (let i = 0; i < allResumePages.length; i++) {
     const page = allResumePages[i] as HTMLElement;
     const parent = page.parentElement;
-    
-    // Skip pages inside hidden measurement div
     if (parent && (
       parent.classList.contains("opacity-0") ||
       parent.style.opacity === "0" ||
@@ -26,73 +31,76 @@ export async function exportResumeToPDF(
     )) {
       continue;
     }
-    
     visiblePages.push(page);
   }
-
-  console.log(`Found ${visiblePages.length} visible resume pages (filtered from ${allResumePages.length} total)`);
 
   if (visiblePages.length === 0) {
     throw new Error("No resume pages found");
   }
 
-  // Get background color from the first visible page or its content
-  let backgroundColor = "#ffffff";
-  if (visiblePages.length > 0) {
-    const firstPage = visiblePages[0];
-    const computedBg = window.getComputedStyle(firstPage).backgroundColor;
-    
-    // Also check the template wrapper inside the page
-    const templateWrapper = firstPage.querySelector(".page-content > div") as HTMLElement;
-    if (templateWrapper) {
-      const templateBg = window.getComputedStyle(templateWrapper).backgroundColor;
-      if (templateBg && templateBg !== "rgba(0, 0, 0, 0)" && templateBg !== "transparent") {
-        backgroundColor = templateBg;
-      }
-    }
-    
-    // Fallback to page background
-    if (backgroundColor === "#ffffff" && computedBg && computedBg !== "rgba(0, 0, 0, 0)" && computedBg !== "transparent") {
-      backgroundColor = computedBg;
-    }
-  }
+  // Extract page break positions from visible page wrappers
+  const pageBreaks = extractPageBreaks(previewElement);
+  const bgInfo = extractBackgroundInfo(previewElement);
 
-  console.log(`Using background color: ${backgroundColor}`);
+  console.log(`Found ${pageBreaks.length} page breaks: [${pageBreaks.join(', ')}]`);
+  console.log(`Background type: ${bgInfo.type}`);
 
   const styles = collectStyles();
 
-  // Get the full content from hidden measurement div or first page's content
   let fullContentHtml = "";
-  
+  let styleSourceContainer: HTMLElement | null = null;
+
   const hiddenContent = previewElement.querySelector(
     '.absolute.opacity-0.pointer-events-none'
   ) as HTMLElement;
 
   if (hiddenContent) {
-    console.log("Using hidden measurement div as content source");
     fullContentHtml = hiddenContent.innerHTML;
+    styleSourceContainer = hiddenContent;
   } else {
-    // Use first visible page's page-content
     const firstPageContent = visiblePages[0].querySelector(".page-content");
     if (firstPageContent) {
-      console.log("Using first page's .page-content as content source");
       fullContentHtml = firstPageContent.innerHTML;
+      styleSourceContainer = firstPageContent as HTMLElement;
     } else {
-      console.log("Using first page's innerHTML as content source");
       fullContentHtml = visiblePages[0].innerHTML;
+      styleSourceContainer = visiblePages[0];
     }
   }
 
-  // Remove no-print elements from content
+  // Apply computed inline styles for PDF fidelity
   const tempDiv = document.createElement("div");
   tempDiv.innerHTML = fullContentHtml;
   tempDiv.querySelectorAll(".no-print").forEach(el => el.remove());
+
+  if (styleSourceContainer) {
+    const sourceResumePage = styleSourceContainer.querySelector('.resume-page') as HTMLElement
+      || (styleSourceContainer.classList?.contains('resume-page') ? styleSourceContainer as HTMLElement : null);
+
+    if (sourceResumePage) {
+      const targetResumePage = tempDiv.querySelector('.resume-page') as HTMLElement;
+      if (targetResumePage) {
+        inlineComputedStyles(sourceResumePage, targetResumePage, true);
+
+        const resumePageDisplay = window.getComputedStyle(sourceResumePage).display;
+        const parentIsFlex = resumePageDisplay === 'flex' || resumePageDisplay === 'inline-flex';
+
+        const srcChildren = Array.from(sourceResumePage.children) as HTMLElement[];
+        const tgtChildren = Array.from(targetResumePage.children) as HTMLElement[];
+        for (let i = 0; i < Math.min(srcChildren.length, tgtChildren.length); i++) {
+          inlineComputedStyles(srcChildren[i], tgtChildren[i] as HTMLElement, false, parentIsFlex);
+        }
+
+        inlineDeepStyles(sourceResumePage, targetResumePage, 0);
+      }
+    }
+  }
+
   fullContentHtml = tempDiv.innerHTML;
 
-  console.log(`Sending content to PDF API for native generation...`);
+  // Get total content height from hidden measurement div (add buffer for margin/border precision)
+  const totalContentHeight = hiddenContent ? hiddenContent.scrollHeight + 10 : 1122;
 
-  // Send single page with full content - API will use native PDF generation
-  // which automatically handles page breaks properly
   const pagesData = [{
     html: fullContentHtml,
     pageIndex: 0,
@@ -100,15 +108,16 @@ export async function exportResumeToPDF(
 
   const response = await fetch("/api/generate-pdf", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ 
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
       pagesData,
       styles,
       filename,
-      totalPages: 1, // Not used anymore, API handles pagination
-      backgroundColor,
+      totalPages: pageBreaks.length + 1,
+      backgroundColor: bgInfo.bgColor,
+      pageBreaks,
+      totalContentHeight,
+      backgroundInfo: bgInfo,
     }),
   });
 
@@ -130,6 +139,239 @@ export async function exportResumeToPDF(
   URL.revokeObjectURL(url);
 }
 
+function extractPageBreaks(previewElement: HTMLElement): number[] {
+  const offsets: number[] = [];
+  const wrappers = previewElement.querySelectorAll('.page-content-wrapper');
+
+  for (const wrapper of Array.from(wrappers)) {
+    // Skip wrappers inside hidden measurement div
+    const hiddenParent = (wrapper as HTMLElement).closest('.absolute.opacity-0');
+    if (hiddenParent) continue;
+
+    const contentDiv = wrapper.querySelector('.page-content') as HTMLElement;
+    if (contentDiv) {
+      const transform = contentDiv.style.transform;
+      const match = transform.match(/translateY\(-(\d+(?:\.\d+)?)px\)/);
+      if (match) {
+        const offset = parseFloat(match[1]);
+        if (offset > 0) {
+          offsets.push(offset);
+        }
+      }
+    }
+  }
+
+  return offsets;
+}
+
+function extractBackgroundInfo(previewElement: HTMLElement): BackgroundExportInfo {
+  const wrappers = previewElement.querySelectorAll('.page-content-wrapper');
+
+  for (const wrapper of Array.from(wrappers)) {
+    const hiddenParent = (wrapper as HTMLElement).closest('.absolute.opacity-0');
+    if (hiddenParent) continue;
+
+    const children = wrapper.children;
+    if (children.length < 1) {
+      return { type: 'none', bgColor: '#ffffff' };
+    }
+
+    // First child is the background layer
+    const bgLayer = children[0] as HTMLElement;
+    const bgColor = bgLayer.style.backgroundColor || '#ffffff';
+    const bgImage = bgLayer.style.backgroundImage;
+
+    // Check for sidebar (second absolutely-positioned child with explicit width)
+    if (children.length >= 3) {
+      const secondChild = children[1] as HTMLElement;
+      if (secondChild.style.position === 'absolute' && secondChild.style.width && secondChild.style.height === '100%') {
+        return {
+          type: 'sidebar',
+          bgColor,
+          sidebarWidth: parseInt(secondChild.style.width) || 0,
+          sidebarColor: secondChild.style.backgroundColor || bgColor,
+        };
+      }
+    }
+
+    if (bgImage && bgImage !== 'none') {
+      return { type: 'fullpage', bgColor, bgImage };
+    }
+
+    if (bgColor && bgColor !== 'rgb(255, 255, 255)' && bgColor !== 'rgba(0, 0, 0, 0)') {
+      return { type: 'fullpage', bgColor };
+    }
+
+    return { type: 'none', bgColor: '#ffffff' };
+  }
+
+  return { type: 'none', bgColor: '#ffffff' };
+}
+
+function inlineComputedStyles(
+  source: HTMLElement,
+  target: HTMLElement,
+  isResumePage: boolean,
+  parentIsFlex: boolean = false
+): void {
+  const cs = window.getComputedStyle(source);
+
+  target.style.paddingTop = cs.paddingTop;
+  target.style.paddingRight = cs.paddingRight;
+  target.style.paddingBottom = cs.paddingBottom;
+  target.style.paddingLeft = cs.paddingLeft;
+  target.style.boxSizing = 'border-box';
+
+  target.style.marginTop = cs.marginTop;
+  target.style.marginRight = cs.marginRight;
+  target.style.marginBottom = cs.marginBottom;
+  target.style.marginLeft = cs.marginLeft;
+
+  target.style.backgroundColor = cs.backgroundColor;
+  if (cs.backgroundImage !== 'none') {
+    target.style.backgroundImage = cs.backgroundImage;
+  }
+
+  target.style.color = cs.color;
+  target.style.fontFamily = cs.fontFamily;
+  target.style.fontSize = cs.fontSize;
+  target.style.lineHeight = cs.lineHeight;
+  target.style.fontWeight = cs.fontWeight;
+  target.style.letterSpacing = cs.letterSpacing;
+  target.style.wordSpacing = cs.wordSpacing;
+  target.style.textRendering = 'geometricPrecision';
+
+  if (cs.borderBottom && cs.borderBottom !== 'none') {
+    target.style.borderBottom = cs.borderBottom;
+  }
+  if (cs.borderTop && cs.borderTop !== 'none') {
+    target.style.borderTop = cs.borderTop;
+  }
+
+  const display = cs.display;
+  if (display === 'flex' || display === 'inline-flex') {
+    target.style.display = display;
+    target.style.flexDirection = cs.flexDirection;
+    if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
+      target.style.gap = cs.gap;
+    }
+    target.style.alignItems = cs.alignItems;
+    target.style.flexWrap = cs.flexWrap;
+  } else if (display === 'grid' || display === 'inline-grid') {
+    target.style.display = display;
+    target.style.gridTemplateColumns = cs.gridTemplateColumns;
+    if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
+      target.style.gap = cs.gap;
+    }
+  }
+
+  if (!isResumePage && parentIsFlex) {
+    target.style.width = cs.width;
+    if (cs.minWidth !== '0px') target.style.minWidth = cs.minWidth;
+    if (cs.maxWidth !== 'none') target.style.maxWidth = cs.maxWidth;
+    target.style.flex = cs.flex;
+    target.style.flexShrink = cs.flexShrink;
+    target.style.flexGrow = cs.flexGrow;
+  }
+
+  if (cs.overflow !== 'visible') {
+    target.style.overflow = cs.overflow;
+  }
+
+  if (cs.position !== 'static') {
+    target.style.position = cs.position;
+  }
+}
+
+function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: number = 0): void {
+  if (depth > 3) return;
+
+  const srcChildren = Array.from(source.children) as HTMLElement[];
+  const tgtChildren = Array.from(target.children) as HTMLElement[];
+
+  for (let i = 0; i < Math.min(srcChildren.length, tgtChildren.length); i++) {
+    const srcChild = srcChildren[i];
+    const tgtChild = tgtChildren[i];
+    const tag = srcChild.tagName.toLowerCase();
+
+    if (tag === 'section' || srcChild.classList.contains('resume-item') ||
+        tag === 'header' || tag === 'main' || tag === 'aside' || tag === 'nav' ||
+        tag === 'div' || tag === 'ul' || tag === 'ol') {
+      const cs = window.getComputedStyle(srcChild);
+      const parentDisplay = window.getComputedStyle(srcChild.parentElement!).display;
+      const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
+
+      tgtChild.style.paddingTop = cs.paddingTop;
+      tgtChild.style.paddingRight = cs.paddingRight;
+      tgtChild.style.paddingBottom = cs.paddingBottom;
+      tgtChild.style.paddingLeft = cs.paddingLeft;
+      tgtChild.style.marginTop = cs.marginTop;
+      tgtChild.style.marginRight = cs.marginRight;
+      tgtChild.style.marginBottom = cs.marginBottom;
+      tgtChild.style.marginLeft = cs.marginLeft;
+      tgtChild.style.boxSizing = 'border-box';
+
+      if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+        tgtChild.style.backgroundColor = cs.backgroundColor;
+      }
+      if (cs.backgroundImage !== 'none') {
+        tgtChild.style.backgroundImage = cs.backgroundImage;
+      }
+
+      tgtChild.style.color = cs.color;
+      tgtChild.style.fontFamily = cs.fontFamily;
+      tgtChild.style.fontSize = cs.fontSize;
+      tgtChild.style.lineHeight = cs.lineHeight;
+      tgtChild.style.fontWeight = cs.fontWeight;
+
+      const display = cs.display;
+      if (display === 'flex' || display === 'inline-flex') {
+        tgtChild.style.display = display;
+        tgtChild.style.flexDirection = cs.flexDirection;
+        if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
+          tgtChild.style.gap = cs.gap;
+        }
+        tgtChild.style.alignItems = cs.alignItems;
+        tgtChild.style.flexWrap = cs.flexWrap;
+      } else if (display === 'grid' || display === 'inline-grid') {
+        tgtChild.style.display = display;
+        tgtChild.style.gridTemplateColumns = cs.gridTemplateColumns;
+        if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
+          tgtChild.style.gap = cs.gap;
+        }
+      }
+
+      if (parentIsFlex) {
+        tgtChild.style.width = cs.width;
+        tgtChild.style.flex = cs.flex;
+      }
+
+      if (cs.overflow !== 'visible') {
+        tgtChild.style.overflow = cs.overflow;
+      }
+
+      if (cs.borderBottom && cs.borderBottom !== 'none') {
+        tgtChild.style.borderBottom = cs.borderBottom;
+      }
+
+      inlineDeepStyles(srcChild, tgtChild, depth + 1);
+    } else if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' ||
+               tag === 'h5' || tag === 'h6' || tag === 'p' || tag === 'li' || tag === 'span') {
+      const cs = window.getComputedStyle(srcChild);
+      tgtChild.style.fontFamily = cs.fontFamily;
+      tgtChild.style.fontSize = cs.fontSize;
+      tgtChild.style.lineHeight = cs.lineHeight;
+      tgtChild.style.fontWeight = cs.fontWeight;
+      tgtChild.style.color = cs.color;
+      tgtChild.style.letterSpacing = cs.letterSpacing;
+      tgtChild.style.marginTop = cs.marginTop;
+      tgtChild.style.marginBottom = cs.marginBottom;
+      tgtChild.style.paddingTop = cs.paddingTop;
+      tgtChild.style.paddingBottom = cs.paddingBottom;
+    }
+  }
+}
+
 function collectStyles(): string {
   const styles: string[] = [];
 
@@ -137,6 +379,9 @@ function collectStyles(): string {
     try {
       if (sheet.cssRules) {
         for (const rule of Array.from(sheet.cssRules)) {
+          // Skip @media print rules — they conflict with Puppeteer PDF generation
+          // (e.g. padding: 0 !important overrides template-specific inline padding)
+          if (rule.cssText.trimStart().startsWith('@media print')) continue;
           styles.push(rule.cssText);
         }
       }

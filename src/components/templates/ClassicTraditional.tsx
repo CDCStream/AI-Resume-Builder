@@ -14,7 +14,7 @@ export default function ClassicTraditional({ resume }: TemplateProps) {
   const orderedSections = useOrderedSections(resume);
 
   return (
-    <div className="resume-page w-[210mm] min-h-[297mm] bg-white p-12 shadow-lg print:shadow-none font-serif">
+    <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg font-serif" style={{ padding: '48px' }}>
       <header className="text-center mb-8 pb-6 border-b-2 border-gray-900">
         <h1 className="text-4xl font-bold text-gray-900 mb-2 tracking-wide">{basics?.name || "Your Name"}</h1>
         <p className="text-lg text-gray-600 mb-3">{basics?.label || "Professional Title"}</p>
