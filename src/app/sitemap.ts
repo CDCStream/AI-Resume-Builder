@@ -1,21 +1,32 @@
 import { MetadataRoute } from 'next';
-import { getAllPosts } from '@/lib/blog';
+import { createClient } from '@supabase/supabase-js';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://linimpact.ai';
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = 'https://www.linimpact.ai';
   
-  // Get all blog posts
+  // Get all blog posts from Supabase
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
-    const posts = getAllPosts();
-    blogPosts = posts.map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.date),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }));
+    const { data: posts } = await supabase
+      .from('blog_posts')
+      .select('slug, published_at, updated_at')
+      .eq('status', 'published');
+    
+    if (posts) {
+      blogPosts = posts.map((post) => ({
+        url: `${baseUrl}/blog/${post.slug}`,
+        lastModified: new Date(post.updated_at || post.published_at),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      }));
+    }
   } catch (e) {
-    // Blog posts not available during build
+    console.error('Error fetching blog posts for sitemap:', e);
   }
 
   return [
@@ -44,6 +55,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
     
     // Blog index
     {
@@ -55,31 +78,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     
     // Blog posts
     ...blogPosts,
-    
-    // Feature pages (can be added later)
-    // {
-    //   url: `${baseUrl}/features/ats-checker`,
-    //   lastModified: new Date(),
-    //   changeFrequency: 'monthly',
-    //   priority: 0.8,
-    // },
-    // {
-    //   url: `${baseUrl}/features/cover-letter-generator`,
-    //   lastModified: new Date(),
-    //   changeFrequency: 'monthly',
-    //   priority: 0.8,
-    // },
-    // {
-    //   url: `${baseUrl}/templates`,
-    //   lastModified: new Date(),
-    //   changeFrequency: 'weekly',
-    //   priority: 0.8,
-    // },
-    // {
-    //   url: `${baseUrl}/resume-examples`,
-    //   lastModified: new Date(),
-    //   changeFrequency: 'weekly',
-    //   priority: 0.7,
-    // },
   ];
 }

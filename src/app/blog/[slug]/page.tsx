@@ -1,11 +1,17 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getPostBySlug, getAllPosts } from "@/lib/blog";
 import { MDXComponents } from "@/components/blog/MDXComponents";
 import { BlogPostTracker } from "@/components/blog/BlogPostTracker";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, User, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
+
+// Supabase client for server-side
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Authors with realistic AI-generated avatars
 const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = {
@@ -34,18 +40,51 @@ function getAuthorInfo(authorName: string) {
   };
 }
 
+function calculateReadingTime(content: string): string {
+  const plainText = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const wordCount = plainText.split(" ").length;
+  const minutes = Math.ceil(wordCount / 200);
+  return `${minutes} min read`;
+}
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 60;
+
+async function getPost(slug: string) {
+  const { data: post, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
+
+  if (error || !post) {
+    return null;
+  }
+
+  return post;
+}
+
+async function getAllPosts() {
+  const { data: posts } = await supabase
+    .from("blog_posts")
+    .select("slug")
+    .eq("status", "published");
+
+  return posts || [];
+}
+
 export async function generateStaticParams() {
-  const posts = getAllPosts();
+  const posts = await getAllPosts();
   return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPost(slug);
   
   if (!post) {
     return { title: "Post Not Found" };
@@ -57,25 +96,27 @@ export async function generateMetadata({ params }: Props) {
     openGraph: {
       title: post.title,
       description: post.description,
-      images: [post.image],
+      images: post.image ? [post.image] : [],
     },
   };
 }
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPost(slug);
 
   if (!post) {
     notFound();
   }
 
   const author = getAuthorInfo(post.author);
+  const readingTime = calculateReadingTime(post.content);
 
   return (
     <div className="min-h-screen bg-white">
       {/* Mixpanel tracking */}
       <BlogPostTracker slug={slug} title={post.title} author={post.author} />
+      
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -97,22 +138,30 @@ export default async function BlogPostPage({ params }: Props) {
       </nav>
 
       {/* Hero Image */}
-      <div className="relative h-[400px] bg-gray-900">
-        <img
-          src={post.image}
-          alt={post.title}
-          className="w-full h-full object-cover opacity-80"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+      <div className="relative h-[400px] bg-gradient-to-br from-blue-600 to-cyan-600">
+        {post.image ? (
+          <>
+            <img
+              src={post.image}
+              alt={post.title}
+              className="w-full h-full object-cover opacity-80"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-8xl opacity-30">📄</span>
+          </div>
+        )}
       </div>
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 -mt-32 relative z-10">
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
           {/* Tags */}
-          {post.tags.length > 0 && (
+          {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
-              {post.tags.map(tag => (
+              {post.tags.map((tag: string) => (
                 <span 
                   key={tag}
                   className="text-xs font-medium px-3 py-1 bg-blue-50 text-blue-600 rounded-full"
@@ -143,7 +192,7 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
             <span className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              {new Date(post.date).toLocaleDateString('en-US', { 
+              {new Date(post.published_at).toLocaleDateString('en-US', { 
                 month: 'long', 
                 day: 'numeric',
                 year: 'numeric'
@@ -151,21 +200,15 @@ export default async function BlogPostPage({ params }: Props) {
             </span>
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              {post.readingTime}
+              {readingTime}
             </span>
           </div>
 
-          {/* Content */}
-          {post.contentType === 'html' ? (
-            <div 
-              className="blog-content"
-              dangerouslySetInnerHTML={{ __html: post.content }} 
-            />
-          ) : (
-            <div className="prose prose-lg max-w-none">
-              <MDXRemote source={post.content} components={MDXComponents} />
-            </div>
-          )}
+          {/* Content - Always render as HTML since Outrank sends HTML */}
+          <div 
+            className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-lg"
+            dangerouslySetInnerHTML={{ __html: post.content }} 
+          />
 
           {/* Share */}
           <div className="mt-12 pt-8 border-t border-gray-200">
@@ -174,7 +217,7 @@ export default async function BlogPostPage({ params }: Props) {
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" asChild>
                   <a 
-                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://linimpact.ai/blog/${post.slug}`)}`}
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://www.linimpact.ai/blog/${post.slug}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -183,7 +226,7 @@ export default async function BlogPostPage({ params }: Props) {
                 </Button>
                 <Button variant="outline" size="sm" asChild>
                   <a 
-                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://linimpact.ai/blog/${post.slug}`)}`}
+                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://www.linimpact.ai/blog/${post.slug}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
 
-// Outrank webhook secret for security (set this in your environment variables)
+// Outrank webhook secret for security
 const WEBHOOK_SECRET = process.env.OUTRANK_WEBHOOK_SECRET;
 
-// Default authors mapping - Outrank'teki yazar adlarını buradaki yazarlara eşle
+// Supabase admin client for server-side operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// Default authors mapping
 const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = {
   "Sarah Chen": {
     name: "Sarah Chen",
@@ -58,28 +63,23 @@ function generateSlug(title: string): string {
 }
 
 function extractDescription(content: string, maxLength: number = 160): string {
-  // Try to get meta description or first paragraph
   const metaMatch = content.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
   if (metaMatch) return metaMatch[1].slice(0, maxLength);
 
-  // Get first paragraph text
   const pMatch = content.match(/<p[^>]*>([^<]+)<\/p>/i);
   if (pMatch) {
     const text = pMatch[1].replace(/\s+/g, " ").trim();
     return text.length > maxLength ? text.slice(0, maxLength - 3) + "..." : text;
   }
 
-  // Strip HTML and get first 160 chars
   const plainText = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   return plainText.length > maxLength ? plainText.slice(0, maxLength - 3) + "..." : plainText;
 }
 
 function extractCoverImage(content: string): string {
-  // Look for first image in content
   const imgMatch = content.match(/<img[^>]*src=["']([^"']+)["']/i);
   if (imgMatch) return imgMatch[1];
 
-  // Look for background-image
   const bgMatch = content.match(/background-image:\s*url\(['"]?([^'")\s]+)['"]?\)/i);
   if (bgMatch) return bgMatch[1];
 
@@ -103,22 +103,18 @@ function extractTags(content: string, categories?: string[]): string[] {
     }
   }
 
-  // Add categories as tags
   if (categories && categories.length > 0) {
     foundTags.push(...categories.map(c => c.toLowerCase()));
   }
 
-  // Remove duplicates and limit
   return [...new Set(foundTags)].slice(0, 5);
 }
 
 function mapAuthor(authorName?: string): string {
   if (!authorName) return DEFAULT_AUTHOR;
   
-  // Check if author exists in our mapping
   if (AUTHORS[authorName]) return authorName;
   
-  // Try to find a partial match
   const lowerAuthor = authorName.toLowerCase();
   for (const key of Object.keys(AUTHORS)) {
     if (key.toLowerCase().includes(lowerAuthor) || lowerAuthor.includes(key.toLowerCase())) {
@@ -135,9 +131,9 @@ export async function POST(request: NextRequest) {
     if (WEBHOOK_SECRET) {
       const signature = request.headers.get("x-webhook-signature") || 
                        request.headers.get("x-outrank-signature") ||
-                       request.headers.get("authorization");
+                       request.headers.get("authorization")?.replace("Bearer ", "");
       
-      if (signature !== WEBHOOK_SECRET && signature !== `Bearer ${WEBHOOK_SECRET}`) {
+      if (signature !== WEBHOOK_SECRET) {
         console.error("Webhook signature mismatch");
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
@@ -150,7 +146,6 @@ export async function POST(request: NextRequest) {
     if (payload.event === "post.published" || payload.event === "article.published" || payload.event === "content.published") {
       const data = payload.data;
       
-      // Extract or generate required fields
       const title = data.title || data.meta_title || "Untitled Post";
       const slug = data.slug || generateSlug(title);
       const content = data.content;
@@ -158,36 +153,32 @@ export async function POST(request: NextRequest) {
       const coverImage = data.featured_image || data.cover_image || data.image || extractCoverImage(content);
       const author = mapAuthor(data.author);
       const tags = data.tags || extractTags(content, data.categories);
-      const publishDate = data.published_at || new Date().toISOString().split("T")[0];
+      const publishDate = data.published_at || new Date().toISOString();
 
-      // Create frontmatter
-      const frontmatter = `---
-title: "${title.replace(/"/g, '\\"')}"
-description: "${description.replace(/"/g, '\\"')}"
-date: "${publishDate}"
-author: "${author}"
-image: "${coverImage}"
-tags: [${tags.map(t => `"${t}"`).join(", ")}]
-contentType: "html"
----
+      // Upsert to Supabase
+      const { error } = await supabaseAdmin
+        .from("blog_posts")
+        .upsert({
+          slug,
+          title,
+          description,
+          content,
+          author,
+          image: coverImage,
+          tags,
+          published_at: publishDate,
+          updated_at: new Date().toISOString(),
+          status: "published"
+        }, {
+          onConflict: "slug"
+        });
 
-`;
-
-      // Combine frontmatter with content
-      const fileContent = frontmatter + content;
-
-      // Save to blog content directory
-      const blogDir = path.join(process.cwd(), "content", "blog");
-      
-      // Ensure directory exists
-      if (!fs.existsSync(blogDir)) {
-        fs.mkdirSync(blogDir, { recursive: true });
+      if (error) {
+        console.error("Supabase error:", error);
+        return NextResponse.json({ error: "Database error", details: error.message }, { status: 500 });
       }
 
-      const filePath = path.join(blogDir, `${slug}.html`);
-      fs.writeFileSync(filePath, fileContent, "utf-8");
-
-      console.log(`Blog post created: ${slug}`);
+      console.log(`Blog post created/updated: ${slug}`);
 
       return NextResponse.json({ 
         success: true, 
@@ -206,47 +197,30 @@ contentType: "html"
         return NextResponse.json({ error: "Slug or title required for updates" }, { status: 400 });
       }
 
-      const blogDir = path.join(process.cwd(), "content", "blog");
-      const htmlPath = path.join(blogDir, `${slug}.html`);
-      const mdxPath = path.join(blogDir, `${slug}.mdx`);
-
-      // Find existing file
-      let existingPath = fs.existsSync(htmlPath) ? htmlPath : (fs.existsSync(mdxPath) ? mdxPath : null);
-
-      if (!existingPath) {
-        // If not found, create new
-        return POST(request);
-      }
-
-      // Update the file
       const title = data.title || "Untitled Post";
       const content = data.content;
       const description = data.description || data.excerpt || extractDescription(content);
       const coverImage = data.featured_image || data.cover_image || data.image || extractCoverImage(content);
       const author = mapAuthor(data.author);
       const tags = data.tags || extractTags(content, data.categories);
-      const publishDate = data.published_at || new Date().toISOString().split("T")[0];
 
-      const frontmatter = `---
-title: "${title.replace(/"/g, '\\"')}"
-description: "${description.replace(/"/g, '\\"')}"
-date: "${publishDate}"
-author: "${author}"
-image: "${coverImage}"
-tags: [${tags.map(t => `"${t}"`).join(", ")}]
-contentType: "html"
----
+      const { error } = await supabaseAdmin
+        .from("blog_posts")
+        .update({
+          title,
+          description,
+          content,
+          author,
+          image: coverImage,
+          tags,
+          updated_at: new Date().toISOString()
+        })
+        .eq("slug", slug);
 
-`;
-
-      const fileContent = frontmatter + content;
-      
-      // Delete old file if exists and create new HTML
-      if (existingPath !== htmlPath && fs.existsSync(existingPath)) {
-        fs.unlinkSync(existingPath);
+      if (error) {
+        console.error("Supabase update error:", error);
+        return NextResponse.json({ error: "Database error", details: error.message }, { status: 500 });
       }
-      
-      fs.writeFileSync(htmlPath, fileContent, "utf-8");
 
       console.log(`Blog post updated: ${slug}`);
 
@@ -267,17 +241,17 @@ contentType: "html"
         return NextResponse.json({ error: "Slug or title required" }, { status: 400 });
       }
 
-      const blogDir = path.join(process.cwd(), "content", "blog");
-      const htmlPath = path.join(blogDir, `${slug}.html`);
-      const mdxPath = path.join(blogDir, `${slug}.mdx`);
+      const { error } = await supabaseAdmin
+        .from("blog_posts")
+        .delete()
+        .eq("slug", slug);
 
-      if (fs.existsSync(htmlPath)) {
-        fs.unlinkSync(htmlPath);
-        console.log(`Blog post deleted: ${slug}`);
-      } else if (fs.existsSync(mdxPath)) {
-        fs.unlinkSync(mdxPath);
-        console.log(`Blog post deleted: ${slug}`);
+      if (error) {
+        console.error("Supabase delete error:", error);
+        return NextResponse.json({ error: "Database error", details: error.message }, { status: 500 });
       }
+
+      console.log(`Blog post deleted: ${slug}`);
 
       return NextResponse.json({ 
         success: true, 
@@ -286,7 +260,6 @@ contentType: "html"
       });
     }
 
-    // Unknown event
     console.log(`Unknown webhook event: ${payload.event}`);
     return NextResponse.json({ 
       success: true, 
@@ -302,11 +275,9 @@ contentType: "html"
   }
 }
 
-// GET endpoint for webhook verification (some services require this)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   
-  // Handle verification challenges
   const challenge = searchParams.get("challenge") || searchParams.get("hub.challenge");
   if (challenge) {
     return new NextResponse(challenge, { status: 200 });

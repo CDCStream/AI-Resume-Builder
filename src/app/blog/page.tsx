@@ -1,8 +1,13 @@
 import Link from "next/link";
-import Image from "next/image";
-import { getAllPosts } from "@/lib/blog";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Clock, User, ArrowLeft } from "lucide-react";
+import { ArrowRight, Calendar, Clock } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
+
+// Supabase client for server-side
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Authors with realistic AI-generated avatars
 const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = {
@@ -31,13 +36,37 @@ function getAuthorInfo(authorName: string) {
   };
 }
 
+function calculateReadingTime(content: string): string {
+  const plainText = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const wordCount = plainText.split(" ").length;
+  const minutes = Math.ceil(wordCount / 200);
+  return `${minutes} min read`;
+}
+
 export const metadata = {
   title: "Career Insights & Expert Tips | LinImpact.ai Blog",
   description: "Discover proven strategies for resume writing, job searching, and career growth. Expert advice from LinImpact.ai to help you land your dream job.",
 };
 
-export default function BlogPage() {
-  const posts = getAllPosts();
+export const revalidate = 60; // Revalidate every 60 seconds
+
+async function getPosts() {
+  const { data: posts, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching posts:", error);
+    return [];
+  }
+
+  return posts || [];
+}
+
+export default async function BlogPage() {
+  const posts = await getPosts();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -108,20 +137,26 @@ export default function BlogPage() {
                 className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
               >
                 <Link href={`/blog/${post.slug}`} className="block">
-                  <div className="relative aspect-video">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-cyan-100">
+                    {post.image ? (
+                      <img
+                        src={post.image}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-4xl">📄</span>
+                      </div>
+                    )}
                   </div>
                 </Link>
                 
                 <div className="p-6 flex flex-col flex-1">
                   {/* Tags */}
-                  {post.tags.length > 0 && (
+                  {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {post.tags.slice(0, 2).map(tag => (
+                      {post.tags.slice(0, 2).map((tag: string) => (
                         <span 
                           key={tag}
                           className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-600 rounded-full"
@@ -159,7 +194,7 @@ export default function BlogPage() {
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        {new Date(post.date).toLocaleDateString('en-US', { 
+                        {new Date(post.published_at).toLocaleDateString('en-US', { 
                           month: 'short', 
                           day: 'numeric',
                           year: 'numeric'
@@ -167,7 +202,7 @@ export default function BlogPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        {post.readingTime}
+                        {calculateReadingTime(post.content)}
                       </span>
                     </div>
                   </div>
