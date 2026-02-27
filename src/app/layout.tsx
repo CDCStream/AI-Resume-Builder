@@ -99,6 +99,13 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
         />
+        {/* Ahrefs Web Analytics */}
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="wbGYng8gzWDJQHAsZKprxg"
+          async
+          strategy="afterInteractive"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
