@@ -31,28 +31,6 @@ const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = 
 
 const DEFAULT_AUTHOR = "Sarah Chen";
 
-interface OutrankWebhookPayload {
-  event: string;
-  data: {
-    id?: string;
-    title: string;
-    slug?: string;
-    content: string;
-    excerpt?: string;
-    description?: string;
-    author?: string;
-    featured_image?: string;
-    cover_image?: string;
-    image?: string;
-    tags?: string[];
-    categories?: string[];
-    published_at?: string;
-    status?: string;
-    meta_title?: string;
-    meta_description?: string;
-  };
-}
-
 function generateSlug(title: string): string {
   return title
     .toLowerCase()
@@ -139,108 +117,56 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const payload: OutrankWebhookPayload = await request.json();
-    console.log("Outrank webhook received:", payload.event);
+    const payload = await request.json();
+    
+    // Log the full payload for debugging
+    console.log("Outrank webhook payload:", JSON.stringify(payload, null, 2));
 
-    // Handle different event types
-    if (payload.event === "post.published" || payload.event === "article.published" || payload.event === "content.published") {
-      const data = payload.data;
-      
-      const title = data.title || data.meta_title || "Untitled Post";
-      const slug = data.slug || generateSlug(title);
-      const content = data.content;
-      const description = data.description || data.excerpt || data.meta_description || extractDescription(content);
-      const coverImage = data.featured_image || data.cover_image || data.image || extractCoverImage(content);
-      const author = mapAuthor(data.author);
-      const tags = data.tags || extractTags(content, data.categories);
-      const publishDate = data.published_at || new Date().toISOString();
+    // Try to extract data - Outrank may send different formats
+    // Format 1: { event: "post.published", data: { ... } }
+    // Format 2: { title: "...", content: "...", ... } (direct data)
+    // Format 3: { article: { title: "...", content: "..." } }
+    // Format 4: { post: { title: "...", content: "..." } }
+    
+    let articleData: Record<string, unknown> | null = null;
+    let eventType = payload.event || payload.type || payload.action || "publish";
 
-      // Upsert to Supabase
-      const { error } = await supabaseAdmin
-        .from("blog_posts")
-        .upsert({
-          slug,
-          title,
-          description,
-          content,
-          author,
-          image: coverImage,
-          tags,
-          published_at: publishDate,
-          updated_at: new Date().toISOString(),
-          status: "published"
-        }, {
-          onConflict: "slug"
-        });
-
-      if (error) {
-        console.error("Supabase error:", error);
-        return NextResponse.json({ error: "Database error", details: error.message }, { status: 500 });
-      }
-
-      console.log(`Blog post created/updated: ${slug}`);
-
-      return NextResponse.json({ 
-        success: true, 
-        message: "Blog post created successfully",
-        slug,
-        url: `/blog/${slug}`
-      });
+    // Try to find the article data in various locations
+    if (payload.data && typeof payload.data === "object") {
+      articleData = payload.data;
+    } else if (payload.article && typeof payload.article === "object") {
+      articleData = payload.article;
+    } else if (payload.post && typeof payload.post === "object") {
+      articleData = payload.post;
+    } else if (payload.content && typeof payload.content === "object") {
+      articleData = payload.content;
+    } else if (payload.title || payload.content || payload.html || payload.body) {
+      // Direct payload - the payload itself is the article data
+      articleData = payload;
     }
 
-    // Handle post updates
-    if (payload.event === "post.updated" || payload.event === "article.updated" || payload.event === "content.updated") {
-      const data = payload.data;
-      const slug = data.slug || (data.title ? generateSlug(data.title) : null);
-      
-      if (!slug) {
-        return NextResponse.json({ error: "Slug or title required for updates" }, { status: 400 });
-      }
-
-      const title = data.title || "Untitled Post";
-      const content = data.content;
-      const description = data.description || data.excerpt || extractDescription(content);
-      const coverImage = data.featured_image || data.cover_image || data.image || extractCoverImage(content);
-      const author = mapAuthor(data.author);
-      const tags = data.tags || extractTags(content, data.categories);
-
-      const { error } = await supabaseAdmin
-        .from("blog_posts")
-        .update({
-          title,
-          description,
-          content,
-          author,
-          image: coverImage,
-          tags,
-          updated_at: new Date().toISOString()
-        })
-        .eq("slug", slug);
-
-      if (error) {
-        console.error("Supabase update error:", error);
-        return NextResponse.json({ error: "Database error", details: error.message }, { status: 500 });
-      }
-
-      console.log(`Blog post updated: ${slug}`);
-
+    if (!articleData) {
+      console.error("Could not find article data in payload");
       return NextResponse.json({ 
-        success: true, 
-        message: "Blog post updated successfully",
-        slug,
-        url: `/blog/${slug}`
-      });
+        error: "Invalid payload format", 
+        received: Object.keys(payload)
+      }, { status: 400 });
     }
 
-    // Handle post deletion
-    if (payload.event === "post.deleted" || payload.event === "article.deleted" || payload.event === "content.deleted") {
-      const data = payload.data;
-      const slug = data.slug || (data.title ? generateSlug(data.title) : null);
-      
-      if (!slug) {
-        return NextResponse.json({ error: "Slug or title required" }, { status: 400 });
-      }
+    // Extract fields with multiple possible names
+    const title = (articleData.title || articleData.headline || articleData.name || "Untitled Post") as string;
+    const content = (articleData.content || articleData.html || articleData.body || articleData.text || "") as string;
+    const slug = (articleData.slug || articleData.url_slug || generateSlug(title)) as string;
+    const description = (articleData.description || articleData.excerpt || articleData.summary || articleData.meta_description || extractDescription(content)) as string;
+    const coverImage = (articleData.featured_image || articleData.cover_image || articleData.image || articleData.thumbnail || articleData.og_image || extractCoverImage(content)) as string;
+    const author = mapAuthor(articleData.author as string | undefined);
+    const rawTags = articleData.tags || articleData.keywords || articleData.categories;
+    const tags = Array.isArray(rawTags) ? rawTags : extractTags(content, Array.isArray(articleData.categories) ? articleData.categories as string[] : undefined);
+    const publishDate = (articleData.published_at || articleData.publish_date || articleData.created_at || new Date().toISOString()) as string;
+    const status = (articleData.status || "published") as string;
 
+    // Check if this is a delete event
+    if (eventType.includes("delete") || eventType.includes("unpublish") || eventType.includes("remove")) {
       const { error } = await supabaseAdmin
         .from("blog_posts")
         .delete()
@@ -252,18 +178,52 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`Blog post deleted: ${slug}`);
-
-      return NextResponse.json({ 
-        success: true, 
-        message: "Blog post deleted successfully",
-        slug
-      });
+      return NextResponse.json({ success: true, message: "Blog post deleted", slug });
     }
 
-    console.log(`Unknown webhook event: ${payload.event}`);
+    // Validate required fields
+    if (!title || title === "Untitled Post") {
+      console.warn("No title found, using default");
+    }
+    
+    if (!content) {
+      console.error("No content found in payload");
+      return NextResponse.json({ 
+        error: "Content is required",
+        received_fields: Object.keys(articleData)
+      }, { status: 400 });
+    }
+
+    // Upsert to Supabase
+    const { error } = await supabaseAdmin
+      .from("blog_posts")
+      .upsert({
+        slug,
+        title,
+        description,
+        content,
+        author,
+        image: coverImage,
+        tags,
+        published_at: publishDate,
+        updated_at: new Date().toISOString(),
+        status: status === "draft" ? "draft" : "published"
+      }, {
+        onConflict: "slug"
+      });
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json({ error: "Database error", details: error.message }, { status: 500 });
+    }
+
+    console.log(`Blog post created/updated: ${slug}`);
+
     return NextResponse.json({ 
       success: true, 
-      message: `Event ${payload.event} received but not processed`
+      message: "Blog post saved successfully",
+      slug,
+      url: `/blog/${slug}`
     });
 
   } catch (error) {
