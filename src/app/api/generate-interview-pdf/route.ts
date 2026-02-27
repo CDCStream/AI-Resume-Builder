@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
+
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   let browser = null;
@@ -18,13 +21,10 @@ export async function POST(request: NextRequest) {
     console.log("Generating Interview Guide PDF...");
 
     browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: { width: 794, height: 1122 },
+      executablePath: await chromium.executablePath(),
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-      ],
     });
 
     const page = await browser.newPage();
