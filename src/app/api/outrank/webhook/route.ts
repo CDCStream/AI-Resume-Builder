@@ -120,43 +120,36 @@ export async function POST(request: NextRequest) {
     const payload = await request.json();
     
     // Log the full payload for debugging
-    console.log("Outrank webhook payload:", JSON.stringify(payload, null, 2));
+    console.log("Outrank webhook full payload:", JSON.stringify(payload));
 
-    // Try to extract data - Outrank may send different formats
-    // Format 1: { event: "post.published", data: { ... } }
-    // Format 2: { title: "...", content: "...", ... } (direct data)
-    // Format 3: { article: { title: "...", content: "..." } }
-    // Format 4: { post: { title: "...", content: "..." } }
+    // Handle Outrank's { articles: [...] } format
+    let articleData: Record<string, unknown>;
     
-    let articleData: Record<string, unknown> | null = null;
-    let eventType = payload.event || payload.type || payload.action || "publish";
-
-    // Try to find the article data in various locations
     if (payload.articles && Array.isArray(payload.articles) && payload.articles.length > 0) {
-      // Outrank sends { articles: [...] } format
       articleData = payload.articles[0];
-    } else if (payload.data && typeof payload.data === "object") {
+      console.log("Found article in articles array, keys:", Object.keys(articleData));
+      console.log("Article data sample:", JSON.stringify(articleData).substring(0, 500));
+    } else if (payload.data) {
       articleData = payload.data;
-    } else if (payload.article && typeof payload.article === "object") {
+    } else if (payload.article) {
       articleData = payload.article;
-    } else if (payload.post && typeof payload.post === "object") {
+    } else if (payload.post) {
       articleData = payload.post;
-    } else if (payload.content && typeof payload.content === "object") {
-      articleData = payload.content;
     } else if (payload.title || payload.content || payload.html || payload.body) {
-      // Direct payload - the payload itself is the article data
       articleData = payload;
-    }
-
-    if (!articleData) {
-      console.error("Could not find article data in payload");
+    } else {
+      console.error("Could not find article data. Payload keys:", Object.keys(payload));
+      // Return full payload structure for debugging
       return NextResponse.json({ 
         error: "Invalid payload format", 
-        received: Object.keys(payload)
+        received: Object.keys(payload),
+        payload_preview: JSON.stringify(payload).substring(0, 1000)
       }, { status: 400 });
     }
     
-    console.log("Extracted article data keys:", Object.keys(articleData));
+    console.log("Article data keys:", Object.keys(articleData));
+    
+    const eventType = payload.event || payload.type || payload.action || "publish";
 
     // Extract fields with multiple possible names
     const title = (articleData.title || articleData.headline || articleData.name || "Untitled Post") as string;
