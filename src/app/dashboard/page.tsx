@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Clock, Pencil, Search, Sparkles, Loader2, LogOut, User, Settings, Crown, CreditCard, PenSquare } from "lucide-react";
+import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Clock, Pencil, Search, Sparkles, Loader2, LogOut, User, Settings, Crown, CreditCard } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -287,10 +287,6 @@ export default function DashboardPage() {
                 <DropdownMenuItem onClick={() => router.push("/billing")} className="cursor-pointer">
                   <CreditCard className="w-4 h-4 mr-2" />
                   Billing
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/admin/blog")} className="cursor-pointer">
-                  <PenSquare className="w-4 h-4 mr-2" />
-                  Blog Admin
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
