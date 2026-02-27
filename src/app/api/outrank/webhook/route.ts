@@ -142,10 +142,10 @@ export async function POST(request: NextRequest) {
       console.log("Processing article with keys:", Object.keys(articleData));
 
       const title = findString(articleData, ["title", "headline", "name", "meta_title"]) || "Untitled Post";
-      const content = findString(articleData, ["content", "html", "body", "text", "article_html", "article_content", "markup"]);
+      const content = findString(articleData, ["content_html", "content", "html", "body", "text", "content_markdown", "article_html", "article_content", "markup"]);
       const slug = findString(articleData, ["slug", "url_slug", "permalink"]) || generateSlug(title);
-      const description = findString(articleData, ["description", "excerpt", "summary", "meta_description"]) || (content ? extractDescription(content) : "");
-      const coverImage = findString(articleData, ["featured_image", "cover_image", "image", "thumbnail", "og_image", "featuredImage", "coverImage"]);
+      const description = findString(articleData, ["meta_description", "description", "excerpt", "summary"]) || (content ? extractDescription(content) : "");
+      const coverImage = findString(articleData, ["image_url", "featured_image", "cover_image", "image", "thumbnail", "og_image", "featuredImage", "coverImage"]);
       const tags = findArray(articleData, ["tags", "keywords", "categories"]);
 
       // If STILL no content, try to find it recursively in nested objects
