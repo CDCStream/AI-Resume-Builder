@@ -138,12 +138,12 @@ export const trackPricingPageViewed = (source?: string) => {
   trackEvent("Pricing Page Viewed", { source });
 };
 
-export const trackPlanSelected = (plan: string, price: number) => {
-  trackEvent("Plan Selected", { plan, price });
+export const trackPlanSelected = (planId: string, planName: string, price: number) => {
+  trackEvent("Plan Selected", { plan_id: planId, plan_name: planName, price });
 };
 
-export const trackCheckoutStarted = (plan: string, price: number) => {
-  trackEvent("Checkout Started", { plan, price });
+export const trackCheckoutStarted = (planId: string, planName: string, price: number) => {
+  trackEvent("Checkout Started", { plan_id: planId, plan_name: planName, price });
 };
 
 export const trackSubscriptionActivated = (plan: string, price: number, billingPeriod: string) => {

@@ -45,7 +45,7 @@ export async function POST() {
     try {
       await polar.subscriptions.update({
         id: subscription.polar_subscription_id,
-        body: {
+        subscriptionUpdate: {
           cancelAtPeriodEnd: true,
         },
       });
