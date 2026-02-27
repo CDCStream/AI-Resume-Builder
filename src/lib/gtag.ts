@@ -1,4 +1,5 @@
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+export const GA_ADS_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ADS_MEASUREMENT_ID;
 export const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 
 // Check if GA is available

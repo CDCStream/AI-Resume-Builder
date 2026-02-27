@@ -3,7 +3,7 @@
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { GA_MEASUREMENT_ID, GOOGLE_ADS_ID, pageview, captureUTMParams } from "@/lib/gtag";
+import { GA_MEASUREMENT_ID, GA_ADS_MEASUREMENT_ID, GOOGLE_ADS_ID, pageview, captureUTMParams } from "@/lib/gtag";
 
 export function GoogleAnalytics() {
   const pathname = usePathname();
@@ -25,6 +25,10 @@ export function GoogleAnalytics() {
     ? `gtag('config', '${GOOGLE_ADS_ID}');`
     : "";
 
+  const adsGAConfigLine = GA_ADS_MEASUREMENT_ID
+    ? `gtag('config', '${GA_ADS_MEASUREMENT_ID}');`
+    : "";
+
   return (
     <>
       <Script
@@ -42,6 +46,7 @@ export function GoogleAnalytics() {
             gtag('config', '${GA_MEASUREMENT_ID}', {
               page_path: window.location.pathname,
             });
+            ${adsGAConfigLine}
             ${adsConfigLine}
           `,
         }}
