@@ -37,7 +37,8 @@ export default function BillingPage() {
     trialDaysRemaining, 
     plan, 
     daysRemaining,
-    subscription 
+    subscription,
+    refetch,
   } = useSubscription();
   
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -67,9 +68,10 @@ export default function BillingPage() {
 
       if (response.ok) {
         setCancelDialogOpen(false);
-        router.refresh();
+        await refetch();
       } else {
-        alert("Failed to cancel subscription. Please try again.");
+        const data = await response.json();
+        alert(data.error || "Failed to cancel subscription. Please try again.");
       }
     } catch (error) {
       console.error("Cancel error:", error);
@@ -128,10 +130,16 @@ export default function BillingPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg text-gray-900">{planDetails.name}</h3>
-                      {isPro && !isTrialing && (
+                      {isPro && !isTrialing && subscription?.status !== "canceled" && (
                         <span className="inline-flex items-center text-sm text-green-600">
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Active
+                        </span>
+                      )}
+                      {subscription?.status === "canceled" && (
+                        <span className="inline-flex items-center text-sm text-orange-600">
+                          <AlertTriangle className="w-4 h-4 mr-1" />
+                          Canceled
                         </span>
                       )}
                       {isTrialing && (
@@ -164,7 +172,7 @@ export default function BillingPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
-                          Next billing date
+                          {subscription.status === "canceled" ? "Access until" : "Next billing date"}
                         </span>
                         <span className="font-medium text-gray-900">
                           {new Date(subscription.current_period_end).toLocaleDateString()}
@@ -176,26 +184,42 @@ export default function BillingPage() {
 
                 {/* Actions */}
                 <div className="space-y-4">
-                  {!isPro || isTrialing ? (
-                    <>
-                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
-                        <h4 className="font-medium text-amber-800 mb-2">
-                          {isTrialing ? "Your trial is ending soon!" : "Upgrade to Pro"}
-                        </h4>
-                        <p className="text-sm text-amber-700 mb-4">
-                          {isTrialing 
-                            ? `You have ${trialDaysRemaining} day${trialDaysRemaining !== 1 ? 's' : ''} left. Upgrade now to keep all your premium features.`
-                            : "Get unlimited access to all premium features."}
-                        </p>
-                        <Button 
-                          onClick={() => router.push("/pricing")}
-                          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                        >
-                          <Crown className="w-4 h-4 mr-2" />
-                          Upgrade to Pro
-                        </Button>
-                      </div>
-                    </>
+                  {subscription?.status === "canceled" ? (
+                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
+                      <h4 className="font-medium text-orange-800 mb-2">
+                        Subscription Canceled
+                      </h4>
+                      <p className="text-sm text-orange-700 mb-4">
+                        {subscription?.current_period_end 
+                          ? `Your access continues until ${new Date(subscription.current_period_end).toLocaleDateString()}. Resubscribe anytime to keep your premium features.`
+                          : "Your subscription has been canceled. Resubscribe to regain access to premium features."}
+                      </p>
+                      <Button 
+                        onClick={() => router.push("/pricing")}
+                        className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                      >
+                        <Crown className="w-4 h-4 mr-2" />
+                        Resubscribe
+                      </Button>
+                    </div>
+                  ) : !isPro || isTrialing ? (
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+                      <h4 className="font-medium text-amber-800 mb-2">
+                        {isTrialing ? "Your trial is ending soon!" : "Upgrade to Pro"}
+                      </h4>
+                      <p className="text-sm text-amber-700 mb-4">
+                        {isTrialing 
+                          ? `You have ${trialDaysRemaining} day${trialDaysRemaining !== 1 ? 's' : ''} left. Upgrade now to keep all your premium features.`
+                          : "Get unlimited access to all premium features."}
+                      </p>
+                      <Button 
+                        onClick={() => router.push("/pricing")}
+                        className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                      >
+                        <Crown className="w-4 h-4 mr-2" />
+                        Upgrade to Pro
+                      </Button>
+                    </div>
                   ) : (
                     <>
                       <Button 
