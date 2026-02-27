@@ -1,4 +1,5 @@
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+export const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 
 // Check if GA is available
 export const isGAEnabled = () => {
@@ -165,6 +166,80 @@ export const gaGenerateLead = (source?: string) => {
   event("generate_lead", {
     source,
   });
+};
+
+// ============================================
+// GOOGLE ADS CONVERSION TRACKING
+// ============================================
+
+export const gadsConversion = (conversionLabel: string, value?: number) => {
+  if (!GOOGLE_ADS_ID || typeof window === "undefined") return;
+  window.gtag("event", "conversion", {
+    send_to: `${GOOGLE_ADS_ID}/${conversionLabel}`,
+    ...(value !== undefined && { value, currency: "USD" }),
+  });
+};
+
+export const gadsSignUpConversion = () => {
+  const label = process.env.NEXT_PUBLIC_GADS_SIGNUP_LABEL;
+  if (label) gadsConversion(label);
+  event("sign_up_conversion", { source: getStoredUTMParams()?.utm_source || "direct" });
+};
+
+export const gadsPurchaseConversion = (value: number) => {
+  const label = process.env.NEXT_PUBLIC_GADS_PURCHASE_LABEL;
+  if (label) gadsConversion(label, value);
+  event("purchase_conversion", {
+    value,
+    currency: "USD",
+    source: getStoredUTMParams()?.utm_source || "direct",
+    campaign: getStoredUTMParams()?.utm_campaign || "none",
+  });
+};
+
+// ============================================
+// UTM PARAMETER TRACKING
+// ============================================
+
+export interface UTMParams {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
+}
+
+export const captureUTMParams = (): UTMParams | null => {
+  if (typeof window === "undefined") return null;
+
+  const params = new URLSearchParams(window.location.search);
+  const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"] as const;
+
+  const utmData: UTMParams = {};
+  let hasUTM = false;
+
+  for (const key of utmKeys) {
+    const value = params.get(key);
+    if (value) {
+      utmData[key] = value;
+      hasUTM = true;
+    }
+  }
+
+  if (hasUTM) {
+    sessionStorage.setItem("utm_params", JSON.stringify(utmData));
+    return utmData;
+  }
+
+  const stored = sessionStorage.getItem("utm_params");
+  return stored ? JSON.parse(stored) : null;
+};
+
+export const getStoredUTMParams = (): UTMParams | null => {
+  if (typeof window === "undefined") return null;
+  const stored = sessionStorage.getItem("utm_params");
+  return stored ? JSON.parse(stored) : null;
 };
 
 // Declare gtag on window

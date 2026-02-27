@@ -3,7 +3,7 @@
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { GA_MEASUREMENT_ID, pageview } from "@/lib/gtag";
+import { GA_MEASUREMENT_ID, GOOGLE_ADS_ID, pageview, captureUTMParams } from "@/lib/gtag";
 
 export function GoogleAnalytics() {
   const pathname = usePathname();
@@ -13,12 +13,17 @@ export function GoogleAnalytics() {
     if (pathname) {
       const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
       pageview(url);
+      captureUTMParams();
     }
   }, [pathname, searchParams]);
 
   if (!GA_MEASUREMENT_ID) {
     return null;
   }
+
+  const adsConfigLine = GOOGLE_ADS_ID
+    ? `gtag('config', '${GOOGLE_ADS_ID}');`
+    : "";
 
   return (
     <>
@@ -37,6 +42,7 @@ export function GoogleAnalytics() {
             gtag('config', '${GA_MEASUREMENT_ID}', {
               page_path: window.location.pathname,
             });
+            ${adsConfigLine}
           `,
         }}
       />

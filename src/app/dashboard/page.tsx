@@ -46,6 +46,7 @@ import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Clock, Pencil, 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { gadsPurchaseConversion, gaPurchase } from "@/lib/gtag";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -78,8 +79,15 @@ export default function DashboardPage() {
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
+            const priceMap: Record<string, number> = {
+              PRO_MONTHLY: 13.98,
+              PRO_QUARTERLY: 27.75,
+              PRO_SEMI_ANNUAL: 47.10,
+            };
+            const price = priceMap[data.plan] || 13.98;
+            gaPurchase(data.plan, data.plan, price);
+            gadsPurchaseConversion(price);
             refetch();
-            // Clean URL
             router.replace("/dashboard");
           }
         })

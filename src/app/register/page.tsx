@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, Lock, Eye, EyeOff, Loader2, FileText, User, Home } from "lucide-react";
 import { trackSignUpStarted, trackSignUpCompleted, trackError } from "@/lib/mixpanel";
+import { gadsSignUpConversion, gaSignUp } from "@/lib/gtag";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -48,6 +49,8 @@ export default function RegisterPage() {
       setLoading(false);
     } else {
       trackSignUpCompleted("temp_id", email, "email");
+      gaSignUp("email");
+      gadsSignUpConversion();
       setSuccess(true);
       setLoading(false);
     }
