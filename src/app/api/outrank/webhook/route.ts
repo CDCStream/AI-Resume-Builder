@@ -132,7 +132,10 @@ export async function POST(request: NextRequest) {
     let eventType = payload.event || payload.type || payload.action || "publish";
 
     // Try to find the article data in various locations
-    if (payload.data && typeof payload.data === "object") {
+    if (payload.articles && Array.isArray(payload.articles) && payload.articles.length > 0) {
+      // Outrank sends { articles: [...] } format
+      articleData = payload.articles[0];
+    } else if (payload.data && typeof payload.data === "object") {
       articleData = payload.data;
     } else if (payload.article && typeof payload.article === "object") {
       articleData = payload.article;
@@ -152,6 +155,8 @@ export async function POST(request: NextRequest) {
         received: Object.keys(payload)
       }, { status: 400 });
     }
+    
+    console.log("Extracted article data keys:", Object.keys(articleData));
 
     // Extract fields with multiple possible names
     const title = (articleData.title || articleData.headline || articleData.name || "Untitled Post") as string;
