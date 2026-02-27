@@ -193,6 +193,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Ping Google & Bing to re-crawl sitemap
+    const sitemapUrl = "https://www.linimpact.ai/sitemap.xml";
+    await Promise.allSettled([
+      fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`),
+      fetch(`https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`),
+    ]).then((pings) => {
+      console.log("Sitemap ping results:", pings.map(p => p.status));
+    });
+
     return NextResponse.json({ 
       success: true,
       message: `Processed ${articles.length} article(s)`,
