@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium-min";
+
+const CHROMIUM_PACK_URL =
+  "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
 
 interface PageData {
   html: string;
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: { width: 794, height: 1122 },
-      executablePath: await chromium.executablePath(),
+      executablePath: await chromium.executablePath(CHROMIUM_PACK_URL),
       headless: true,
     });
 
