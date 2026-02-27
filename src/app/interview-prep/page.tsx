@@ -822,7 +822,7 @@ function InterviewPrepContent() {
                 <div className="flex flex-col items-center justify-center gap-4">
                   <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
                   <p className="text-lg font-medium">Generating your interview guide...</p>
-                  <p className="text-sm text-gray-500">This may take a minute</p>
+                  <p className="text-sm text-gray-500">This may take up to 5 minutes</p>
                 </div>
               </Card>
             ) : guide ? (
