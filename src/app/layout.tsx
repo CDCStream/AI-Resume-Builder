@@ -100,11 +100,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
         />
         {/* Ahrefs Web Analytics */}
-        <Script
+        <script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="wbGYng8gzWDJQHAsZKprxg"
-          async
-          strategy="afterInteractive"
+          async={true}
         />
       </head>
       <body
