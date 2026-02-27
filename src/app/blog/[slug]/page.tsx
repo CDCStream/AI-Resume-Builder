@@ -1,19 +1,16 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MDXRemote } from "next-mdx-remote/rsc";
-import { MDXComponents } from "@/components/blog/MDXComponents";
 import { BlogPostTracker } from "@/components/blog/BlogPostTracker";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
+import { parseBlogPost } from "@/lib/blog-parser";
 
-// Supabase client for server-side
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Authors with realistic AI-generated avatars
 const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = {
   "Sarah Chen": {
     name: "Sarah Chen",
@@ -54,27 +51,44 @@ interface Props {
 export const revalidate = 60;
 
 async function getPost(slug: string) {
-  const { data: post, error } = await supabase
+  // First try exact slug match
+  let { data: row, error } = await supabase
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
     .eq("status", "published")
     .single();
 
-  if (error || !post) {
+  if (error || !row) {
+    // If the slug from the URL doesn't match the DB slug, 
+    // search all posts and find one whose parsed slug matches
+    const { data: allRows } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("status", "published");
+
+    if (allRows) {
+      for (const r of allRows) {
+        const parsed = parseBlogPost(r);
+        if (parsed.slug === slug) {
+          return parsed;
+        }
+      }
+    }
     return null;
   }
 
-  return post;
+  return parseBlogPost(row);
 }
 
 async function getAllPosts() {
-  const { data: posts } = await supabase
+  const { data: rows } = await supabase
     .from("blog_posts")
-    .select("slug")
+    .select("*")
     .eq("status", "published");
 
-  return posts || [];
+  if (!rows) return [];
+  return rows.map((row) => parseBlogPost(row));
 }
 
 export async function generateStaticParams() {
@@ -114,10 +128,8 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Mixpanel tracking */}
-      <BlogPostTracker slug={slug} title={post.title} author={post.author} />
+      <BlogPostTracker slug={post.slug} title={post.title} author={post.author} />
       
-      {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -125,27 +137,17 @@ export default async function BlogPostPage({ params }: Props) {
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm font-medium">Back to Blog</span>
             </Link>
-            
             <Link href="/" className="flex items-center">
-              <img 
-                src="/logo.png" 
-                alt="LinImpact.ai Logo" 
-                className="w-10 h-10 object-contain"
-              />
+              <img src="/logo.png" alt="LinImpact.ai Logo" className="w-10 h-10 object-contain" />
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero Image */}
       <div className="relative h-[400px] bg-gradient-to-br from-blue-600 to-cyan-600">
         {post.image ? (
           <>
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-full object-cover opacity-80"
-            />
+            <img src={post.image} alt={post.title} className="w-full h-full object-cover opacity-80" />
             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
           </>
         ) : (
@@ -155,36 +157,21 @@ export default async function BlogPostPage({ params }: Props) {
         )}
       </div>
 
-      {/* Article */}
       <article className="max-w-3xl mx-auto px-4 -mt-32 relative z-10">
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
+          {post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
-              {post.tags.map((tag: string) => (
-                <span 
-                  key={tag}
-                  className="text-xs font-medium px-3 py-1 bg-blue-50 text-blue-600 rounded-full"
-                >
-                  {tag}
-                </span>
+              {post.tags.map((tag) => (
+                <span key={tag} className="text-xs font-medium px-3 py-1 bg-blue-50 text-blue-600 rounded-full">{tag}</span>
               ))}
             </div>
           )}
 
-          {/* Title */}
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            {post.title}
-          </h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">{post.title}</h1>
 
-          {/* Meta */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-8 pb-8 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <img
-                src={author.avatar}
-                alt={author.name}
-                className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
-              />
+              <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
               <div>
                 <p className="font-semibold text-gray-900">{author.name}</p>
                 <p className="text-xs text-gray-500">{author.role}</p>
@@ -192,11 +179,7 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
             <span className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              {new Date(post.published_at).toLocaleDateString('en-US', { 
-                month: 'long', 
-                day: 'numeric',
-                year: 'numeric'
-              })}
+              {new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
@@ -204,13 +187,11 @@ export default async function BlogPostPage({ params }: Props) {
             </span>
           </div>
 
-          {/* Content - Always render as HTML since Outrank sends HTML */}
           <div 
             className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-lg"
             dangerouslySetInnerHTML={{ __html: post.content }} 
           />
 
-          {/* Share */}
           <div className="mt-12 pt-8 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-gray-500 text-sm">Share this article</span>
@@ -238,20 +219,14 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </div>
 
-        {/* CTA */}
         <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 mt-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">
-            Ready to Create Your Perfect Resume?
-          </h2>
-          <p className="text-blue-100 mb-6">
-            Start building your ATS-optimized resume with AI assistance
-          </p>
+          <h2 className="text-2xl font-bold text-white mb-3">Ready to Create Your Perfect Resume?</h2>
+          <p className="text-blue-100 mb-6">Start building your ATS-optimized resume with AI assistance</p>
           <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
             <Link href="/register">Get Started Free</Link>
           </Button>
         </div>
 
-        {/* Back to Blog */}
         <div className="text-center py-12">
           <Button variant="outline" asChild>
             <Link href="/blog">
