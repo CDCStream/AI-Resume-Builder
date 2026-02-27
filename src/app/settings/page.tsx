@@ -24,7 +24,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 export default function SettingsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isPro, isTrialing, trialDaysRemaining, plan } = useSubscription();
+  const { isPro, isTrialing, trialDaysRemaining, plan, subscription } = useSubscription();
   
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
   const [saving, setSaving] = useState(false);
@@ -149,7 +149,17 @@ export default function SettingsPage() {
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Current Plan</p>
                     <div className="flex items-center gap-2">
-                      {isPro ? (
+                      {subscription?.status === "canceled" ? (
+                        <>
+                          <Crown className="w-5 h-5 text-gray-400" />
+                          <span className="text-xl font-bold text-gray-900">
+                            {plan === "PRO_MONTHLY" && "Pro Monthly"}
+                            {plan === "PRO_QUARTERLY" && "Pro Quarterly"}
+                            {plan === "PRO_SEMI_ANNUAL" && "Pro Semi-Annual"}
+                            {plan === "FREE" && "Free Plan"}
+                          </span>
+                        </>
+                      ) : isPro ? (
                         <>
                           <Crown className="w-5 h-5 text-amber-500" />
                           <span className="text-xl font-bold text-gray-900">
@@ -172,24 +182,43 @@ export default function SettingsPage() {
                       )}
                     </div>
                   </div>
-                  {isPro && !isTrialing && (
+                  {subscription?.status === "canceled" ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-700">
+                      Canceled
+                    </span>
+                  ) : isPro && !isTrialing ? (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
                       <CheckCircle className="w-4 h-4 mr-1" />
                       Active
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
-                {isPro && !isTrialing && (
+                {subscription?.status === "canceled" ? (
+                  <p className="text-sm text-gray-500">
+                    Your subscription has been canceled.{" "}
+                    {subscription.current_period_end && (
+                      <>Access continues until {new Date(subscription.current_period_end).toLocaleDateString()}.</>
+                    )}
+                  </p>
+                ) : isPro && !isTrialing ? (
                   <p className="text-sm text-gray-500">
                     Your subscription will automatically renew.
                   </p>
-                )}
+                ) : null}
               </div>
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {!isPro || isTrialing ? (
+                {subscription?.status === "canceled" ? (
+                  <Button 
+                    onClick={() => router.push("/pricing")}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                  >
+                    <Crown className="w-4 h-4 mr-2" />
+                    Resubscribe
+                  </Button>
+                ) : !isPro || isTrialing ? (
                   <Button 
                     onClick={() => router.push("/pricing")}
                     className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
@@ -198,16 +227,14 @@ export default function SettingsPage() {
                     Upgrade to Pro
                   </Button>
                 ) : (
-                  <>
-                    <Button 
-                      onClick={() => router.push("/billing")}
-                      variant="outline"
-                      className="border-blue-200 hover:bg-blue-50"
-                    >
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Manage Billing
-                    </Button>
-                  </>
+                  <Button 
+                    onClick={() => router.push("/billing")}
+                    variant="outline"
+                    className="border-blue-200 hover:bg-blue-50"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Manage Billing
+                  </Button>
                 )}
               </div>
             </CardContent>
