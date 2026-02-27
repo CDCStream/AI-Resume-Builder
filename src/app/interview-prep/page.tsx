@@ -19,10 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
-import {
-  getResumes,
-  SavedResume,
-} from "@/lib/store/documentStore";
+import { useResumes, SavedResume } from "@/hooks/useResumes";
 import {
   ArrowLeft,
   Loader2,
@@ -124,9 +121,9 @@ function InterviewPrepContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
+  const { resumes, loading: resumesLoading } = useResumes();
 
   // Resume selection
-  const [resumes, setResumes] = useState<SavedResume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
 
   // Job input
@@ -155,10 +152,9 @@ function InterviewPrepContent() {
   const [showBestAnswer, setShowBestAnswer] = useState(false);
   const [practiceComplete, setPracticeComplete] = useState(false);
 
-  // Load resumes and URL params
+  // Load URL params
   useEffect(() => {
-    const savedResumes = getResumes();
-    setResumes(savedResumes);
+    if (resumesLoading) return;
 
     // Check if coming from Find Jobs page
     const fromFindJobs = searchParams.get("fromFindJobs");
@@ -182,22 +178,19 @@ function InterviewPrepContent() {
           if (data.jobUrl) {
             setLinkedInUrl(data.jobUrl);
           }
-          // Clear transfer data after loading
           sessionStorage.removeItem("interviewPrepTransfer");
-          console.log("Loaded interview prep data from Find Jobs");
         } catch (e) {
           console.error("Failed to parse interview prep transfer data:", e);
         }
       }
     } else {
-      // Normal URL params handling
       const resumeId = searchParams.get("resumeId");
       const jobUrl = searchParams.get("jobUrl");
 
       if (resumeId) {
         setSelectedResumeId(resumeId);
-      } else if (savedResumes.length === 1) {
-        setSelectedResumeId(savedResumes[0].id);
+      } else if (resumes.length === 1) {
+        setSelectedResumeId(resumes[0].id);
       }
 
       if (jobUrl) {
@@ -205,7 +198,7 @@ function InterviewPrepContent() {
         fetchJobDetails(jobUrl);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, resumes, resumesLoading]);
 
   // Fetch job details from LinkedIn URL
   const fetchJobDetails = async (url: string) => {
@@ -549,8 +542,8 @@ function InterviewPrepContent() {
     return "text-red-600";
   };
 
-  // Loading subscription
-  if (subscriptionLoading) {
+  // Loading
+  if (subscriptionLoading || resumesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
