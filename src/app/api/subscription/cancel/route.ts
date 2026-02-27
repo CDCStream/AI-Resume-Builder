@@ -43,8 +43,11 @@ export async function POST() {
 
     // Cancel subscription in Polar
     try {
-      await polar.subscriptions.cancel({
+      await polar.subscriptions.update({
         id: subscription.polar_subscription_id,
+        body: {
+          cancelAtPeriodEnd: true,
+        },
       });
     } catch (polarError) {
       console.error("Polar cancel error:", polarError);
