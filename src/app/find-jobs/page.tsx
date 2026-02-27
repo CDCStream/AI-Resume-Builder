@@ -26,11 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  getResumes,
-  SavedResume,
-  createResume,
-} from "@/lib/store/documentStore";
+import { useResumes, SavedResume } from "@/hooks/useResumes";
 import {
   Search,
   Briefcase,
@@ -53,7 +49,9 @@ import {
   Filter,
   SortAsc,
   SortDesc,
+  Crown,
 } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface LinkedInJob {
   id: string;
@@ -127,9 +125,10 @@ const POPULAR_LOCATIONS = [
 function FindJobsContent() {
   const router = useRouter();
   const locationInputRef = useRef<HTMLInputElement>(null);
+  const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
 
-  // Resume selection
-  const [resumes, setResumes] = useState<SavedResume[]>([]);
+  // Resume selection - now from Supabase
+  const { resumes, loading: resumesLoading, createResume } = useResumes();
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
 
   // Search form state
@@ -155,10 +154,10 @@ function FindJobsContent() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzedCount, setAnalyzedCount] = useState(0);
   const [analyzingJobIds, setAnalyzingJobIds] = useState<Set<string>>(new Set());
-  // Cache ATS scores by job ID + CV ID combination
   const [atsScoreCache, setAtsScoreCache] = useState<Map<string, { score: number; analysis: ATSAnalysis }>>(new Map());
-  // Track which CV was used for current job scores
   const [lastAnalyzedResumeId, setLastAnalyzedResumeId] = useState<string>("");
+  // Session ref to abort stale analyses when CV changes
+  const analysisSessionRef = useRef<number>(0);
 
   // Sorting
   const [sortBy, setSortBy] = useState<"date" | "ats" | "applications">("date");
@@ -180,17 +179,13 @@ function FindJobsContent() {
   const [showCoverLetterDialog, setShowCoverLetterDialog] = useState(false);
   const [coverLetterAIAdditions, setCoverLetterAIAdditions] = useState<AIAddition[]>([]);
 
-  // Load resumes on mount
+  // Auto-select resume if only one exists
   useEffect(() => {
-    const savedResumes = getResumes();
-    setResumes(savedResumes);
-    
-    // Only auto-select if no saved state exists
-    const savedState = localStorage.getItem("findJobsState");
-    if (!savedState && savedResumes.length === 1) {
-      setSelectedResumeId(savedResumes[0].id);
+    const savedState = sessionStorage.getItem("findJobsState");
+    if (!savedState && resumes.length === 1 && !selectedResumeId) {
+      setSelectedResumeId(resumes[0].id);
     }
-  }, []);
+  }, [resumes, selectedResumeId]);
 
   // Track if we're restoring state (to prevent reset logic from triggering)
   const [isRestoringState, setIsRestoringState] = useState(true);
@@ -199,7 +194,7 @@ function FindJobsContent() {
   // Restore Find Jobs state from localStorage on mount
   useEffect(() => {
     console.log("=== Attempting to restore Find Jobs state ===");
-    const savedState = localStorage.getItem("findJobsState");
+    const savedState = sessionStorage.getItem("findJobsState");
     
     if (!savedState) {
       console.log("No saved state found");
@@ -259,11 +254,11 @@ function FindJobsContent() {
         console.log("=== State restoration complete ===");
       } else {
         console.log("State too old, clearing");
-        localStorage.removeItem("findJobsState");
+        sessionStorage.removeItem("findJobsState");
       }
     } catch (e) {
       console.error("Failed to restore Find Jobs state:", e);
-      localStorage.removeItem("findJobsState");
+      sessionStorage.removeItem("findJobsState");
     }
     
     // Mark restoration as complete after a short delay
@@ -308,42 +303,50 @@ function FindJobsContent() {
         selectedJobId: selectedJob?.id || null,
         savedAt: Date.now(),
       };
-      localStorage.setItem("findJobsState", JSON.stringify(state));
+      sessionStorage.setItem("findJobsState", JSON.stringify(state));
     }
   }, [jobs, selectedResumeId, lastAnalyzedResumeId, titleSearch, companySearch, locationSearch, selectedJob, isRestoringState]);
 
-  // Reset ATS scores and auto-fix cache when CV changes (but not during restore)
+  // Reset ATS scores and re-analyze when CV changes
+  const cvChangeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    // Skip reset during state restoration
-    if (isRestoringState) {
-      console.log("Skipping reset - still restoring state");
-      return;
-    }
-    
-    // Skip if state was just restored
-    if (stateRestored && selectedResumeId === lastAnalyzedResumeId) {
-      console.log("Skipping reset - state just restored and CV matches");
-      return;
-    }
+    if (isRestoringState) return;
+    if (stateRestored && selectedResumeId === lastAnalyzedResumeId) return;
     
     if (selectedResumeId && selectedResumeId !== lastAnalyzedResumeId && jobs.length > 0) {
-      console.log("RESETTING ATS scores:", {
-        selectedResumeId,
-        lastAnalyzedResumeId,
-        jobsCount: jobs.length,
-        isRestoringState,
-        stateRestored
-      });
-      // Clear ATS scores from jobs since we're using a different CV
-      setJobs(prevJobs => prevJobs.map(job => ({
+      console.log("CV changed - aborting old analysis and triggering re-analysis");
+      
+      // Abort any running analysis
+      analysisSessionRef.current++;
+      setIsAnalyzing(false);
+      
+      // Show loading spinners on ALL jobs immediately
+      const allJobIds = new Set(jobs.map(j => j.id));
+      setAnalyzingJobIds(allJobIds);
+      
+      // Clear scores
+      const resetJobs = jobs.map(job => ({
         ...job,
-        atsScore: undefined,
-        atsAnalysis: undefined
-      })));
-      // Clear the caches for this CV
+        atsScore: undefined as number | undefined,
+        atsAnalysis: undefined as ATSAnalysis | undefined,
+      }));
+      setJobs(resetJobs);
       setAtsScoreCache(new Map());
       setAutoFixCache(new Map());
+      
+      // Clear any pending timer
+      if (cvChangeTimerRef.current) clearTimeout(cvChangeTimerRef.current);
+      
+      // Start re-analysis after a brief delay
+      cvChangeTimerRef.current = setTimeout(() => {
+        analyzeJobsATS(resetJobs);
+      }, 300);
     }
+    
+    return () => {
+      if (cvChangeTimerRef.current) clearTimeout(cvChangeTimerRef.current);
+    };
   }, [selectedResumeId, lastAnalyzedResumeId, jobs.length, isRestoringState, stateRestored]);
 
   // Search jobs
@@ -419,27 +422,30 @@ function FindJobsContent() {
     const selectedResume = resumes.find((r) => r.id === selectedResumeId);
     if (!selectedResume) return;
 
+    // Create a unique session - aborts if CV changes or new analysis starts
+    const sessionId = ++analysisSessionRef.current;
+
     setIsAnalyzing(true);
     setAnalyzedCount(0);
-    // Track which CV was used for this analysis
     setLastAnalyzedResumeId(selectedResumeId);
     
-    // Mark all jobs as analyzing
     const allJobIds = new Set(jobsToAnalyze.map(j => j.id));
     setAnalyzingJobIds(allJobIds);
 
     const newCache = new Map(atsScoreCache);
-    
-    // Create a map of job IDs to analyze for quick lookup
-    const jobsToAnalyzeMap = new Map(jobsToAnalyze.map(j => [j.id, j]));
 
     for (let i = 0; i < jobsToAnalyze.length; i++) {
+      // Abort if a newer session has started (CV changed)
+      if (analysisSessionRef.current !== sessionId) {
+        console.log(`Analysis session ${sessionId} aborted - CV changed`);
+        return;
+      }
+
       const job = jobsToAnalyze[i];
       const cacheKey = `${job.id}_${selectedResumeId}`;
       
       let updatedJob = { ...job };
       
-      // Check cache first
       const cachedResult = newCache.get(cacheKey);
       if (cachedResult) {
         updatedJob = {
@@ -458,13 +464,17 @@ function FindJobsContent() {
             }),
           });
 
+          // Check again after API call returns
+          if (analysisSessionRef.current !== sessionId) {
+            console.log(`Analysis session ${sessionId} aborted after API call - CV changed`);
+            return;
+          }
+
           if (response.ok) {
             const data = await response.json();
-            // Parse missingSkills - API returns Array<{name, importance}> or string[]
             const missingSkills = (data.missingSkills || []).map((skill: string | { name: string }) => 
               typeof skill === 'string' ? skill : skill.name
             );
-            // Parse matchedKeywords as matched skills
             const matchedSkills = data.matchedKeywords || data.matchedSkills || [];
             
             const analysis: ATSAnalysis = {
@@ -482,7 +492,6 @@ function FindJobsContent() {
               atsAnalysis: analysis,
             };
             
-            // Store in cache
             newCache.set(cacheKey, { score: data.score || 0, analysis });
           } else {
             const errorData = await response.json().catch(() => ({}));
@@ -493,7 +502,9 @@ function FindJobsContent() {
         }
       }
 
-      // Remove this job from analyzing set
+      // Final check before updating state
+      if (analysisSessionRef.current !== sessionId) return;
+
       setAnalyzingJobIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(job.id);
@@ -502,7 +513,6 @@ function FindJobsContent() {
       
       setAnalyzedCount(i + 1);
       
-      // Update jobs state by merging with existing jobs (preserve jobs not being analyzed)
       setJobs(prevJobs => {
         return prevJobs.map(existingJob => {
           if (existingJob.id === updatedJob.id) {
@@ -513,10 +523,12 @@ function FindJobsContent() {
       });
     }
 
-    // Update the cache
-    setAtsScoreCache(newCache);
-    setIsAnalyzing(false);
-    setAnalyzingJobIds(new Set());
+    // Only finalize if this session is still active
+    if (analysisSessionRef.current === sessionId) {
+      setAtsScoreCache(newCache);
+      setIsAnalyzing(false);
+      setAnalyzingJobIds(new Set());
+    }
   };
 
   // Sort jobs
@@ -641,7 +653,7 @@ function FindJobsContent() {
     setSelectedJob(job);
     
     // Check if there's an optimized CV for this job
-    const jobResumeMapping = JSON.parse(localStorage.getItem("jobResumeMapping") || "{}");
+    const jobResumeMapping = JSON.parse(sessionStorage.getItem("jobResumeMapping") || "{}");
     const mapping = jobResumeMapping[job.id];
     
     if (mapping && mapping.resumeId) {
@@ -688,21 +700,26 @@ function FindJobsContent() {
     }
 
     // Create new resume
-    const newResume = createResume(
+    const newResume = await createResume(
       `${selectedResume.name} - Optimized for ${selectedJob.company}`,
       newResumeData,
       selectedResume.templateId
     );
 
-    // Save the job-resume mapping to localStorage for ATS tracking
-    const jobResumeMapping = JSON.parse(localStorage.getItem("jobResumeMapping") || "{}");
+    if (!newResume) {
+      alert("Failed to create optimized resume");
+      return;
+    }
+
+    // Save the job-resume mapping to sessionStorage for ATS tracking
+    const jobResumeMapping = JSON.parse(sessionStorage.getItem("jobResumeMapping") || "{}");
     jobResumeMapping[selectedJob.id] = {
       resumeId: newResume.id,
       jobTitle: selectedJob.title,
       company: selectedJob.company,
       createdAt: new Date().toISOString()
     };
-    localStorage.setItem("jobResumeMapping", JSON.stringify(jobResumeMapping));
+    sessionStorage.setItem("jobResumeMapping", JSON.stringify(jobResumeMapping));
 
     setShowAutoFixDialog(false);
 
@@ -866,13 +883,61 @@ function FindJobsContent() {
     return "text-red-600 bg-red-100";
   };
 
+  // Loading subscription
+  if (subscriptionLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Trial expired gate
+  if (trialExpired) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-amber-200 shadow-lg shadow-amber-500/10">
+          <CardHeader className="text-center bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
+              <Crown className="h-8 w-8 text-amber-500" />
+            </div>
+            <CardTitle className="text-gray-900">
+              Your Free Trial Has Ended
+            </CardTitle>
+            <CardDescription>
+              Upgrade to Pro to continue using Find Jobs & ATS Optimizer
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <p className="text-gray-600 text-center mb-6">
+              Your 3-day free trial has expired. Upgrade to Pro to continue searching LinkedIn jobs and getting AI-powered ATS score analysis.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={() => router.push("/pricing")} 
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade to Pro
+              </Button>
+              <Button variant="outline" onClick={() => router.push("/dashboard")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // No resumes - show message
   if (resumes.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-blue-100 shadow-lg shadow-blue-500/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-blue-900">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
               No Resume Found
             </CardTitle>
@@ -881,11 +946,11 @@ function FindJobsContent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Button onClick={() => router.push("/resume")} className="w-full">
+            <Button onClick={() => router.push("/resume")} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
               <FileText className="w-4 h-4 mr-2" />
               Create Resume
             </Button>
-            <Button variant="outline" onClick={() => router.push("/dashboard")} className="w-full">
+            <Button variant="outline" onClick={() => router.push("/dashboard")} className="w-full border-blue-200 hover:bg-blue-50">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -896,18 +961,25 @@ function FindJobsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <div className="w-full px-4 py-4 md:px-6 md:py-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
+            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="border-blue-200 hover:bg-blue-50">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Find Jobs</h1>
-              <p className="text-sm text-gray-500">Search LinkedIn jobs and analyze ATS compatibility</p>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/logo.png" 
+                alt="LinImpact.ai Logo" 
+                className="w-10 h-10 object-contain"
+              />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Find Jobs</h1>
+                <p className="text-sm text-gray-500">Search LinkedIn jobs and analyze ATS compatibility</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1450,7 +1522,7 @@ function FindJobsContent() {
                           jobUrl: selectedJob.url,
                           resumeId: selectedResumeId,
                         };
-                        localStorage.setItem("interviewPrepTransfer", JSON.stringify(interviewPrepTransfer));
+                        sessionStorage.setItem("interviewPrepTransfer", JSON.stringify(interviewPrepTransfer));
                         router.push(`/interview-prep?fromFindJobs=true`);
                       }}
                     >
@@ -1618,7 +1690,7 @@ function FindJobsContent() {
                   location: selectedJob?.location || "",
                 }
               };
-              localStorage.setItem("coverLetterTransfer", JSON.stringify(coverLetterTransfer));
+              sessionStorage.setItem("coverLetterTransfer", JSON.stringify(coverLetterTransfer));
               router.push(`/cover-letter?fromFindJobs=true`);
             }}>
               Edit in Cover Letter Editor
@@ -1634,7 +1706,7 @@ export default function FindJobsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
           <div className="flex items-center gap-2">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             <span className="text-gray-600">Loading...</span>

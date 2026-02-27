@@ -1,19 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  getResumes,
-  getCoverLetters,
-  deleteResume,
-  deleteCoverLetter,
-  duplicateResume,
-  duplicateCoverLetter,
-  updateResume,
-  updateCoverLetter,
-  SavedResume,
-  SavedCoverLetter,
-} from "@/lib/store/documentStore";
+import { useResumes, SavedResume } from "@/hooks/useResumes";
+import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -52,7 +42,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Clock, Pencil, Search, Sparkles } from "lucide-react";
+import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Clock, Pencil, Search, Sparkles, Loader2, LogOut, User, Settings, Crown, CreditCard, PenSquare } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -67,8 +60,25 @@ function formatDate(dateString: string): string {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [resumes, setResumes] = useState<SavedResume[]>([]);
-  const [coverLetters, setCoverLetters] = useState<SavedCoverLetter[]>([]);
+  const { user, signOut } = useAuth();
+  const { isTrialing, trialExpired, trialDaysRemaining, isLoading: subscriptionLoading } = useSubscription();
+  
+  const {
+    resumes,
+    loading: resumesLoading,
+    deleteResume,
+    duplicateResume,
+    updateResume,
+  } = useResumes();
+  
+  const {
+    coverLetters,
+    loading: coverLettersLoading,
+    deleteCoverLetter,
+    duplicateCoverLetter,
+    updateCoverLetter,
+  } = useCoverLetters();
+
   const [activeTab, setActiveTab] = useState("resumes");
   const [deleteDialog, setDeleteDialog] = useState<{
     type: "resume" | "coverLetter";
@@ -82,35 +92,29 @@ export default function DashboardPage() {
   } | null>(null);
   const [newName, setNewName] = useState("");
 
-  const loadDocuments = () => {
-    setResumes(getResumes());
-    setCoverLetters(getCoverLetters());
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
   };
 
-  useEffect(() => {
-    loadDocuments();
-  }, []);
-
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteDialog) return;
     
     if (deleteDialog.type === "resume") {
-      deleteResume(deleteDialog.id);
+      await deleteResume(deleteDialog.id);
     } else {
-      deleteCoverLetter(deleteDialog.id);
+      await deleteCoverLetter(deleteDialog.id);
     }
     
-    loadDocuments();
     setDeleteDialog(null);
   };
 
-  const handleDuplicate = (type: "resume" | "coverLetter", id: string) => {
+  const handleDuplicate = async (type: "resume" | "coverLetter", id: string) => {
     if (type === "resume") {
-      duplicateResume(id);
+      await duplicateResume(id);
     } else {
-      duplicateCoverLetter(id);
+      await duplicateCoverLetter(id);
     }
-    loadDocuments();
   };
 
   const handleRenameOpen = (type: "resume" | "coverLetter", id: string, currentName: string) => {
@@ -118,16 +122,15 @@ export default function DashboardPage() {
     setNewName(currentName);
   };
 
-  const handleRename = () => {
+  const handleRename = async () => {
     if (!renameDialog || !newName.trim()) return;
     
     if (renameDialog.type === "resume") {
-      updateResume(renameDialog.id, { name: newName.trim() });
+      await updateResume(renameDialog.id, { name: newName.trim() });
     } else {
-      updateCoverLetter(renameDialog.id, { name: newName.trim() });
+      await updateCoverLetter(renameDialog.id, { name: newName.trim() });
     }
     
-    loadDocuments();
     setRenameDialog(null);
     setNewName("");
   };
@@ -148,57 +151,177 @@ export default function DashboardPage() {
     }
   };
 
+  if (resumesLoading || coverLettersLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <span className="text-gray-600">Loading your documents...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+      {/* Trial Expired Modal */}
+      {trialExpired && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
+              <Crown className="h-10 w-10 text-amber-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Your Free Trial Has Ended</h2>
+            <p className="text-gray-600 mb-6">
+              Your 3-day free trial has expired. Upgrade to Pro to continue using all premium features and take your career to the next level.
+            </p>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => router.push("/pricing")} 
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg h-12 text-lg"
+              >
+                <Crown className="h-5 w-5 mr-2" />
+                Upgrade to Pro
+              </Button>
+              <p className="text-sm text-gray-500">
+                Starting at just $7.85/month
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trial Banner */}
+      {isTrialing && trialDaysRemaining !== null && (
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5" />
+              <span className="font-medium">
+                Free Trial: {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining
+              </span>
+            </div>
+            <Button 
+              onClick={() => router.push("/pricing")} 
+              variant="secondary"
+              className="bg-white/20 hover:bg-white/30 text-white border-0 h-8 px-4"
+            >
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Header with Logo */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="LinImpact.ai Logo" 
+              className="w-20 h-20 object-contain"
+            />
+            <span className="text-3xl font-extrabold tracking-tight -ml-3" style={{ fontFamily: 'var(--font-poppins)' }}>
+              <span className="text-cyan-500">Lin</span><span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">Impact</span><span className="text-slate-500 font-semibold">.ai</span>
+            </span>
+          </div>
+          <div className="flex gap-2 items-center">
+            <Button onClick={() => router.push("/interview-prep")} variant="outline" className="gap-2 border-blue-200 hover:bg-blue-50 h-11 px-5 text-base">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <span className="hidden sm:inline">Prepare for Interview</span>
+            </Button>
+            <Button onClick={() => router.push("/find-jobs")} className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 h-11 px-5 text-base">
+              <Search className="w-5 h-5" />
+              <span className="hidden sm:inline">Find Jobs</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 p-1 rounded-full hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  <Avatar className="w-11 h-11 border-2 border-blue-200">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-semibold text-sm">
+                      {user?.user_metadata?.full_name 
+                        ? user.user_metadata.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+                        : user?.email?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.user_metadata?.full_name || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+                <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Account Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/billing")} className="cursor-pointer">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Billing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/admin/blog")} className="cursor-pointer">
+                  <PenSquare className="w-4 h-4 mr-2" />
+                  Blog Admin
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+
       <div className="max-w-6xl mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Documents</h1>
-            <p className="text-gray-500">Manage your resumes and cover letters</p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => router.push("/interview-prep")} variant="outline" className="gap-2">
-              <Sparkles className="w-4 h-4" />
-              Prepare for Interview
-            </Button>
-            <Button onClick={() => router.push("/find-jobs")} className="gap-2">
-              <Search className="w-4 h-4" />
-              Find Jobs
-            </Button>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">My Documents</h1>
+            <p className="text-gray-500">
+              {user?.user_metadata?.full_name ? `Welcome, ${user.user_metadata.full_name}` : user?.email ? `Welcome, ${user.email}` : "Manage your resumes and cover letters"}
+            </p>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="resumes" className="flex items-center gap-2">
+          <TabsList className="mb-6 bg-blue-50 border border-blue-100">
+            <TabsTrigger value="resumes" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">
               <FileText className="h-4 w-4" />
               Resumes ({resumes.length})
             </TabsTrigger>
-            <TabsTrigger value="coverLetters" className="flex items-center gap-2">
+            <TabsTrigger value="coverLetters" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">
               <Mail className="h-4 w-4" />
               Cover Letters ({coverLetters.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="resumes">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
                 <div>
-                  <CardTitle>Resumes</CardTitle>
+                  <CardTitle className="text-blue-900">Resumes</CardTitle>
                   <CardDescription>Your saved resumes</CardDescription>
                 </div>
-                <Button onClick={() => handleCreateNew("resume")} className="flex items-center gap-2">
+                <Button onClick={() => handleCreateNew("resume")} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg shadow-blue-500/25">
                   <Plus className="h-4 w-4" />
                   Create New Resume
                 </Button>
               </CardHeader>
               <CardContent>
                 {resumes.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No resumes yet</h3>
+                  <div className="text-center py-12 bg-gradient-to-br from-blue-50/50 to-cyan-50/50 rounded-lg">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
+                      <FileText className="h-8 w-8 text-blue-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-blue-900 mb-2">No resumes yet</h3>
                     <p className="text-gray-500 mb-4">Create your first resume to get started</p>
-                    <Button onClick={() => handleCreateNew("resume")}>
+                    <Button onClick={() => handleCreateNew("resume")} className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg shadow-blue-500/25">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Resume
                     </Button>
@@ -280,24 +403,26 @@ export default function DashboardPage() {
           </TabsContent>
 
           <TabsContent value="coverLetters">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
                 <div>
-                  <CardTitle>Cover Letters</CardTitle>
+                  <CardTitle className="text-blue-900">Cover Letters</CardTitle>
                   <CardDescription>Your saved cover letters</CardDescription>
                 </div>
-                <Button onClick={() => handleCreateNew("coverLetter")} className="flex items-center gap-2">
+                <Button onClick={() => handleCreateNew("coverLetter")} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg shadow-blue-500/25">
                   <Plus className="h-4 w-4" />
                   Create New Cover Letter
                 </Button>
               </CardHeader>
               <CardContent>
                 {coverLetters.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Mail className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No cover letters yet</h3>
+                  <div className="text-center py-12 bg-gradient-to-br from-blue-50/50 to-cyan-50/50 rounded-lg">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
+                      <Mail className="h-8 w-8 text-blue-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-blue-900 mb-2">No cover letters yet</h3>
                     <p className="text-gray-500 mb-4">Create your first cover letter</p>
-                    <Button onClick={() => handleCreateNew("coverLetter")}>
+                    <Button onClick={() => handleCreateNew("coverLetter")} className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg shadow-blue-500/25">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Cover Letter
                     </Button>

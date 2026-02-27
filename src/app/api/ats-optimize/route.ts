@@ -198,6 +198,82 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Server-side synonym deduplication for suggestedSkills
+    if (result.suggestedSkills?.length && context?.skills?.length) {
+      const normalizeSkill = (s: string): string =>
+        s.toLowerCase()
+          .replace(/[.\-\/\s]+/g, "")
+          .replace(/^(the|a|an)\s+/i, "");
+
+      const synonymMap: Record<string, string[]> = {
+        machinelearning: ["ml", "machinelearning"],
+        deeplearning: ["dl", "deeplearning"],
+        javascript: ["js", "javascript", "ecmascript"],
+        typescript: ["ts", "typescript"],
+        kubernetes: ["k8s", "kubernetes", "kube"],
+        postgresql: ["postgres", "postgresql", "psql"],
+        react: ["react", "reactjs"],
+        node: ["node", "nodejs"],
+        tensorflow: ["tf", "tensorflow"],
+        pytorch: ["pytorch", "torch"],
+        aws: ["aws", "amazonwebservices"],
+        gcp: ["gcp", "googlecloudplatform", "googlecloud"],
+        nlp: ["nlp", "naturallanguageprocessing"],
+        computervision: ["cv", "computervision"],
+        cicd: ["cicd", "continuousintegrationcontinuousdeployment", "continuousintegration"],
+        oop: ["oop", "objectorientedprogramming"],
+        mssql: ["mssql", "sqlserver", "microsoftsqlserver"],
+        mongodb: ["mongo", "mongodb"],
+        statistics: ["stats", "statistics", "statisticalanalysis", "statisticalmodeling", "statisticalinference"],
+        python: ["python", "py"],
+        r: ["rlanguage", "rprogramming"],
+        docker: ["docker", "containerization"],
+        airflow: ["apacheairflow", "airflow"],
+        spark: ["spark", "apachespark", "pyspark"],
+        kafka: ["kafka", "apachekafka"],
+        tableau: ["tableau"],
+        git: ["git", "github", "gitgithub"],
+        powerbi: ["powerbi", "pbi"],
+        excel: ["excel", "microsoftexcel", "msexcel"],
+        azure: ["azure", "microsoftazure"],
+      };
+
+      const getCanonicalKeys = (normalized: string): string[] => {
+        const keys: string[] = [normalized];
+        for (const [canonical, aliases] of Object.entries(synonymMap)) {
+          if (aliases.includes(normalized)) {
+            keys.push(canonical);
+            keys.push(...aliases);
+          }
+        }
+        return keys;
+      };
+
+      const existingNormalized = context.skills.filter((s): s is string => !!s).map(normalizeSkill);
+      const existingKeySet = new Set<string>();
+      for (const norm of existingNormalized) {
+        existingKeySet.add(norm);
+        for (const key of getCanonicalKeys(norm)) {
+          existingKeySet.add(key);
+        }
+      }
+
+      const beforeCount = result.suggestedSkills.length;
+      result.suggestedSkills = result.suggestedSkills.filter(skill => {
+        const norm = normalizeSkill(skill.name);
+        const keys = getCanonicalKeys(norm);
+        const isDuplicate = keys.some(k => existingKeySet.has(k));
+        if (isDuplicate) {
+          console.log(`Filtered duplicate suggested skill: "${skill.name}" (matches existing skill)`);
+        }
+        return !isDuplicate;
+      });
+
+      if (beforeCount !== result.suggestedSkills.length) {
+        console.log(`Filtered ${beforeCount - result.suggestedSkills.length} duplicate suggested skills`);
+      }
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("ATS Optimize error:", error);
@@ -366,7 +442,8 @@ CRITICAL REMINDERS:
 4. Keep the meaning and core information intact
 5. Only improve ATS compatibility and impact
 6. List 2-5 specific changes with before/after/reason
-7. Return ONLY valid JSON, no markdown`;
+7. When optimizing skills, do NOT create duplicates - if the candidate already has a synonym/abbreviation, keep the better version only
+8. Return ONLY valid JSON, no markdown`;
 }
 
 function getTailoredOptimizePrompt(
@@ -436,7 +513,32 @@ function getTailoredOptimizePrompt(
 - Suggest missing skills that the candidate likely has based on their experience
 - Prioritize hard/technical skills over soft skills
 - Use industry-standard skill names
-- IMPORTANT: Skills are typically written in English. If the existing skills are in English, write ALL your response (including reasons) in English regardless of the job description language.`,
+- IMPORTANT: Skills are typically written in English. If the existing skills are in English, write ALL your response (including reasons) in English regardless of the job description language.
+
+CRITICAL - SYNONYM/DUPLICATE CHECK: Before suggesting a skill, check if the candidate ALREADY has it under a different name or abbreviation. Examples of duplicates to avoid:
+- "ML" = "Machine Learning"
+- "JS" = "JavaScript"  
+- "TS" = "TypeScript"
+- "K8s" = "Kubernetes"
+- "DL" = "Deep Learning"
+- "NLP" = "Natural Language Processing"
+- "CV" = "Computer Vision"
+- "AWS" = "Amazon Web Services"
+- "GCP" = "Google Cloud Platform"
+- "Postgres" = "PostgreSQL"
+- "Node" = "Node.js"
+- "React" = "ReactJS"
+- "Mongo" = "MongoDB"
+- "TF" = "TensorFlow"
+- "PyTorch" = "Torch"
+- "Stats" = "Statistics" = "Statistical Analysis"
+- "CI/CD" = "Continuous Integration"
+- "OOP" = "Object-Oriented Programming"
+- "Git" = "GitHub" = "Git/GitHub"
+- "Spark" = "Apache Spark" = "PySpark"
+- "Kafka" = "Apache Kafka"
+- "Airflow" = "Apache Airflow"
+Do NOT suggest adding a skill if any synonym, abbreviation, or variation of it already exists in the candidate's skills list.`,
 
     full_resume: `Tailor this complete resume for the target job:
 - Align professional title and summary with job requirements
@@ -518,5 +620,6 @@ CRITICAL REMINDERS:
 3. If skills are in English (Python, SQL, etc.), write reasons in English
 4. Keep truthful - don't add experience they don't have
 5. Only suggest skills/languages if relevant to the job AND not already in their profile
-6. Return ONLY valid JSON, no markdown`;
+6. NEVER suggest a skill that already exists under a different name/abbreviation (e.g. don't suggest "Machine Learning" if "ML" exists, don't suggest "JavaScript" if "JS" exists)
+7. Return ONLY valid JSON, no markdown`;
 }

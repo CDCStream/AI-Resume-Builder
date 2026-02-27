@@ -23,16 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  getResumes,
-  getCoverLetterById,
-  createCoverLetter,
-  updateCoverLetter,
-  SavedResume,
-  SavedCoverLetter,
-} from "@/lib/store/documentStore";
-import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle } from "lucide-react";
+import { useResumes, SavedResume } from "@/hooks/useResumes";
+import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
+import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Crown } from "lucide-react";
 import { ProfessionalCoverLetter } from "@/components/templates/cover-letter";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface CoverLetterData {
   recipientName: string;
@@ -71,8 +66,16 @@ function CoverLetterPageContent() {
   const searchParams = useSearchParams();
   const documentId = searchParams.get("id");
 
+  const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
+  const { resumes, loading: resumesLoading } = useResumes();
+  const {
+    getCoverLetterById,
+    createCoverLetter,
+    updateCoverLetter,
+    loading: coverLettersLoading,
+  } = useCoverLetters();
+
   const [coverLetter, setCoverLetter] = useState<CoverLetterData>(defaultCoverLetter);
-  const [resumes, setResumes] = useState<SavedResume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
   const [jobUrl, setJobUrl] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -94,31 +97,32 @@ function CoverLetterPageContent() {
     backgroundUrl?: string;
   } | null>(null);
 
-  // Load resumes
+  // Auto-select resume if only one exists
   useEffect(() => {
-    const savedResumes = getResumes();
-    setResumes(savedResumes);
-    if (savedResumes.length === 1) {
-      setSelectedResumeId(savedResumes[0].id);
+    if (resumes.length === 1 && !selectedResumeId) {
+      setSelectedResumeId(resumes[0].id);
     }
-  }, []);
+  }, [resumes, selectedResumeId]);
 
   // Load existing cover letter if editing
   useEffect(() => {
-    if (documentId) {
-      const saved = getCoverLetterById(documentId);
-      if (saved) {
-        setCoverLetter(saved.coverLetterData);
-        setCurrentDocument(saved);
+    const loadCoverLetter = async () => {
+      if (documentId) {
+        const saved = await getCoverLetterById(documentId);
+        if (saved) {
+          setCoverLetter(saved.coverLetterData);
+          setCurrentDocument(saved);
+        }
       }
-    }
-  }, [documentId]);
+    };
+    loadCoverLetter();
+  }, [documentId, getCoverLetterById]);
 
   // Load cover letter data transferred from Find Jobs page
   useEffect(() => {
     const fromFindJobs = searchParams.get("fromFindJobs");
     if (fromFindJobs === "true") {
-      const transferData = localStorage.getItem("coverLetterTransfer");
+      const transferData = sessionStorage.getItem("coverLetterTransfer");
       if (transferData) {
         try {
           const data = JSON.parse(transferData);
@@ -127,6 +131,13 @@ function CoverLetterPageContent() {
             recipientName: data.recipientName || "Hiring Manager",
             recipientTitle: data.recipientTitle || "",
             companyName: data.companyName || "",
+            companyAddress: data.companyAddress || "",
+            date: data.date || new Date().toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            subject: data.subject || "",
             greeting: data.greeting || "Dear Hiring Manager,",
             closing: data.closing || "Sincerely,",
             senderName: data.senderName || "",
@@ -136,7 +147,7 @@ function CoverLetterPageContent() {
             setJobDetails(data.jobDetails);
           }
           // Clear transfer data after loading
-          localStorage.removeItem("coverLetterTransfer");
+          sessionStorage.removeItem("coverLetterTransfer");
         } catch (e) {
           console.error("Failed to parse cover letter transfer data:", e);
         }
@@ -254,11 +265,11 @@ function CoverLetterPageContent() {
 
   // Handle save
   const handleSave = useCallback(
-    (name: string) => {
+    async (name: string) => {
       setIsSaving(true);
       try {
         if (currentDocument) {
-          const updated = updateCoverLetter(currentDocument.id, {
+          const updated = await updateCoverLetter(currentDocument.id, {
             name,
             coverLetterData: coverLetter,
           });
@@ -266,9 +277,11 @@ function CoverLetterPageContent() {
             setCurrentDocument(updated);
           }
         } else {
-          const newDoc = createCoverLetter(name, coverLetter, "professional");
-          setCurrentDocument(newDoc);
-          router.push(`/cover-letter?id=${newDoc.id}`, { scroll: false });
+          const newDoc = await createCoverLetter(name, coverLetter, "professional");
+          if (newDoc) {
+            setCurrentDocument(newDoc);
+            router.push(`/cover-letter?id=${newDoc.id}`, { scroll: false });
+          }
         }
         setIsSaveModalOpen(false);
       } catch (err) {
@@ -277,7 +290,7 @@ function CoverLetterPageContent() {
         setIsSaving(false);
       }
     },
-    [currentDocument, coverLetter, router]
+    [currentDocument, coverLetter, router, createCoverLetter, updateCoverLetter]
   );
 
   const handleSaveClick = () => {
@@ -342,26 +355,77 @@ function CoverLetterPageContent() {
     }
   }, [coverLetter.senderName, isExporting]);
 
+  // Loading state
+  if (resumesLoading || coverLettersLoading || subscriptionLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <span className="text-gray-600">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Trial expired gate
+  if (trialExpired) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-amber-200 shadow-lg shadow-amber-500/10">
+          <CardHeader className="text-center bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
+              <Crown className="h-8 w-8 text-amber-500" />
+            </div>
+            <CardTitle className="text-gray-900">
+              Your Free Trial Has Ended
+            </CardTitle>
+            <CardDescription>
+              Upgrade to Pro to continue using Cover Letter Generator
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <p className="text-gray-600 text-center mb-6">
+              Your 3-day free trial has expired. Upgrade to Pro to continue creating personalized, AI-powered cover letters.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={() => router.push("/pricing")} 
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade to Pro
+              </Button>
+              <Button variant="outline" onClick={() => router.push("/dashboard")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // No resumes - show message
   if (resumes.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-blue-100 shadow-lg shadow-blue-500/10">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
               <AlertCircle className="w-8 h-8 text-orange-600" />
             </div>
-            <CardTitle>No Resume Found</CardTitle>
+            <CardTitle className="text-blue-900">No Resume Found</CardTitle>
             <CardDescription>
               You need to create and save a resume first before generating a cover letter.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Button onClick={() => router.push("/resume")} className="w-full">
+            <Button onClick={() => router.push("/resume")} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
               <FileText className="w-4 h-4 mr-2" />
               Create Resume
             </Button>
-            <Button variant="outline" onClick={() => router.push("/dashboard")} className="w-full">
+            <Button variant="outline" onClick={() => router.push("/dashboard")} className="w-full border-blue-200 hover:bg-blue-50">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -372,22 +436,29 @@ function CoverLetterPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <div className="w-full px-4 py-4 md:px-6 md:py-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3 sm:gap-4">
-            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
+            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="border-blue-200 hover:bg-blue-50">
               <ArrowLeft className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Back</span>
             </Button>
-            <div>
-              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 line-clamp-1">
-                {currentDocument?.name || "Create Cover Letter"}
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-                Generate a personalized cover letter using AI
-              </p>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/logo.png" 
+                alt="LinImpact.ai Logo" 
+                className="w-10 h-10 object-contain"
+              />
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent line-clamp-1">
+                  {currentDocument?.name || "Create Cover Letter"}
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+                  Generate a personalized cover letter using AI
+                </p>
+              </div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -686,7 +757,7 @@ function CoverLetterPageContent() {
 export default function CoverLetterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           <span className="text-gray-600">Loading...</span>

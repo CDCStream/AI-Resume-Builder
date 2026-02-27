@@ -43,7 +43,9 @@ import {
   TrendingUp,
   AlertCircle,
   Lightbulb,
+  Crown,
 } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface STARStory {
   title: string;
@@ -121,6 +123,7 @@ interface PracticeResult {
 function InterviewPrepContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
 
   // Resume selection
   const [resumes, setResumes] = useState<SavedResume[]>([]);
@@ -160,7 +163,7 @@ function InterviewPrepContent() {
     // Check if coming from Find Jobs page
     const fromFindJobs = searchParams.get("fromFindJobs");
     if (fromFindJobs === "true") {
-      const transferData = localStorage.getItem("interviewPrepTransfer");
+      const transferData = sessionStorage.getItem("interviewPrepTransfer");
       if (transferData) {
         try {
           const data = JSON.parse(transferData);
@@ -180,7 +183,7 @@ function InterviewPrepContent() {
             setLinkedInUrl(data.jobUrl);
           }
           // Clear transfer data after loading
-          localStorage.removeItem("interviewPrepTransfer");
+          sessionStorage.removeItem("interviewPrepTransfer");
           console.log("Loaded interview prep data from Find Jobs");
         } catch (e) {
           console.error("Failed to parse interview prep transfer data:", e);
@@ -546,13 +549,61 @@ function InterviewPrepContent() {
     return "text-red-600";
   };
 
+  // Loading subscription
+  if (subscriptionLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Trial expired gate
+  if (trialExpired) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-amber-200 shadow-lg shadow-amber-500/10">
+          <CardHeader className="text-center bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
+              <Crown className="h-8 w-8 text-amber-500" />
+            </div>
+            <CardTitle className="text-gray-900">
+              Your Free Trial Has Ended
+            </CardTitle>
+            <CardDescription>
+              Upgrade to Pro to continue using Interview Prep AI
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <p className="text-gray-600 text-center mb-6">
+              Your 3-day free trial has expired. Upgrade to Pro to continue preparing for your interviews with AI-generated guides and practice questions.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={() => router.push("/pricing")} 
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade to Pro
+              </Button>
+              <Button variant="outline" onClick={() => router.push("/dashboard")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // No resumes
   if (resumes.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-blue-100 shadow-lg shadow-blue-500/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-blue-900">
               <AlertCircle className="w-5 h-5 text-amber-500" />
               No Resume Found
             </CardTitle>
@@ -561,7 +612,7 @@ function InterviewPrepContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push("/resume")} className="w-full">
+            <Button onClick={() => router.push("/resume")} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
               Create Resume
             </Button>
           </CardContent>
@@ -571,18 +622,25 @@ function InterviewPrepContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")}>
+            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")} className="hover:bg-blue-50">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <div>
-              <h1 className="text-xl font-bold">Interview Preparation</h1>
-              <p className="text-sm text-gray-500">Prepare for your dream job interview</p>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/logo.png" 
+                alt="LinImpact.ai Logo" 
+                className="w-10 h-10 object-contain"
+              />
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Interview Preparation</h1>
+                <p className="text-sm text-gray-500">Prepare for your dream job interview</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1237,8 +1295,8 @@ function InterviewPrepContent() {
 export default function InterviewPrepPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     }>
       <InterviewPrepContent />

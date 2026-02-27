@@ -149,6 +149,27 @@ IMPORTANT RULES:
 6. Be truthful - don't suggest adding false information
 7. Prioritize skills from the "MISSING SKILLS" list if they seem relevant to candidate's background
 8. Write in the same language as the resume content
+9. CRITICAL - SYNONYM/DUPLICATE CHECK: Before suggesting a skill, check if the candidate ALREADY has it under a different name or abbreviation. Examples of duplicates to avoid:
+   - "ML" = "Machine Learning"
+   - "JS" = "JavaScript"
+   - "TS" = "TypeScript"
+   - "K8s" = "Kubernetes"
+   - "Postgres" = "PostgreSQL"
+   - "React.js" = "React" = "ReactJS"
+   - "Node" = "Node.js" = "NodeJS"
+   - "TF" = "TensorFlow"
+   - "PyTorch" = "Torch"
+   - "AWS" = "Amazon Web Services"
+   - "GCP" = "Google Cloud Platform" = "Google Cloud"
+   - "DL" = "Deep Learning"
+   - "NLP" = "Natural Language Processing"
+   - "CV" = "Computer Vision"
+   - "CI/CD" = "Continuous Integration/Continuous Deployment"
+   - "OOP" = "Object-Oriented Programming"
+   - "SQL Server" = "MSSQL" = "Microsoft SQL Server"
+   - "Mongo" = "MongoDB"
+   - "Stats" = "Statistics" = "Statistical Analysis" = "Statistical Modeling" = "Statistical Inference"
+   Do NOT suggest adding a skill if any synonym, abbreviation, or variation of it already exists in the candidate's current skills list. This includes partial matches (e.g., if "Statistical Modeling" exists, don't suggest "Statistics" or "Statistical Inference").
 
 Return ONLY valid JSON, no additional text.`;
 
@@ -214,10 +235,79 @@ Return ONLY valid JSON, no additional text.`;
     if (!result.addedSkills) result.addedSkills = [];
     if (!result.experienceAdditions) result.experienceAdditions = [];
 
+    // Server-side synonym deduplication
+    const normalizeSkill = (s: string): string =>
+      s.toLowerCase()
+        .replace(/[.\-\/\s]+/g, "")
+        .replace(/^(the|a|an)\s+/i, "");
+
+    const synonymMap: Record<string, string[]> = {
+      machinelearning: ["ml", "machinelearning"],
+      deeplearning: ["dl", "deeplearning"],
+      javascript: ["js", "javascript", "ecmascript"],
+      typescript: ["ts", "typescript"],
+      kubernetes: ["k8s", "kubernetes", "kube"],
+      postgresql: ["postgres", "postgresql", "psql"],
+      react: ["react", "reactjs"],
+      node: ["node", "nodejs"],
+      tensorflow: ["tf", "tensorflow"],
+      pytorch: ["pytorch", "torch"],
+      aws: ["aws", "amazonwebservices"],
+      gcp: ["gcp", "googlecloudplatform", "googlecloud"],
+      nlp: ["nlp", "naturallanguageprocessing"],
+      computervision: ["cv", "computervision"],
+      cicd: ["cicd", "continuousintegrationcontinuousdeployment", "continuousintegration"],
+      oop: ["oop", "objectorientedprogramming"],
+      mssql: ["mssql", "sqlserver", "microsoftsqlserver"],
+      mongodb: ["mongo", "mongodb"],
+      statistics: ["stats", "statistics", "statisticalanalysis", "statisticalmodeling", "statisticalinference", "statisticalmethods"],
+      python: ["python", "py"],
+      r: ["rlanguage", "rprogramming"],
+      docker: ["docker", "containerization"],
+      apache: ["apacheairflow", "airflow"],
+      spark: ["spark", "apachespark", "pyspark"],
+      kafka: ["kafka", "apachekafka"],
+      tableau: ["tableau"],
+      git: ["git", "github", "gitgithub"],
+    };
+
+    const existingNormalized = existingSkills.filter((s): s is string => !!s).map(normalizeSkill);
+
+    const getCanonicalKeys = (normalized: string): string[] => {
+      const keys: string[] = [normalized];
+      for (const [canonical, aliases] of Object.entries(synonymMap)) {
+        if (aliases.includes(normalized)) {
+          keys.push(canonical);
+          keys.push(...aliases);
+        }
+      }
+      return keys;
+    };
+
+    const existingKeySet = new Set<string>();
+    for (const norm of existingNormalized) {
+      existingKeySet.add(norm);
+      for (const key of getCanonicalKeys(norm)) {
+        existingKeySet.add(key);
+      }
+    }
+
+    const beforeCount = result.addedSkills.length;
+    result.addedSkills = result.addedSkills.filter(skill => {
+      const norm = normalizeSkill(skill.name);
+      const keys = getCanonicalKeys(norm);
+      const isDuplicate = keys.some(k => existingKeySet.has(k));
+      if (isDuplicate) {
+        console.log(`Filtered duplicate skill: "${skill.name}" (matches existing skill)`);
+      }
+      return !isDuplicate;
+    });
+
     console.log("Auto-fix suggestions generated:", {
       skillCount: result.addedSkills.length,
+      filteredDuplicates: beforeCount - result.addedSkills.length,
       hasSummaryChanges: !!result.summaryAdditions,
-      experienceAdditionCount: result.experienceAdditions.length
+      experienceAdditionCount: result.experienceAdditions.length,
     });
 
     return NextResponse.json(result);

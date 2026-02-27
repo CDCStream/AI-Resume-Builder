@@ -1,0 +1,54 @@
+# LinImpact.ai - AI Resume Builder
+# https://linimpact.ai
+
+User-agent: *
+Allow: /
+
+# Allow all crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# AI Crawlers (for GEO - Generative Engine Optimization)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /editor/
+Disallow: /settings/
+Disallow: /billing/
+
+# Sitemap location
+Sitemap: https://linimpact.ai/sitemap.xml
+
+# LLMs.txt for AI assistants
+# See: https://linimpact.ai/llms.txt

@@ -698,8 +698,11 @@ export default function ResumeEditor({
                     newProjects[index] = { ...newProjects[index], description: newValue };
                     let updatedResume = { ...resume, projects: newProjects };
                     if (suggestedSkills && suggestedSkills.length > 0) {
-                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
-                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      const allExisting = new Set([
+                        ...(resume.skills?.map(s => s.name?.toLowerCase()) || []),
+                        ...(resume.skills?.flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []) || []),
+                      ]);
+                      const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                       if (newSkills.length > 0) {
                         updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
                       }
@@ -810,8 +813,11 @@ export default function ResumeEditor({
                     newCerts[index] = { ...newCerts[index], summary: newValue };
                     let updatedResume = { ...resume, certificates: newCerts };
                     if (suggestedSkills && suggestedSkills.length > 0) {
-                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
-                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      const allExisting = new Set([
+                        ...(resume.skills?.map(s => s.name?.toLowerCase()) || []),
+                        ...(resume.skills?.flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []) || []),
+                      ]);
+                      const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                       if (newSkills.length > 0) {
                         updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
                       }
@@ -898,8 +904,11 @@ export default function ResumeEditor({
                     newAwards[index] = { ...newAwards[index], summary: newValue };
                     let updatedResume = { ...resume, awards: newAwards };
                     if (suggestedSkills && suggestedSkills.length > 0) {
-                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
-                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      const allExisting = new Set([
+                        ...(resume.skills?.map(s => s.name?.toLowerCase()) || []),
+                        ...(resume.skills?.flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []) || []),
+                      ]);
+                      const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                       if (newSkills.length > 0) {
                         updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
                       }
@@ -1011,8 +1020,11 @@ export default function ResumeEditor({
                     newVols[index] = { ...newVols[index], summary: newValue };
                     let updatedResume = { ...resume, volunteer: newVols };
                     if (suggestedSkills && suggestedSkills.length > 0) {
-                      const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
-                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                      const allExisting = new Set([
+                        ...(resume.skills?.map(s => s.name?.toLowerCase()) || []),
+                        ...(resume.skills?.flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []) || []),
+                      ]);
+                      const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                       if (newSkills.length > 0) {
                         updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
                       }
@@ -1694,8 +1706,11 @@ export default function ResumeEditor({
                   onApply={(newValue, suggestedSkills, suggestedLanguages) => {
                     updateBasics("label", newValue);
                     if (suggestedSkills && suggestedSkills.length > 0) {
-                      const existingSkillNames = (resume.skills || []).map(s => s.name?.toLowerCase());
-                      const newSkills = suggestedSkills.filter(s => !existingSkillNames.includes(s.name.toLowerCase()));
+                      const allExisting = new Set([
+                        ...(resume.skills || []).map(s => s.name?.toLowerCase()),
+                        ...(resume.skills || []).flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []),
+                      ]);
+                      const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                       if (newSkills.length > 0) {
                         onResumeChange({
                           ...resume,
@@ -1992,8 +2007,11 @@ export default function ResumeEditor({
               onApply={(newValue, suggestedSkills, suggestedLanguages) => {
                 let updatedResume = { ...resume, basics: { ...resume.basics, summary: newValue } };
                 if (suggestedSkills && suggestedSkills.length > 0) {
-                  const existingSkillNames = (resume.skills || []).map(s => s.name?.toLowerCase());
-                  const newSkills = suggestedSkills.filter(s => !existingSkillNames.includes(s.name.toLowerCase()));
+                  const allExisting = new Set([
+                    ...(resume.skills || []).map(s => s.name?.toLowerCase()),
+                    ...(resume.skills || []).flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []),
+                  ]);
+                  const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                   if (newSkills.length > 0) {
                     updatedResume = {
                       ...updatedResume,
@@ -2180,8 +2198,11 @@ export default function ResumeEditor({
                       newWork[index] = { ...newWork[index], summary: newValue };
                       let updatedResume = { ...resume, work: newWork };
                       if (suggestedSkills && suggestedSkills.length > 0) {
-                        const existingSkillNames = (resume.skills || []).map(s => s.name?.toLowerCase());
-                        const newSkills = suggestedSkills.filter(s => !existingSkillNames.includes(s.name.toLowerCase()));
+                        const allExisting = new Set([
+                          ...(resume.skills || []).map(s => s.name?.toLowerCase()),
+                          ...(resume.skills || []).flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []),
+                        ]);
+                        const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                         if (newSkills.length > 0) {
                           updatedResume = {
                             ...updatedResume,
@@ -2364,8 +2385,11 @@ export default function ResumeEditor({
                       newEducation[index] = { ...newEducation[index], summary: newValue };
                       let updatedResume = { ...resume, education: newEducation };
                       if (suggestedSkills && suggestedSkills.length > 0) {
-                        const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
-                        const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                        const allExisting = new Set([
+                          ...(resume.skills?.map(s => s.name?.toLowerCase()) || []),
+                          ...(resume.skills?.flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []) || []),
+                        ]);
+                        const newSkills = suggestedSkills.filter(s => !allExisting.has(s.name.toLowerCase()));
                         if (newSkills.length > 0) {
                           updatedResume.skills = [...(resume.skills || []), ...newSkills.map(s => ({ name: s.name, level: s.level, keywords: [] }))];
                         }
@@ -2451,7 +2475,10 @@ export default function ResumeEditor({
                 context={{
                   name: resume.basics?.name,
                   currentTitle: resume.basics?.label,
-                  skills: resume.skills?.flatMap(s => s.keywords || []),
+                  skills: [
+                    ...(resume.skills?.flatMap(s => s.keywords || []) || []),
+                    ...(resume.skills?.map(s => s.name || "").filter(Boolean) || []),
+                  ],
                   experience: resume.work?.map(w => ({
                     position: w.position || "",
                     company: w.name || "",
@@ -2460,8 +2487,11 @@ export default function ResumeEditor({
                 }}
                 onApply={(_, suggestedSkills) => {
                   if (suggestedSkills && suggestedSkills.length > 0) {
-                    const existingSkillNames = new Set(resume.skills?.map(s => s.name?.toLowerCase()) || []);
-                    const newSkills = suggestedSkills.filter(s => !existingSkillNames.has(s.name.toLowerCase()));
+                    const allExistingSkills = new Set([
+                      ...(resume.skills?.map(s => s.name?.toLowerCase()) || []),
+                      ...(resume.skills?.flatMap(s => s.keywords?.map(k => k.toLowerCase()) || []) || []),
+                    ]);
+                    const newSkills = suggestedSkills.filter(s => !allExistingSkills.has(s.name.toLowerCase()));
                     if (newSkills.length > 0) {
                       onResumeChange({
                         ...resume,

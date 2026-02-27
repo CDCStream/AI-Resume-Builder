@@ -11,7 +11,7 @@ import { templates } from "@/components/templates";
 import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
 import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X, Loader2 } from "lucide-react";
 import { exportResumeToPDF } from "@/lib/utils/pdfExport";
-import { createResume, updateResume, getResumeById, SavedResume } from "@/lib/store/documentStore";
+import { useResumes, SavedResume } from "@/hooks/useResumes";
 
 type ViewMode = "edit" | "page";
 
@@ -27,7 +27,15 @@ function ResumeEditorContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const documentId = searchParams.get("id");
-  
+
+  const {
+    getResumeById,
+    createResume,
+    updateResume,
+    loading: resumesLoading,
+    isAuthenticated,
+  } = useResumes();
+
   const [resume, setResume] = useState<Resume>(defaultResume);
   const [selectedTemplate, setSelectedTemplate] = useState("professional-white");
   const [scale, setScale] = useState(1);
@@ -44,7 +52,6 @@ function ResumeEditorContent() {
   const [hasSeenTextEditPopup, setHasSeenTextEditPopup] = useState(false);
   const [activeHeatmapZone, setActiveHeatmapZone] = useState<HeatmapZone | null>(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-  // Document save state
   const [currentDocument, setCurrentDocument] = useState<SavedResume | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -57,7 +64,7 @@ function ResumeEditorContent() {
 
   const handleDownloadPDF = useCallback(async () => {
     if (!previewRef.current || isExportingPDF) return;
-    
+
     setIsExportingPDF(true);
     try {
       const resumeName = resume.basics?.name || "resume";
@@ -70,7 +77,6 @@ function ResumeEditorContent() {
     }
   }, [resume.basics?.name, isExportingPDF]);
 
-  // Track unsaved changes
   useEffect(() => {
     const currentState = JSON.stringify({ resume, selectedTemplate });
     if (lastSavedState && currentState !== lastSavedState) {
@@ -78,13 +84,11 @@ function ResumeEditorContent() {
     }
   }, [resume, selectedTemplate, lastSavedState]);
 
-  // Handle save
-  const handleSave = useCallback((name: string) => {
+  const handleSave = useCallback(async (name: string) => {
     setIsSaving(true);
     try {
       if (currentDocument) {
-        // Update existing document
-        const updated = updateResume(currentDocument.id, {
+        const updated = await updateResume(currentDocument.id, {
           name,
           resumeData: resume,
           templateId: selectedTemplate,
@@ -93,11 +97,11 @@ function ResumeEditorContent() {
           setCurrentDocument(updated);
         }
       } else {
-        // Create new document
-        const newDoc = createResume(name, resume, selectedTemplate);
-        setCurrentDocument(newDoc);
-        // Update URL with new document ID
-        router.push(`/resume?id=${newDoc.id}`, { scroll: false });
+        const newDoc = await createResume(name, resume, selectedTemplate);
+        if (newDoc) {
+          setCurrentDocument(newDoc);
+          router.push(`/resume?id=${newDoc.id}`, { scroll: false });
+        }
       }
       const savedState = JSON.stringify({ resume, selectedTemplate });
       setLastSavedState(savedState);
@@ -107,9 +111,8 @@ function ResumeEditorContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentDocument, resume, selectedTemplate, router]);
+  }, [currentDocument, resume, selectedTemplate, router, createResume, updateResume]);
 
-  // Auto-save: debounce 2s after changes, only if document was saved before
   useEffect(() => {
     if (!currentDocument || !hasUnsavedChanges) return;
 
@@ -117,10 +120,10 @@ function ResumeEditorContent() {
       clearTimeout(autoSaveTimerRef.current);
     }
 
-    autoSaveTimerRef.current = setTimeout(() => {
+    autoSaveTimerRef.current = setTimeout(async () => {
       setAutoSaveStatus("saving");
       try {
-        const updated = updateResume(currentDocument.id, {
+        const updated = await updateResume(currentDocument.id, {
           name: currentDocument.name,
           resumeData: resume,
           templateId: selectedTemplate,
@@ -144,40 +147,40 @@ function ResumeEditorContent() {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [resume, selectedTemplate, currentDocument, hasUnsavedChanges]);
+  }, [resume, selectedTemplate, currentDocument, hasUnsavedChanges, updateResume]);
 
-  // Handle rename
-  const handleRename = useCallback((newName: string) => {
+  const handleRename = useCallback(async (newName: string) => {
     if (currentDocument) {
-      const updated = updateResume(currentDocument.id, { name: newName });
+      const updated = await updateResume(currentDocument.id, { name: newName });
       if (updated) {
         setCurrentDocument(updated);
       }
     }
-  }, [currentDocument]);
+  }, [currentDocument, updateResume]);
 
-  // Load saved document if ID is provided in URL
   useEffect(() => {
-    if (documentId) {
-      setIsLoadingDocument(true);
-      const savedDoc = getResumeById(documentId);
-      if (savedDoc) {
-        setResume(savedDoc.resumeData);
-        setSelectedTemplate(savedDoc.templateId);
-        setCurrentDocument(savedDoc);
-        setShowGettingStarted(false);
-        const savedState = JSON.stringify({
-          resume: savedDoc.resumeData,
-          selectedTemplate: savedDoc.templateId,
-        });
-        setLastSavedState(savedState);
-        setHasUnsavedChanges(false);
+    const loadDocument = async () => {
+      if (documentId && isAuthenticated) {
+        setIsLoadingDocument(true);
+        const savedDoc = await getResumeById(documentId);
+        if (savedDoc) {
+          setResume(savedDoc.resumeData);
+          setSelectedTemplate(savedDoc.templateId);
+          setCurrentDocument(savedDoc);
+          setShowGettingStarted(false);
+          const savedState = JSON.stringify({
+            resume: savedDoc.resumeData,
+            selectedTemplate: savedDoc.templateId,
+          });
+          setLastSavedState(savedState);
+          setHasUnsavedChanges(false);
+        }
+        setIsLoadingDocument(false);
       }
-      setIsLoadingDocument(false);
-    }
-  }, [documentId]);
+    };
+    loadDocument();
+  }, [documentId, isAuthenticated, getResumeById]);
 
-  // Show Edit Mode popup on first page load
   useEffect(() => {
     if (!hasSeenEditModePopup && !documentId) {
       const timer = setTimeout(() => {
@@ -197,7 +200,6 @@ function ResumeEditorContent() {
         setShowGettingStarted(false);
         break;
       case "ai":
-        // TODO: Open AI assistance modal
         setResume(emptyResume);
         setShowGettingStarted(false);
         break;
@@ -208,7 +210,7 @@ function ResumeEditorContent() {
       case "linkedin":
         setShowGettingStarted(false);
         setShowLinkedInModal(true);
-        return; // Don't close getting started yet
+        return;
       case "example":
         setResume(defaultResume);
         setShowGettingStarted(false);
@@ -230,7 +232,7 @@ function ResumeEditorContent() {
     setHasSelection(selected);
   }, []);
 
-  const A4_WIDTH = 794; // 210mm at 96dpi
+  const A4_WIDTH = 794;
 
   useEffect(() => {
     const updateScale = () => {
@@ -247,31 +249,38 @@ function ResumeEditorContent() {
     return () => window.removeEventListener("resize", updateScale);
   }, []);
 
+  if (resumesLoading || isLoadingDocument) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <span className="text-gray-600">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Getting Started Modal */}
       <GettingStartedModal
         isOpen={showGettingStarted}
         onClose={() => setShowGettingStarted(false)}
         onSelectOption={handleSelectOption}
       />
 
-      {/* LinkedIn Import Modal */}
       <LinkedInImportModal
         isOpen={showLinkedInModal}
         onClose={() => setShowLinkedInModal(false)}
         onImport={handleLinkedInImport}
       />
 
-      {/* Upload Resume Modal */}
       <UploadResumeModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         onImport={handleUploadImport}
       />
 
-      <div className="flex h-screen bg-gray-100">
-        {/* Left Panel - Editor */}
+      <div className="flex h-screen bg-gradient-to-br from-blue-50 via-gray-50 to-cyan-50">
         <div className="w-[480px] bg-white border-r border-gray-200 flex-shrink-0 no-print">
           <ResumeEditor
             resume={resume}
@@ -291,7 +300,6 @@ function ResumeEditorContent() {
           />
         </div>
 
-        {/* Right Panel - Preview */}
         <div ref={containerRef} className="flex-1 overflow-auto">
           <div
             className="py-8 flex justify-center print:scale-100 print:transform-none print:py-0"
@@ -306,17 +314,16 @@ function ResumeEditorContent() {
                 viewMode={viewMode}
                 isTextEditMode={isTextEditMode}
                 onElementSelect={handleElementSelect}
-          >
-            {TemplateComponent && <TemplateComponent resume={resume} />}
+              >
+                {TemplateComponent && <TemplateComponent resume={resume} />}
               </ResumePaginator>
-              
-              {/* Zone Info Badge */}
+
               {activeHeatmapZone && (
                 <div className="absolute top-4 right-4 pointer-events-none z-50">
-                  <div 
+                  <div
                     className="px-4 py-2 rounded-xl shadow-2xl text-white text-sm font-semibold flex items-center gap-2"
                     style={{
-                      background: activeHeatmapZone.attention === "high" 
+                      background: activeHeatmapZone.attention === "high"
                         ? "rgb(34, 197, 94)"
                         : activeHeatmapZone.attention === "medium"
                         ? "rgb(234, 179, 8)"
@@ -337,9 +344,7 @@ function ResumeEditorContent() {
           </div>
         </div>
 
-        {/* Floating Controls - Outside of scaled container */}
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 no-print">
-          {/* Text Edit Controls (only in edit mode with selection) */}
           {viewMode === "edit" && isTextEditMode && hasSelection && (
             <div className="flex items-center gap-1 bg-white rounded-full shadow-xl border border-gray-200 p-1 mr-2">
               <button
@@ -359,7 +364,6 @@ function ResumeEditorContent() {
             </div>
           )}
 
-          {/* Reset Margins Button (only in edit mode with text edit) */}
           {viewMode === "edit" && isTextEditMode && (
             <button
               onClick={() => paginatorRef.current?.resetMargins()}
@@ -370,13 +374,11 @@ function ResumeEditorContent() {
             </button>
           )}
 
-          {/* Edit Text Button (only in edit mode) */}
           {viewMode === "edit" && (
             <button
               onClick={() => {
                 const newValue = !isTextEditMode;
                 setIsTextEditMode(newValue);
-                // Show popup on first text edit activation
                 if (newValue && !hasSeenTextEditPopup) {
                   setShowTextEditPopup(true);
                   setHasSeenTextEditPopup(true);
@@ -393,15 +395,12 @@ function ResumeEditorContent() {
             </button>
           )}
 
-          {/* Mode Toggle Button */}
           <button
             onClick={() => {
               const newMode = viewMode === "edit" ? "page" : "edit";
               setViewMode(newMode);
-              // Auto-activate text edit mode when switching to edit mode
               if (newMode === "edit") {
                 setIsTextEditMode(true);
-                // Show popup on first text edit activation
                 if (!hasSeenTextEditPopup) {
                   setShowTextEditPopup(true);
                   setHasSeenTextEditPopup(true);
@@ -410,7 +409,6 @@ function ResumeEditorContent() {
                 setIsTextEditMode(false);
               }
               setHasSelection(false);
-              // Close edit mode popup when switching
               setShowEditModePopup(false);
             }}
             className={`p-3 rounded-full shadow-xl transition-all duration-200 flex items-center gap-2 ${
@@ -434,7 +432,6 @@ function ResumeEditorContent() {
           </button>
         </div>
 
-        {/* Edit Mode Introduction Popup (shown on first page load) */}
         {showEditModePopup && !showGettingStarted && (
           <div className="fixed bottom-20 right-6 z-50 bg-gradient-to-br from-blue-600 to-blue-700 text-white text-sm rounded-xl px-5 py-4 shadow-2xl max-w-sm backdrop-blur-sm border border-blue-500 no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
             <button
@@ -465,7 +462,6 @@ function ResumeEditorContent() {
           </div>
         )}
 
-        {/* Text Edit Help Popup (shown on first text edit activation) */}
         {showTextEditPopup && (
           <div className="fixed bottom-20 right-6 z-50 bg-gray-900/95 text-white text-sm rounded-xl px-5 py-4 shadow-2xl max-w-sm backdrop-blur-sm border border-gray-700 no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
             <button
@@ -498,7 +494,6 @@ function ResumeEditorContent() {
           </div>
         )}
 
-        {/* Help tooltip for text edit mode (always visible when in text edit mode, after popup is dismissed) */}
         {viewMode === "edit" && isTextEditMode && !showTextEditPopup && (
           <div className="fixed bottom-20 right-6 z-50 bg-gray-900/95 text-white text-sm rounded-xl px-4 py-3 shadow-2xl max-w-xs backdrop-blur-sm border border-gray-700 no-print">
             <p className="font-semibold mb-2 flex items-center gap-2">
@@ -526,7 +521,7 @@ function ResumeEditorContent() {
 export default function ResumePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           <span className="text-gray-600">Loading...</span>
