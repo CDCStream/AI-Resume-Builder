@@ -22,41 +22,51 @@ export const initMixpanel = () => {
 // Track Events
 export const trackEvent = (eventName: string, properties?: Record<string, any>) => {
   if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    mixpanel.track(eventName, {
-      ...properties,
-      timestamp: new Date().toISOString(),
-    });
+    if (!isInitialized) initMixpanel();
+    try {
+      mixpanel.track(eventName, {
+        ...properties,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      // Mixpanel not ready yet
+    }
   }
 };
 
 // Identify User
 export const identifyUser = (userId: string, properties?: Record<string, any>) => {
   if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    mixpanel.identify(userId);
-    if (properties) {
-      mixpanel.people.set(properties);
-    }
+    if (!isInitialized) initMixpanel();
+    try {
+      mixpanel.identify(userId);
+      if (properties) {
+        mixpanel.people.set(properties);
+      }
+    } catch { /* Mixpanel not ready */ }
   }
 };
 
 // Set User Properties
 export const setUserProperties = (properties: Record<string, any>) => {
   if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    mixpanel.people.set(properties);
+    if (!isInitialized) initMixpanel();
+    try { mixpanel.people.set(properties); } catch { /* Mixpanel not ready */ }
   }
 };
 
 // Increment User Property
 export const incrementUserProperty = (property: string, value: number = 1) => {
   if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    mixpanel.people.increment(property, value);
+    if (!isInitialized) initMixpanel();
+    try { mixpanel.people.increment(property, value); } catch { /* Mixpanel not ready */ }
   }
 };
 
 // Reset (on logout)
 export const resetMixpanel = () => {
   if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    mixpanel.reset();
+    try { mixpanel.reset(); } catch { /* Mixpanel not ready */ }
   }
 };
 
