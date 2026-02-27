@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
 import { Button } from "@/components/ui/button";
@@ -60,8 +60,32 @@ function formatDate(dateString: string): string {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, signOut } = useAuth();
-  const { isTrialing, trialExpired, trialDaysRemaining, isLoading: subscriptionLoading } = useSubscription();
+  const { isTrialing, trialExpired, trialDaysRemaining, isLoading: subscriptionLoading, refetch } = useSubscription();
+
+  // Handle checkout success - verify and activate subscription
+  useEffect(() => {
+    const checkoutStatus = searchParams.get("checkout");
+    const sessionToken = searchParams.get("customer_session_token");
+    
+    if (checkoutStatus === "success") {
+      fetch("/api/checkout/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerSessionToken: sessionToken }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            refetch();
+            // Clean URL
+            router.replace("/dashboard");
+          }
+        })
+        .catch(console.error);
+    }
+  }, [searchParams]);
   
   const {
     resumes,
