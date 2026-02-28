@@ -47,6 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { gadsPurchaseConversion, gaPurchase } from "@/lib/gtag";
+import { trackSubscriptionActivated } from "@/lib/mixpanel";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -87,6 +88,12 @@ export default function DashboardPage() {
             const price = priceMap[data.plan] || 13.98;
             gaPurchase(data.plan, data.plan, price);
             gadsPurchaseConversion(price);
+            const billingMap: Record<string, string> = {
+              PRO_MONTHLY: "monthly",
+              PRO_QUARTERLY: "quarterly",
+              PRO_SEMI_ANNUAL: "semi-annual",
+            };
+            trackSubscriptionActivated(data.plan, price, billingMap[data.plan] || "monthly");
             refetch();
             router.replace("/dashboard");
           }
