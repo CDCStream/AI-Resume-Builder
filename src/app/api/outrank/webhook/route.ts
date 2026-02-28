@@ -80,42 +80,42 @@ export async function POST(request: NextRequest) {
     // Strategy: try to find article data from any structure
     let articles: Record<string, unknown>[] = [];
 
-    // If payload.articles is an array of objects
-    if (Array.isArray(payload.articles)) {
-      for (const item of payload.articles) {
-        if (typeof item === "object" && item !== null) {
-          articles.push(item as Record<string, unknown>);
-        } else if (typeof item === "string") {
-          // articles is array of HTML strings
-          articles.push({ content: item, title: "Blog Post" });
-        }
-      }
-    }
-    // If payload.articles is a single object
-    else if (payload.articles && typeof payload.articles === "object") {
-      articles.push(payload.articles);
-    }
-    // If payload.articles is a string (HTML content)
-    else if (typeof payload.articles === "string") {
-      articles.push({ content: payload.articles, title: "Blog Post" });
-    }
-    // If payload.data exists
-    else if (payload.data && typeof payload.data === "object") {
-      articles.push(Array.isArray(payload.data) ? payload.data[0] : payload.data);
-    }
-    // If payload.article exists (can be array or object)
-    else if (payload.article) {
-      if (Array.isArray(payload.article)) {
-        for (const item of payload.article) {
+    const extractArticles = (source: unknown) => {
+      if (Array.isArray(source)) {
+        for (const item of source) {
           if (typeof item === "object" && item !== null) {
             articles.push(item as Record<string, unknown>);
+          } else if (typeof item === "string") {
+            articles.push({ content: item, title: "Blog Post" });
           }
         }
-      } else if (typeof payload.article === "object") {
-        articles.push(payload.article);
+      } else if (source && typeof source === "object") {
+        articles.push(source as Record<string, unknown>);
+      } else if (typeof source === "string") {
+        articles.push({ content: source, title: "Blog Post" });
       }
+    };
+
+    // Outrank format: { data: { articles: [...] } }
+    if (payload.data?.articles) {
+      extractArticles(payload.data.articles);
     }
-    // If payload itself has content
+    // { articles: [...] }
+    else if (payload.articles) {
+      extractArticles(payload.articles);
+    }
+    // { data: { article: ... } } or { data: [...] }
+    else if (payload.data?.article) {
+      extractArticles(payload.data.article);
+    }
+    else if (payload.data) {
+      extractArticles(Array.isArray(payload.data) ? payload.data : payload.data);
+    }
+    // { article: ... }
+    else if (payload.article) {
+      extractArticles(payload.article);
+    }
+    // Payload itself has content
     else if (payload.title || payload.content || payload.html || payload.body) {
       articles.push(payload);
     }
