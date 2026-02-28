@@ -8,7 +8,6 @@ import {
   Eye,
   Play,
   RotateCcw,
-  Download,
   Loader2,
   Sparkles,
   X,
@@ -25,7 +24,7 @@ import {
   CheckCircle2,
   Lightbulb,
 } from "lucide-react";
-import html2canvas from "html2canvas";
+
 
 interface HeatmapZoneData {
   sectionId: string;
@@ -147,7 +146,6 @@ export default function HeatmapScanModal({
   const [error, setError] = useState<string | null>(null);
   const [pages, setPages] = useState<number[]>([]);
   const [activePage, setActivePage] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [showAllHeat, setShowAllHeat] = useState(false);
   const [verdict, setVerdict] = useState<RecruiterVerdict | null>(null);
   const [verdictLoading, setVerdictLoading] = useState(false);
@@ -507,136 +505,6 @@ export default function HeatmapScanModal({
     setShowAllHeat(false);
   };
 
-  const handleDownloadImage = async () => {
-    if (!resumeContainerRef.current) return;
-    setIsDownloading(true);
-
-    try {
-      const container = resumeContainerRef.current;
-      const pageWrappers = container.querySelectorAll(".page-content-wrapper");
-
-      const canvases: HTMLCanvasElement[] = [];
-
-      for (let i = 0; i < pageWrappers.length; i++) {
-        const wrapper = pageWrappers[i] as HTMLElement;
-
-        const canvas = await html2canvas(wrapper, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#ffffff",
-          width: A4_WIDTH,
-          height: A4_HEIGHT,
-        });
-
-        const overlayCanvas = document.createElement("canvas");
-        overlayCanvas.width = canvas.width;
-        overlayCanvas.height = canvas.height;
-        const ctx = overlayCanvas.getContext("2d")!;
-
-        ctx.drawImage(canvas, 0, 0);
-
-        const scaleX = canvas.width / A4_WIDTH;
-        const scaleY = canvas.height / A4_HEIGHT;
-
-        for (const zone of heatmapData) {
-          const section = sectionRects.find(s => s.id === zone.sectionId && s.pageIndex === i);
-          if (!section) continue;
-
-          const x = section.left * scaleX;
-          const y = section.top * scaleY;
-          const w = section.width * scaleX;
-          const h = section.height * scaleY;
-
-          const gradient = ctx.createRadialGradient(
-            x + w / 2, y + h / 2, 0,
-            x + w / 2, y + h / 2, Math.max(w, h) / 1.5
-          );
-          gradient.addColorStop(0, getIntensityColor(zone.intensity, 0.45));
-          gradient.addColorStop(1, getIntensityColor(zone.intensity, 0.05));
-
-          ctx.fillStyle = gradient;
-          ctx.fillRect(x, y, w, h);
-
-          ctx.strokeStyle = getIntensityColor(zone.intensity, 0.7);
-          ctx.lineWidth = 2 * scaleX;
-          ctx.setLineDash([6 * scaleX, 4 * scaleX]);
-          ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "rgba(0,0,0,0.7)";
-          const fontSize = 11 * scaleX;
-          ctx.font = `bold ${fontSize}px sans-serif`;
-          const labelText = `#${zone.scanOrder} ${section.label} (${zone.timeSpent}s)`;
-          const textMetrics = ctx.measureText(labelText);
-          const padding = 4 * scaleX;
-
-          ctx.fillStyle = "rgba(0,0,0,0.75)";
-          ctx.beginPath();
-          const rx = x + 4 * scaleX;
-          const ry = y + 4 * scaleY;
-          const rw = textMetrics.width + padding * 2;
-          const rh = fontSize + padding * 2;
-          const radius = 4 * scaleX;
-          ctx.moveTo(rx + radius, ry);
-          ctx.lineTo(rx + rw - radius, ry);
-          ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
-          ctx.lineTo(rx + rw, ry + rh - radius);
-          ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
-          ctx.lineTo(rx + radius, ry + rh);
-          ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
-          ctx.lineTo(rx, ry + radius);
-          ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
-          ctx.fill();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(labelText, rx + padding, ry + fontSize + padding * 0.5);
-        }
-
-        canvases.push(overlayCanvas);
-      }
-
-      if (canvases.length === 1) {
-        canvases[0].toBlob(blob => {
-          if (!blob) return;
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `resume-heatmap-${Date.now()}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }, "image/png");
-      } else {
-        const totalHeight = canvases.reduce((sum, c) => sum + c.height, 0) + (canvases.length - 1) * 20;
-        const finalCanvas = document.createElement("canvas");
-        finalCanvas.width = canvases[0].width;
-        finalCanvas.height = totalHeight;
-        const ctx = finalCanvas.getContext("2d")!;
-        ctx.fillStyle = "#f3f4f6";
-        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-        let offsetY = 0;
-        for (const c of canvases) {
-          ctx.drawImage(c, 0, offsetY);
-          offsetY += c.height + 20;
-        }
-
-        finalCanvas.toBlob(blob => {
-          if (!blob) return;
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `resume-heatmap-${Date.now()}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }, "image/png");
-      }
-    } catch (err) {
-      console.error("Download failed:", err);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   const currentZone = currentScanIndex >= 0 ? heatmapData[currentScanIndex] : null;
   const currentSection = currentZone ? sectionRects.find(s => s.id === currentZone.sectionId) : null;
@@ -777,24 +645,10 @@ export default function HeatmapScanModal({
 
               {phase === "complete" && (
                 <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Button onClick={resetAnimation} variant="outline" className="flex-1">
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Replay
-                    </Button>
-                    <Button
-                      onClick={handleDownloadImage}
-                      disabled={isDownloading}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-                    >
-                      {isDownloading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Download className="w-4 h-4 mr-2" />
-                      )}
-                      Download
-                    </Button>
-                  </div>
+                  <Button onClick={resetAnimation} variant="outline" className="w-full">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Replay
+                  </Button>
 
                   {/* Verdict button / loading */}
                   {verdictLoading && (
