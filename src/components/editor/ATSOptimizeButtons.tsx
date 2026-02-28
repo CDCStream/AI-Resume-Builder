@@ -55,7 +55,7 @@ export default function ATSOptimizeButtons({
   // If trial expired, show locked buttons
   if (trialExpired) {
     return (
-      <div className={`flex items-center gap-1 shrink-0 ${className}`}>
+      <div className={`flex flex-col items-end gap-1 shrink-0 ${className}`}>
         {!showOnlyTailored && (
           <button
             type="button"
@@ -71,12 +71,16 @@ export default function ATSOptimizeButtons({
         <button
           type="button"
           onClick={() => router.push("/pricing")}
-          className="inline-flex items-center text-[10px] h-5 px-1.5 rounded border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed hover:bg-gray-100 transition-colors"
+          className={`inline-flex items-center rounded border transition-colors ${
+            showOnlyTailored
+              ? "text-sm h-8 px-3 font-medium border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed hover:bg-gray-100 shadow-sm"
+              : "text-[10px] h-5 px-1.5 border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed hover:bg-gray-100"
+          }`}
           title="Upgrade to Pro for AI optimization"
         >
-          <Lock className="w-3 h-3 mr-0.5" />
+          <Lock className={showOnlyTailored ? "w-4 h-4 mr-1" : "w-3 h-3 mr-0.5"} />
           {showOnlyTailored ? "AI Skills" : "Tailored"}
-          <Crown className="w-3 h-3 ml-0.5 text-amber-400" />
+          <Crown className={showOnlyTailored ? "w-4 h-4 ml-1 text-amber-400" : "w-3 h-3 ml-0.5 text-amber-400"} />
         </button>
       </div>
     );
@@ -84,7 +88,7 @@ export default function ATSOptimizeButtons({
 
   return (
     <>
-      <div className={`flex items-center gap-1 shrink-0 ${className}`}>
+      <div className={`flex flex-col items-end gap-1 shrink-0 ${className}`}>
         {!showOnlyTailored && (
           <button
             type="button"
@@ -99,10 +103,14 @@ export default function ATSOptimizeButtons({
         <button
           type="button"
           onClick={openTailoredModal}
-          className="inline-flex items-center text-[10px] h-5 px-1.5 rounded border border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+          className={`inline-flex items-center rounded border transition-colors ${
+            showOnlyTailored
+              ? "text-sm h-8 px-3 font-medium border-blue-300 text-blue-700 hover:bg-blue-50 hover:text-blue-800 shadow-sm"
+              : "text-[10px] h-5 px-1.5 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+          }`}
           title="Tailored ATS Optimize"
         >
-          <span className="mr-0.5 text-[10px]">🎯</span>
+          <span className={showOnlyTailored ? "mr-1 text-sm" : "mr-0.5 text-[10px]"}>🎯</span>
           {showOnlyTailored ? "Suggest Skills from Job" : "Tailored"}
         </button>
       </div>
