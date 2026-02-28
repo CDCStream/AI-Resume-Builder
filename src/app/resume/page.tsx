@@ -57,6 +57,7 @@ function ResumeEditorContent() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedState, setLastSavedState] = useState<string>("");
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const documentLoadedRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -161,6 +162,9 @@ function ResumeEditorContent() {
   useEffect(() => {
     const loadDocument = async () => {
       if (documentId && isAuthenticated) {
+        // Skip if this document is already loaded (prevents re-fetch on token refresh)
+        if (documentLoadedRef.current === documentId) return;
+
         setIsLoadingDocument(true);
         const savedDoc = await getResumeById(documentId);
         if (savedDoc) {
@@ -174,6 +178,7 @@ function ResumeEditorContent() {
           });
           setLastSavedState(savedState);
           setHasUnsavedChanges(false);
+          documentLoadedRef.current = documentId;
         }
         setIsLoadingDocument(false);
       }

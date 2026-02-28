@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as supabaseDb from "@/lib/supabase/database";
 import { Resume } from "@/lib/types/resume";
@@ -29,6 +29,8 @@ export function useResumes() {
   const { user, loading: authLoading } = useAuth();
   const [resumes, setResumes] = useState<SavedResume[]>([]);
   const [loading, setLoading] = useState(true);
+  const initialFetchDone = useRef(false);
+  const currentUserId = useRef<string | null>(null);
 
   const fetchResumes = useCallback(async () => {
     if (!user) {
@@ -36,11 +38,16 @@ export function useResumes() {
       setLoading(false);
       return;
     }
-    
-    setLoading(true);
+
+    // Only show loading on initial fetch, not on token refresh re-fetches
+    const isInitial = !initialFetchDone.current || currentUserId.current !== user.id;
+    if (isInitial) setLoading(true);
+
     const dbResumes = await supabaseDb.getResumes();
     setResumes(dbResumes.map(dbToSavedResume));
     setLoading(false);
+    initialFetchDone.current = true;
+    currentUserId.current = user.id;
   }, [user]);
 
   useEffect(() => {

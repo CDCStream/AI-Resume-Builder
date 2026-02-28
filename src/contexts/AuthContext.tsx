@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
@@ -22,28 +22,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const currentUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const supabase = supabaseRef.current;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      const newUser = session?.user ?? null;
+      // Only update user ref if the actual user ID changed
+      if (newUser?.id !== currentUserIdRef.current) {
+        currentUserIdRef.current = newUser?.id ?? null;
+        setUser(newUser);
+      }
       setLoading(false);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      const newUser = session?.user ?? null;
+      const newUserId = newUser?.id ?? null;
+      // Only trigger user state update on actual user change (sign in/out),
+      // not on TOKEN_REFRESHED which keeps the same user
+      if (newUserId !== currentUserIdRef.current) {
+        currentUserIdRef.current = newUserId;
+        setUser(newUser);
+      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
+    const { error } = await supabaseRef.current.auth.signUp({
       email,
       password,
       options: {
@@ -53,43 +68,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     return { error };
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabaseRef.current.auth.signInWithPassword({
       email,
       password,
     });
     return { error };
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+  const signInWithGoogle = useCallback(async () => {
+    const { error } = await supabaseRef.current.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     return { error };
-  };
+  }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+  const signOut = useCallback(async () => {
+    await supabaseRef.current.auth.signOut();
+  }, []);
 
-  const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const resetPassword = useCallback(async (email: string) => {
+    const { error } = await supabaseRef.current.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
     return { error };
-  };
+  }, []);
 
-  const updatePassword = async (newPassword: string) => {
-    const { error } = await supabase.auth.updateUser({
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { error } = await supabaseRef.current.auth.updateUser({
       password: newPassword,
     });
     return { error };
-  };
+  }, []);
 
   const value = {
     user,
