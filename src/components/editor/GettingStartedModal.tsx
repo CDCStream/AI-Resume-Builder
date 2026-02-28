@@ -53,13 +53,13 @@ export default function GettingStartedModal({
   onSelectOption,
 }: GettingStartedModalProps) {
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
-  const { isPro, trialExpired } = useSubscription();
+  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const router = useRouter();
 
   if (!isOpen) return null;
 
   const handleOptionClick = (option: typeof options[0]) => {
-    if (option.proOnly && trialExpired) {
+    if (option.proOnly && trialExpired && !subLoading) {
       router.push("/pricing");
       onClose();
     } else {
@@ -96,7 +96,7 @@ export default function GettingStartedModal({
         {/* Options */}
         <div className="px-6 pb-8 space-y-2">
           {options.map((option) => {
-            const isLocked = option.proOnly && trialExpired;
+            const isLocked = option.proOnly && trialExpired && !subLoading;
             return (
               <button
                 key={option.id}

@@ -239,7 +239,7 @@ export default function ProfessionATSPanel({
   isExpanded,
   onToggleExpand,
 }: ProfessionATSPanelProps) {
-  const { isPro, trialExpired } = useSubscription();
+  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [selectedProfession, setSelectedProfession] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -692,7 +692,7 @@ export default function ProfessionATSPanel({
   };
 
   if (!isExpanded) {
-    if (trialExpired) {
+    if (trialExpired && !subLoading) {
       return (
         <button
           onClick={() => window.location.href = "/pricing"}

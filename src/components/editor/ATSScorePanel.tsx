@@ -187,7 +187,7 @@ export default function ATSScorePanel({
   isExpanded,
   onToggleExpand,
 }: ATSScorePanelProps) {
-  const { isPro, trialExpired } = useSubscription();
+  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [jobDescription, setJobDescription] = useState(globalSavedJobDescription.jobDescription);
   const [linkedinJobId, setLinkedinJobId] = useState("");
   const [linkedinJobUrl, setLinkedinJobUrl] = useState("");
@@ -744,7 +744,7 @@ export default function ATSScorePanel({
   };
 
   if (!isExpanded) {
-    if (trialExpired) {
+    if (trialExpired && !subLoading) {
       return (
         <button
           onClick={() => window.location.href = "/pricing"}

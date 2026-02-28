@@ -39,6 +39,7 @@ export default function BillingPage() {
     daysRemaining,
     subscription,
     refetch,
+    isLoading: subscriptionLoading,
   } = useSubscription();
   
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -148,7 +149,7 @@ export default function BillingPage() {
                           Trial - {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} left
                         </span>
                       )}
-                      {trialExpired && !isPro && (
+                      {trialExpired && !isPro && !subscriptionLoading && (
                         <span className="inline-flex items-center text-sm text-red-600">
                           <XCircle className="w-4 h-4 mr-1" />
                           Expired

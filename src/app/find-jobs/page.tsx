@@ -893,7 +893,7 @@ function FindJobsContent() {
   }
 
   // Trial expired gate
-  if (trialExpired) {
+  if (trialExpired && !subscriptionLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-amber-200 shadow-lg shadow-amber-500/10">

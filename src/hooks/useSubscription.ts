@@ -8,7 +8,7 @@ export type PlanType = "FREE" | "PRO_MONTHLY" | "PRO_QUARTERLY" | "PRO_SEMI_ANNU
 
 const FREE_TRIAL_DAYS = 3;
 const CACHE_KEY = "linimpact_sub_cache";
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 interface Subscription {
   id: string;
@@ -32,19 +32,27 @@ interface CachedData {
 function readCache(): CachedData | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
+    // Try localStorage first (persists across tabs/sessions), fallback to sessionStorage
+    const raw = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const cached: CachedData = JSON.parse(raw);
     if (Date.now() - cached.timestamp < CACHE_TTL) return cached;
+    // Stale cache — still return it so UI doesn't flash, but mark for background refresh
+    return cached;
   } catch { /* ignore */ }
   return null;
 }
 
+function isCacheStale(cached: CachedData | null): boolean {
+  if (!cached) return true;
+  return Date.now() - cached.timestamp >= CACHE_TTL;
+}
+
 function writeCache(subscription: Subscription | null, userCreatedAt: string | null) {
   if (typeof window === "undefined") return;
-  try {
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ subscription, userCreatedAt, timestamp: Date.now() }));
-  } catch { /* ignore */ }
+  const data = JSON.stringify({ subscription, userCreatedAt, timestamp: Date.now() });
+  try { localStorage.setItem(CACHE_KEY, data); } catch { /* ignore */ }
+  try { sessionStorage.setItem(CACHE_KEY, data); } catch { /* ignore */ }
 }
 
 interface UseSubscriptionReturn {
@@ -65,6 +73,7 @@ export function useSubscription(): UseSubscriptionReturn {
   const [cachedData] = useState(() => readCache());
   const [subscription, setSubscription] = useState<Subscription | null>(cachedData?.subscription ?? null);
   const [userCreatedAt, setUserCreatedAt] = useState<string | null>(cachedData?.userCreatedAt ?? null);
+  // Never show loading if we have ANY cached data (even stale) — prevents "Upgrade to Pro" flash
   const [isLoading, setIsLoading] = useState(!cachedData);
   const supabaseRef = useRef(createClient());
   const fetchedRef = useRef(false);

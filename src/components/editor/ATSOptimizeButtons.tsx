@@ -38,7 +38,7 @@ export default function ATSOptimizeButtons({
   showOnlyTailored = false,
 }: ATSOptimizeButtonsProps) {
   const router = useRouter();
-  const { isPro, trialExpired } = useSubscription();
+  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"quick" | "tailored">("quick");
 
@@ -53,7 +53,7 @@ export default function ATSOptimizeButtons({
   };
 
   // If trial expired, show locked buttons
-  if (trialExpired) {
+  if (trialExpired && !subLoading) {
     return (
       <div className={`flex flex-col items-end gap-1 shrink-0 ${className}`}>
         {!showOnlyTailored && (

@@ -79,7 +79,7 @@ export default function ResumeScanPreview({
   onHighlightZone,
   selectedTemplate,
 }: ResumeScanPreviewProps) {
-  const { isPro, trialExpired } = useSubscription();
+  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ScanAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -266,7 +266,7 @@ export default function ResumeScanPreview({
   };
 
   if (!isExpanded) {
-    if (trialExpired) {
+    if (trialExpired && !subLoading) {
       return (
         <button
           onClick={() => window.location.href = "/pricing"}
