@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MixpanelProvider } from "@/components/providers/MixpanelProvider";
 import { GoogleAnalytics } from "@/components/providers/GoogleAnalytics";
+import { CookieBanner } from "@/components/ui/cookie-banner";
 import Script from "next/script";
 import { Suspense } from "react";
 import "./globals.css";
@@ -114,6 +115,7 @@ export default function RootLayout({
             <GoogleAnalytics />
             <MixpanelProvider>
               {children}
+              <CookieBanner />
             </MixpanelProvider>
           </Suspense>
         </AuthProvider>

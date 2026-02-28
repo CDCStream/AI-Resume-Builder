@@ -2,22 +2,31 @@
 
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GA_MEASUREMENT_ID, GA_ADS_MEASUREMENT_ID, GOOGLE_ADS_ID, pageview, captureUTMParams } from "@/lib/gtag";
+import { hasConsented } from "@/lib/cookie-consent";
 
 export function GoogleAnalytics() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
-    if (pathname) {
+    setConsent(hasConsented());
+    const handler = (e: Event) => setConsent((e as CustomEvent).detail === "accepted");
+    window.addEventListener("cookie-consent-changed", handler);
+    return () => window.removeEventListener("cookie-consent-changed", handler);
+  }, []);
+
+  useEffect(() => {
+    if (consent && pathname) {
       const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
       pageview(url);
       captureUTMParams();
     }
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, consent]);
 
-  if (!GA_MEASUREMENT_ID) {
+  if (!GA_MEASUREMENT_ID || !consent) {
     return null;
   }
 

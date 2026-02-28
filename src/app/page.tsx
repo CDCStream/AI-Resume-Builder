@@ -15,6 +15,8 @@ import {
   ArrowRight,
   Zap,
   Shield,
+  ShieldCheck,
+  Lock,
   Globe,
   Star,
   Brain,
@@ -269,6 +271,10 @@ export default function LandingPage() {
                   <span>ATS-optimized templates</span>
                 </div>
               </div>
+              <p className="mt-3 text-xs text-gray-400 flex items-center gap-1.5 justify-center lg:justify-start">
+                <Lock className="w-3 h-3" />
+                Your data is encrypted and never shared with third parties.
+              </p>
 
               {/* Social Proof */}
               <div className="mt-10 pt-8 border-t border-gray-200">
@@ -614,6 +620,32 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Trust Bar - GDPR & Security */}
+      <section className="py-8 bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+            <div className="flex items-center gap-2.5 text-sm text-gray-600">
+              <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                <ShieldCheck className="w-4 h-4 text-green-600" />
+              </div>
+              <span className="font-medium">GDPR Compliant</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-sm text-gray-600">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Lock className="w-4 h-4 text-blue-600" />
+              </div>
+              <span className="font-medium">AES-256 Encryption</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-sm text-gray-600">
+              <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-purple-600" />
+              </div>
+              <span className="font-medium">No AI Training with Your Data</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="features" className="py-24 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -673,6 +705,12 @@ export default function LandingPage() {
                 title: "PDF Export",
                 description: "Download your resume as a perfectly formatted PDF, ready to submit to any employer.",
                 color: "pink"
+              },
+              {
+                icon: ShieldCheck,
+                title: "Your Privacy First",
+                description: "Your data is never used to train AI models. All processes are protected under European standards (GDPR) with end-to-end encryption.",
+                color: "emerald"
               },
             ].map((feature, index) => (
               <div 
@@ -1421,6 +1459,22 @@ export default function LandingPage() {
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               </ul>
+            </div>
+          </div>
+
+          {/* Security Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
+              <ShieldCheck className="w-4 h-4 text-green-400" />
+              <span className="text-xs font-medium text-gray-300">GDPR Compliant</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
+              <Lock className="w-4 h-4 text-blue-400" />
+              <span className="text-xs font-medium text-gray-300">SSL Encrypted</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
+              <Shield className="w-4 h-4 text-purple-400" />
+              <span className="text-xs font-medium text-gray-300">Privacy Protected</span>
             </div>
           </div>
 

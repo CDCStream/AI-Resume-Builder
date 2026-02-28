@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Mail, Lock, Eye, EyeOff, Loader2, FileText, User, Home } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, FileText, User, Home, Shield } from "lucide-react";
 import { trackSignUpStarted, trackSignUpCompleted, trackError } from "@/lib/mixpanel";
 import { gadsSignUpConversion, gaSignUp } from "@/lib/gtag";
 
@@ -217,6 +217,10 @@ export default function RegisterPage() {
                 "Create Account"
               )}
             </button>
+            <p className="mt-3 text-center text-xs text-gray-400 flex items-center justify-center gap-1.5">
+              <Shield className="w-3 h-3" />
+              Your data is encrypted and never shared with third parties.
+            </p>
           </form>
 
           <div className="relative my-6">

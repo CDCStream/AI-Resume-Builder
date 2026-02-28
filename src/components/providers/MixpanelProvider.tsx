@@ -3,26 +3,40 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { initMixpanel, trackPageView } from "@/lib/mixpanel";
+import { hasConsented } from "@/lib/cookie-consent";
 
 export function MixpanelProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [consent, setConsent] = useState(false);
 
-  // Initialize Mixpanel on mount
   useEffect(() => {
-    initMixpanel();
-    setIsInitialized(true);
-    console.log("[Mixpanel] Initialized");
-  }, []);
+    setConsent(hasConsented());
+    const handler = (e: Event) => {
+      const accepted = (e as CustomEvent).detail === "accepted";
+      setConsent(accepted);
+      if (accepted && !isInitialized) {
+        initMixpanel();
+        setIsInitialized(true);
+      }
+    };
+    window.addEventListener("cookie-consent-changed", handler);
+    return () => window.removeEventListener("cookie-consent-changed", handler);
+  }, [isInitialized]);
 
-  // Track page views on route change (only after init)
   useEffect(() => {
-    if (isInitialized && pathname) {
+    if (consent && !isInitialized) {
+      initMixpanel();
+      setIsInitialized(true);
+    }
+  }, [consent, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized && consent && pathname) {
       const pageName = getPageName(pathname);
       trackPageView(pageName, { path: pathname });
-      console.log("[Mixpanel] Page View:", pageName);
     }
-  }, [pathname, isInitialized]);
+  }, [pathname, isInitialized, consent]);
 
   return <>{children}</>;
 }
