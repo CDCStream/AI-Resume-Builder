@@ -103,9 +103,17 @@ export async function POST(request: NextRequest) {
     else if (payload.data && typeof payload.data === "object") {
       articles.push(Array.isArray(payload.data) ? payload.data[0] : payload.data);
     }
-    // If payload.article exists
-    else if (payload.article && typeof payload.article === "object") {
-      articles.push(payload.article);
+    // If payload.article exists (can be array or object)
+    else if (payload.article) {
+      if (Array.isArray(payload.article)) {
+        for (const item of payload.article) {
+          if (typeof item === "object" && item !== null) {
+            articles.push(item as Record<string, unknown>);
+          }
+        }
+      } else if (typeof payload.article === "object") {
+        articles.push(payload.article);
+      }
     }
     // If payload itself has content
     else if (payload.title || payload.content || payload.html || payload.body) {
@@ -139,14 +147,20 @@ export async function POST(request: NextRequest) {
     const results = [];
 
     for (const articleData of articles) {
-      console.log("Processing article with keys:", Object.keys(articleData));
+      const articleKeys = Object.keys(articleData);
+      console.log("Processing article with keys:", articleKeys);
+      console.log("Article data sample:", JSON.stringify(
+        Object.fromEntries(articleKeys.map(k => [k, typeof articleData[k] === "string" ? (articleData[k] as string).substring(0, 200) : typeof articleData[k]]))
+      ));
 
-      const title = findString(articleData, ["title", "headline", "name", "meta_title"]) || "Untitled Post";
-      const content = findString(articleData, ["content_html", "content", "html", "body", "text", "content_markdown", "article_html", "article_content", "markup"]);
-      const slug = findString(articleData, ["slug", "url_slug", "permalink"]) || generateSlug(title);
-      const description = findString(articleData, ["meta_description", "description", "excerpt", "summary"]) || (content ? extractDescription(content) : "");
-      const coverImage = findString(articleData, ["image_url", "featured_image", "cover_image", "image", "thumbnail", "og_image", "featuredImage", "coverImage"]);
-      const tags = findArray(articleData, ["tags", "keywords", "categories"]);
+      const title = findString(articleData, ["title", "headline", "name", "meta_title", "post_title", "articleTitle"]) || "Untitled Post";
+      const content = findString(articleData, ["content_html", "content", "html", "body", "text", "content_markdown", "article_html", "article_content", "markup", "post_content", "articleContent", "htmlContent"]);
+      const slug = findString(articleData, ["slug", "url_slug", "permalink", "url", "path", "urlSlug"]) || generateSlug(title);
+      const description = findString(articleData, ["meta_description", "description", "excerpt", "summary", "seo_description", "metaDescription"]) || (content ? extractDescription(content) : "");
+      const coverImage = findString(articleData, ["image_url", "featured_image", "cover_image", "image", "thumbnail", "og_image", "featuredImage", "coverImage", "hero_image", "banner", "main_image"]);
+      const tags = findArray(articleData, ["tags", "keywords", "categories", "topics"]);
+
+      console.log("Parsed - title:", title, "| slug:", slug, "| content length:", content?.length || 0);
 
       // If STILL no content, try to find it recursively in nested objects
       let finalContent = content;
