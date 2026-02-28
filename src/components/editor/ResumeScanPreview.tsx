@@ -97,14 +97,13 @@ export default function ResumeScanPreview({
     logoUrl: string;
     backgroundUrl: string;
   } | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const cancelledRef = useRef(false);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
     setError(null);
     setResult(null);
-
-    abortControllerRef.current = new AbortController();
+    cancelledRef.current = false;
 
     try {
       const response = await fetch("/api/resume-scan-analysis", {
@@ -122,8 +121,9 @@ export default function ResumeScanPreview({
           },
           ...(jobDescription.trim() ? { jobDescription: jobDescription.trim() } : {}),
         }),
-        signal: abortControllerRef.current.signal,
       });
+
+      if (cancelledRef.current) return;
 
       const data = await response.json();
 
@@ -131,14 +131,17 @@ export default function ResumeScanPreview({
         throw new Error(data.error || "Failed to analyze resume");
       }
 
-      setResult(data);
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        return;
+      if (!cancelledRef.current) {
+        setResult(data);
       }
-      setError(err instanceof Error ? err.message : "Analysis failed");
+    } catch (err) {
+      if (!cancelledRef.current) {
+        setError(err instanceof Error ? err.message : "Analysis failed");
+      }
     } finally {
-      setIsLoading(false);
+      if (!cancelledRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -204,9 +207,7 @@ export default function ResumeScanPreview({
   };
 
   const handleConfirmClose = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+    cancelledRef.current = true;
     setShowCloseConfirm(false);
     setIsLoading(false);
     onToggleExpand();
