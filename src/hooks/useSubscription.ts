@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type SubscriptionStatus = "trialing" | "active" | "canceled" | "expired" | "none";
 export type PlanType = "FREE" | "PRO_MONTHLY" | "PRO_QUARTERLY" | "PRO_SEMI_ANNUAL";
 
 const FREE_TRIAL_DAYS = 3;
+const CACHE_KEY = "linimpact_sub_cache";
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 interface Subscription {
   id: string;
@@ -19,6 +21,30 @@ interface Subscription {
   canceled_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+interface CachedData {
+  subscription: Subscription | null;
+  userCreatedAt: string | null;
+  timestamp: number;
+}
+
+function readCache(): CachedData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cached: CachedData = JSON.parse(raw);
+    if (Date.now() - cached.timestamp < CACHE_TTL) return cached;
+  } catch { /* ignore */ }
+  return null;
+}
+
+function writeCache(subscription: Subscription | null, userCreatedAt: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ subscription, userCreatedAt, timestamp: Date.now() }));
+  } catch { /* ignore */ }
 }
 
 interface UseSubscriptionReturn {
@@ -36,17 +62,19 @@ interface UseSubscriptionReturn {
 }
 
 export function useSubscription(): UseSubscriptionReturn {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [userCreatedAt, setUserCreatedAt] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const cached = readCache();
+  const [subscription, setSubscription] = useState<Subscription | null>(cached?.subscription ?? null);
+  const [userCreatedAt, setUserCreatedAt] = useState<string | null>(cached?.userCreatedAt ?? null);
+  const [isLoading, setIsLoading] = useState(!cached);
   const supabase = createClient();
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setSubscription(null);
         setUserCreatedAt(null);
+        writeCache(null, null);
         setIsLoading(false);
         return;
       }
@@ -63,17 +91,19 @@ export function useSubscription(): UseSubscriptionReturn {
         console.error("Error fetching subscription:", error);
       }
 
-      setSubscription(data as Subscription | null);
+      const sub = data as Subscription | null;
+      setSubscription(sub);
+      writeCache(sub, user.created_at);
     } catch (error) {
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     fetchSubscription();
-  }, []);
+  }, [fetchSubscription]);
 
   const hasPaidPlan = subscription?.status === "active" && subscription.plan !== "FREE";
   
