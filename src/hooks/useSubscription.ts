@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type SubscriptionStatus = "trialing" | "active" | "canceled" | "expired" | "none";
@@ -30,30 +30,23 @@ interface CachedData {
 }
 
 function readCache(): CachedData | null {
-  if (typeof window === "undefined") return null;
   try {
-    // Try localStorage first (persists across tabs/sessions), fallback to sessionStorage
     const raw = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const cached: CachedData = JSON.parse(raw);
-    if (Date.now() - cached.timestamp < CACHE_TTL) return cached;
-    // Stale cache — still return it so UI doesn't flash, but mark for background refresh
     return cached;
   } catch { /* ignore */ }
   return null;
 }
 
-function isCacheStale(cached: CachedData | null): boolean {
-  if (!cached) return true;
-  return Date.now() - cached.timestamp >= CACHE_TTL;
-}
-
 function writeCache(subscription: Subscription | null, userCreatedAt: string | null) {
-  if (typeof window === "undefined") return;
   const data = JSON.stringify({ subscription, userCreatedAt, timestamp: Date.now() });
   try { localStorage.setItem(CACHE_KEY, data); } catch { /* ignore */ }
   try { sessionStorage.setItem(CACHE_KEY, data); } catch { /* ignore */ }
 }
+
+// SSR-safe: useLayoutEffect on client, useEffect on server (suppresses SSR warning)
+const useClientLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 interface UseSubscriptionReturn {
   subscription: Subscription | null;
@@ -70,16 +63,25 @@ interface UseSubscriptionReturn {
 }
 
 export function useSubscription(): UseSubscriptionReturn {
-  const [cachedData] = useState(() => readCache());
-  const [subscription, setSubscription] = useState<Subscription | null>(cachedData?.subscription ?? null);
-  const [userCreatedAt, setUserCreatedAt] = useState<string | null>(cachedData?.userCreatedAt ?? null);
-  // Never show loading if we have ANY cached data (even stale) — prevents "Upgrade to Pro" flash
-  const [isLoading, setIsLoading] = useState(!cachedData);
-  const supabaseRef = useRef(createClient());
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [userCreatedAt, setUserCreatedAt] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
   const fetchedRef = useRef(false);
+
+  // Phase 1: Read cache BEFORE browser paints — prevents any "Upgrade to Pro" flash
+  useClientLayoutEffect(() => {
+    const cached = readCache();
+    if (cached) {
+      setSubscription(cached.subscription);
+      setUserCreatedAt(cached.userCreatedAt);
+      setIsLoading(false);
+    }
+  }, []);
 
   const fetchSubscription = useCallback(async () => {
     try {
+      if (!supabaseRef.current) supabaseRef.current = createClient();
       const supabase = supabaseRef.current;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -112,6 +114,7 @@ export function useSubscription(): UseSubscriptionReturn {
     }
   }, []);
 
+  // Phase 2: Fetch fresh data from Supabase in background
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
