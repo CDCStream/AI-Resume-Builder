@@ -162,7 +162,7 @@ function formatResumeForAnalysis(resume: ResumeData): string {
   return text;
 }
 
-function getScanAnalysisPrompt(resumeText: string, resume: ResumeData): string {
+function getScanAnalysisPrompt(resumeText: string, resume: ResumeData, jobDescription?: string): string {
   const hasName = !!resume.basics?.name;
   const hasTitle = !!resume.basics?.label;
   const hasSummary = !!resume.basics?.summary;
@@ -171,7 +171,12 @@ function getScanAnalysisPrompt(resumeText: string, resume: ResumeData): string {
   const skillCount = resume.skills?.length || 0;
   const eduCount = resume.education?.length || 0;
   
-  return `You are an expert in recruiter behavior and eye-tracking research. Analyze this resume to simulate what a recruiter sees during a 6-second initial scan.
+  const hasJob = !!jobDescription?.trim();
+  const jobSection = hasJob
+    ? `\n**TARGET JOB POSTING:**\n${jobDescription!.trim().substring(0, 2000)}\n\nYou are the recruiter who posted this job. Evaluate the resume from the perspective of whether this candidate fits THIS specific role.\n`
+    : "";
+
+  return `You are an expert in recruiter behavior and eye-tracking research.${hasJob ? " You are hiring for a specific role." : ""} Analyze this resume to simulate what a recruiter sees during a 6-second initial scan.
 
 **RESUME STRUCTURE:**
 - Has Name: ${hasName}
@@ -183,7 +188,7 @@ function getScanAnalysisPrompt(resumeText: string, resume: ResumeData): string {
 - Education Count: ${eduCount}
 
 **RESUME CONTENT:**
-${resumeText}
+${resumeText}${jobSection}
 
 **TASK:** Based on eye-tracking research (F-pattern scanning, Ladders study showing 7.4 sec average scan time), analyze:
 
@@ -253,7 +258,7 @@ export async function POST(request: NextRequest) {
   console.log("=== Resume Scan Analysis API Called ===");
   try {
     const body = await request.json();
-    const { resume } = body;
+    const { resume, jobDescription } = body;
 
     if (!resume) {
       return NextResponse.json(
@@ -270,7 +275,7 @@ export async function POST(request: NextRequest) {
     }
 
     const resumeText = formatResumeForAnalysis(resume);
-    const prompt = getScanAnalysisPrompt(resumeText, resume);
+    const prompt = getScanAnalysisPrompt(resumeText, resume, jobDescription);
 
     console.log("Calling Claude API for scan analysis...");
     let message;

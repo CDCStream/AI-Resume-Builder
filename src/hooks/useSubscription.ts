@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type SubscriptionStatus = "trialing" | "active" | "canceled" | "expired" | "none";
@@ -62,14 +62,16 @@ interface UseSubscriptionReturn {
 }
 
 export function useSubscription(): UseSubscriptionReturn {
-  const cached = readCache();
-  const [subscription, setSubscription] = useState<Subscription | null>(cached?.subscription ?? null);
-  const [userCreatedAt, setUserCreatedAt] = useState<string | null>(cached?.userCreatedAt ?? null);
-  const [isLoading, setIsLoading] = useState(!cached);
-  const supabase = createClient();
+  const [cachedData] = useState(() => readCache());
+  const [subscription, setSubscription] = useState<Subscription | null>(cachedData?.subscription ?? null);
+  const [userCreatedAt, setUserCreatedAt] = useState<string | null>(cachedData?.userCreatedAt ?? null);
+  const [isLoading, setIsLoading] = useState(!cachedData);
+  const supabaseRef = useRef(createClient());
+  const fetchedRef = useRef(false);
 
   const fetchSubscription = useCallback(async () => {
     try {
+      const supabase = supabaseRef.current;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setSubscription(null);
@@ -99,9 +101,11 @@ export function useSubscription(): UseSubscriptionReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     fetchSubscription();
   }, [fetchSubscription]);
 

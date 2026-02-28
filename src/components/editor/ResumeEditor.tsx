@@ -1555,6 +1555,7 @@ export default function ResumeEditor({
         isExpanded={isScanPreviewExpanded}
         onToggleExpand={() => setIsScanPreviewExpanded(!isScanPreviewExpanded)}
         onHighlightZone={onHeatmapZoneChange}
+        selectedTemplate={selectedTemplate}
       />
 
       <Separator />

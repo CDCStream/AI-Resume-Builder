@@ -27,9 +27,14 @@ import {
   Scan,
   Lightbulb,
   Lock,
-  Crown
+  Crown,
+  Briefcase,
+  Link,
+  X,
+  TrendingUp,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import HeatmapScanModal from "./HeatmapScanModal";
 
 interface ScanZone {
   id: string;
@@ -64,6 +69,7 @@ interface ResumeScanPreviewProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   onHighlightZone?: (zone: ScanZone | null) => void;
+  selectedTemplate: string;
 }
 
 export default function ResumeScanPreview({
@@ -71,6 +77,7 @@ export default function ResumeScanPreview({
   isExpanded,
   onToggleExpand,
   onHighlightZone,
+  selectedTemplate,
 }: ResumeScanPreviewProps) {
   const { isPro, trialExpired } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +87,16 @@ export default function ResumeScanPreview({
   const [activeZone, setActiveZone] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["zones", "readability"]));
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showHeatmapModal, setShowHeatmapModal] = useState(false);
+  const [jobDescription, setJobDescription] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [isFetchingJob, setIsFetchingJob] = useState(false);
+  const [fetchedJobInfo, setFetchedJobInfo] = useState<{
+    title: string;
+    company: string;
+    logoUrl: string;
+    backgroundUrl: string;
+  } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleAnalyze = async () => {
@@ -103,6 +120,7 @@ export default function ResumeScanPreview({
             certificates: resume.certificates,
             languages: resume.languages,
           },
+          ...(jobDescription.trim() ? { jobDescription: jobDescription.trim() } : {}),
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -351,7 +369,7 @@ export default function ResumeScanPreview({
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-white rounded-lg border border-gray-200 text-center">
                   <Scan className="w-5 h-5 text-amber-600 mx-auto mb-1" />
                   <p className="text-xs font-medium text-gray-700">Eye-tracking Simulation</p>
@@ -364,6 +382,139 @@ export default function ResumeScanPreview({
                   <LayoutList className="w-5 h-5 text-amber-600 mx-auto mb-1" />
                   <p className="text-xs font-medium text-gray-700">Layout Analysis</p>
                 </div>
+                <div className="p-3 bg-white rounded-lg border border-gray-200 text-center">
+                  <TrendingUp className="w-5 h-5 text-amber-600 mx-auto mb-1" />
+                  <p className="text-xs font-medium text-gray-700">Continue Reading Probability</p>
+                </div>
+              </div>
+
+              {/* LinkedIn Job Post Input */}
+              <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Briefcase className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-semibold text-indigo-700">Target Job Post</span>
+                  <span className="text-[10px] text-indigo-400 ml-auto">Optional</span>
+                </div>
+                <p className="text-xs text-indigo-500 mb-3">
+                  Paste a LinkedIn job URL or description. The recruiter verdict will evaluate your resume for this specific role.
+                </p>
+
+                <div className="flex gap-2 mb-2">
+                  <div className="relative flex-1">
+                    <Link className="w-3.5 h-3.5 text-indigo-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={linkedinUrl}
+                      onChange={(e) => setLinkedinUrl(e.target.value)}
+                      placeholder="LinkedIn job URL..."
+                      className="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-indigo-200 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={!linkedinUrl.trim() || isFetchingJob}
+                    onClick={async () => {
+                      if (!linkedinUrl.trim()) return;
+                      setIsFetchingJob(true);
+                      try {
+                        const res = await fetch("/api/fetch-job", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ linkedinJobUrl: linkedinUrl.trim() }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          setJobDescription(data.jobDescription || "");
+                          setFetchedJobInfo({
+                            title: data.jobTitle || "",
+                            company: data.companyName || "",
+                            logoUrl: data.logoUrl || "",
+                            backgroundUrl: data.backgroundUrl || "",
+                          });
+                          setLinkedinUrl("");
+                        }
+                      } catch {
+                        // silently fail
+                      } finally {
+                        setIsFetchingJob(false);
+                      }
+                    }}
+                    className="text-xs px-3 h-auto py-2 border-indigo-200 hover:bg-indigo-100"
+                  >
+                    {isFetchingJob ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Fetch"}
+                  </Button>
+                </div>
+
+                <textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  placeholder="Or paste the job description here..."
+                  rows={3}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-indigo-200 bg-white resize-none focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                />
+                {jobDescription && fetchedJobInfo && (
+                  <div className="mt-2 rounded-lg border border-indigo-200 overflow-hidden bg-white relative">
+                    {/* Close button */}
+                    <button
+                      onClick={() => {
+                        setJobDescription("");
+                        setFetchedJobInfo(null);
+                      }}
+                      className="absolute top-1.5 right-1.5 z-10 p-0.5 rounded-full bg-white/80 hover:bg-white shadow-sm text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Background cover */}
+                    <div className="h-12 bg-gradient-to-r from-blue-400 to-blue-500 relative overflow-hidden">
+                      {fetchedJobInfo.backgroundUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={fetchedJobInfo.backgroundUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+
+                    {/* Logo + Info */}
+                    <div className="px-3 pb-2.5 -mt-4 flex items-end gap-2.5">
+                      <div className="w-10 h-10 rounded-lg border-2 border-white shadow-sm bg-white overflow-hidden shrink-0">
+                        {fetchedJobInfo.logoUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={fetchedJobInfo.logoUrl}
+                            alt={fetchedJobInfo.company}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
+                            <Briefcase className="w-4 h-4 text-indigo-500" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 pt-5">
+                        <p className="text-xs font-semibold text-gray-900 truncate">{fetchedJobInfo.title}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{fetchedJobInfo.company}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {jobDescription && !fetchedJobInfo && (
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-[10px] text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Job description loaded
+                    </span>
+                    <button
+                      onClick={() => setJobDescription("")}
+                      className="text-[10px] text-red-400 hover:text-red-600"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
               </div>
 
               {error && (
@@ -375,7 +526,8 @@ export default function ResumeScanPreview({
 
               <Button
                 onClick={handleAnalyze}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                disabled={!jobDescription.trim()}
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 Analyze Resume Scan
@@ -407,6 +559,48 @@ export default function ResumeScanPreview({
           {/* Results */}
           {result && (
             <div className="space-y-4">
+              {/* Job Context Card */}
+              {fetchedJobInfo && (
+                <div className="rounded-xl border border-indigo-200 overflow-hidden bg-white">
+                  <div className="h-10 bg-gradient-to-r from-blue-400 to-blue-500 relative overflow-hidden">
+                    {fetchedJobInfo.backgroundUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={fetchedJobInfo.backgroundUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="px-3 pb-2 -mt-3.5 flex items-end gap-2.5">
+                    <div className="w-8 h-8 rounded-lg border-2 border-white shadow-sm bg-white overflow-hidden shrink-0">
+                      {fetchedJobInfo.logoUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={fetchedJobInfo.logoUrl}
+                          alt={fetchedJobInfo.company}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
+                          <Briefcase className="w-3 h-3 text-indigo-500" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 pt-4">
+                      <p className="text-[11px] font-semibold text-gray-900 truncate">{fetchedJobInfo.title}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{fetchedJobInfo.company}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {jobDescription && !fetchedJobInfo && (
+                <div className="px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100 flex items-center gap-2">
+                  <Briefcase className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span className="text-[11px] text-indigo-700 font-medium">Evaluated for target job</span>
+                </div>
+              )}
+
               {/* Score Overview */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Scan Score */}
@@ -449,23 +643,13 @@ export default function ResumeScanPreview({
                 <p className="text-sm text-gray-700">{result.firstImpressionSummary}</p>
               </div>
 
-              {/* Animate Scan Button */}
+              {/* Heatmap Visual Button */}
               <Button
-                onClick={isAnimating ? handleStopAnimation : handleStartAnimation}
-                variant={isAnimating ? "destructive" : "default"}
-                className={`w-full ${!isAnimating ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" : ""}`}
+                onClick={() => setShowHeatmapModal(true)}
+                className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white"
               >
-                {isAnimating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Stop Simulation
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Play 6-Second Scan Simulation
-                  </>
-                )}
+                <Sparkles className="w-4 h-4 mr-2" />
+                View Visual Heatmap
               </Button>
 
               {/* Attention Zones */}
@@ -659,6 +843,15 @@ export default function ResumeScanPreview({
           )}
         </CardContent>
       </Card>
+
+      <HeatmapScanModal
+        open={showHeatmapModal}
+        onClose={() => setShowHeatmapModal(false)}
+        resume={resume}
+        selectedTemplate={selectedTemplate}
+        jobDescription={jobDescription}
+        scanZones={result?.scanZones}
+      />
     </>
   );
 }
