@@ -218,14 +218,36 @@ function ResumeEditorContent() {
     }
   };
 
+  const autoCreateDocument = useCallback(async (importedResume: Resume) => {
+    if (!isAuthenticated || currentDocument) return;
+    try {
+      const name = importedResume.basics?.name || "My Resume";
+      const docName = `${name}'s Resume`;
+      const newDoc = await createResume(docName, importedResume, selectedTemplate);
+      if (newDoc) {
+        setCurrentDocument(newDoc);
+        const savedState = JSON.stringify({ resume: importedResume, selectedTemplate });
+        setLastSavedState(savedState);
+        setHasUnsavedChanges(false);
+        setAutoSaveStatus("saved");
+        setTimeout(() => setAutoSaveStatus("idle"), 2000);
+        router.push(`/resume?id=${newDoc.id}`, { scroll: false });
+      }
+    } catch (error) {
+      console.error("Auto-create document failed:", error);
+    }
+  }, [isAuthenticated, currentDocument, selectedTemplate, createResume, router]);
+
   const handleLinkedInImport = (importedResume: Resume) => {
     setResume(importedResume);
     setShowLinkedInModal(false);
+    autoCreateDocument(importedResume);
   };
 
   const handleUploadImport = (importedResume: Resume) => {
     setResume(importedResume);
     setShowUploadModal(false);
+    autoCreateDocument(importedResume);
   };
 
   const handleElementSelect = useCallback((selected: boolean) => {
