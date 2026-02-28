@@ -1372,7 +1372,7 @@ export default function ResumeEditor({
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div className="flex flex-col gap-2">
           <Button
             variant="outline"
@@ -1421,7 +1421,7 @@ export default function ResumeEditor({
             </p>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 mt-8">
           <Button 
             onClick={handleSaveClick} 
             variant="outline"
