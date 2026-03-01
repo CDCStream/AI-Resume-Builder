@@ -20,7 +20,7 @@ const orderedSections = useOrderedSections(resume);
     <div className="resume-page w-[210mm] min-h-[297mm] bg-white shadow-lg flex">
       {/* Navy Sidebar */}
       <aside className="w-72 bg-navy-900 bg-[#1e3a5f] text-white" style={{ padding: '24px' }}>
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-center" data-section="header">
           {basics?.image ? (
             <div className="w-28 h-28 rounded-full mx-auto mb-4 overflow-hidden border-4 border-white/30">
               <img
@@ -42,7 +42,7 @@ const orderedSections = useOrderedSections(resume);
         </div>
 
         {/* Contact */}
-        <div className="mb-6">
+        <div className="mb-6" data-section="contact">
           <h2 className="text-xs font-bold uppercase tracking-wider text-blue-300 mb-3 pb-1 border-b border-blue-400/30">
             Contact
           </h2>
@@ -117,9 +117,9 @@ const orderedSections = useOrderedSections(resume);
 
         {/* Skills */}
         {skills && skills.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-6" data-section="skills">
             <h2 className="text-xs font-bold uppercase tracking-wider text-blue-300 mb-3 pb-1 border-b border-blue-400/30">
-              Core Skills
+              Skills
             </h2>
             <div className="space-y-2">
               {skills.filter(skill => skill.name).map((skill, index) => {
@@ -145,7 +145,7 @@ const orderedSections = useOrderedSections(resume);
 
         {/* Languages */}
         {languages && languages.length > 0 && (
-          <div>
+          <div data-section="languages">
             <h2 className="text-xs font-bold uppercase tracking-wider text-blue-300 mb-3 pb-1 border-b border-blue-400/30">
               Languages
             </h2>
@@ -168,7 +168,7 @@ const orderedSections = useOrderedSections(resume);
 
       {/* Main Content */}
       <main className="flex-1" style={{ padding: '32px' }}>
-        {renderSections(resume, orderedSections, theme)}
+        {renderSections(resume, orderedSections.filter(s => s !== "skills" && s !== "languages"), theme)}
       </main>
     </div>
   );

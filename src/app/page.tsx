@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { AnimatedGridBackground } from "@/components/ui/animated-grid-background";
 import { CompanyOrbit } from "@/components/ui/company-logos";
 import Link from "next/link";
-import { 
-  FileText, 
-  Sparkles, 
-  Target, 
-  Download, 
-  CheckCircle2, 
+import {
+  FileText,
+  Sparkles,
+  Target,
+  Download,
+  CheckCircle2,
   ArrowRight,
   Zap,
   Shield,
@@ -120,9 +120,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center flex-shrink-0">
-              <img 
-                src="/logo.png" 
-                alt="LinImpact.ai Logo" 
+              <img
+                src="/logo.png"
+                alt="LinImpact.ai Logo"
                 className="w-24 h-24 object-contain"
               />
               <span className="text-3xl font-extrabold tracking-tight -ml-4" style={{ fontFamily: 'var(--font-poppins)' }}>
@@ -202,7 +202,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <AnimatedGridBackground 
+      <AnimatedGridBackground
         className="bg-gradient-to-b from-slate-50 via-blue-50/30 to-white"
         gridSize={50}
         speedX={0.2}
@@ -244,14 +244,14 @@ export default function LandingPage() {
 
               {/* Subheadline */}
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                Only 2% of resumes win. Create ATS-optimized, professionally designed resumes with AI assistance. 
+                Only 2% of resumes win. Create ATS-optimized, professionally designed resumes with AI assistance.
                 <span className="font-semibold text-gray-900"> Yours will be one of them.</span>
               </p>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="text-base px-8 py-6 h-14 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/25 transition-all hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5"
                   onClick={() => router.push("/register")}
                 >
@@ -367,7 +367,7 @@ export default function LandingPage() {
                           <div className="h-3 w-9 bg-blue-100 rounded-full" />
                         </div>
                       </div>
-                    </div>
+        </div>
 
                     {/* Text */}
                     <h3 className="text-sm font-bold text-gray-900 mb-1">LinkedIn to Resume</h3>
@@ -713,8 +713,8 @@ export default function LandingPage() {
                 color: "emerald"
               },
             ].map((feature, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="group p-6 rounded-2xl border border-gray-200 bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300"
               >
                 <div className={`w-12 h-12 rounded-xl bg-${feature.color}-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -742,7 +742,7 @@ export default function LandingPage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Professional White */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -755,8 +755,8 @@ export default function LandingPage() {
                     <div className="flex gap-2">
                       <div className="h-1 w-12 bg-gray-300 rounded" />
                       <div className="h-1 w-14 bg-gray-300 rounded" />
-                    </div>
-                  </div>
+            </div>
+          </div>
                   <div className="space-y-2">
                     <div className="h-1.5 w-12 bg-gray-700 rounded" />
                     <div className="h-1 w-full bg-gray-200 rounded" />
@@ -772,10 +772,10 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Professional White</h3>
               <p className="text-sm text-gray-500">Clean & minimal design</p>
-            </div>
+        </div>
 
             {/* Modern Sidebar */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -808,7 +808,7 @@ export default function LandingPage() {
             </div>
 
             {/* Creative Timeline */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -818,7 +818,7 @@ export default function LandingPage() {
                   <div className="bg-violet-600 -mx-3 -mt-3 p-2 mb-2">
                     <div className="h-2.5 w-20 bg-white/90 rounded mb-1" />
                     <div className="h-1.5 w-14 bg-white/60 rounded" />
-                  </div>
+            </div>
                   {/* Timeline style content */}
                   <div className="relative pl-3">
                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-violet-200" />
@@ -845,7 +845,7 @@ export default function LandingPage() {
             </div>
 
             {/* Executive Dark */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -873,7 +873,7 @@ export default function LandingPage() {
             </div>
 
             {/* Professional Teal */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -904,7 +904,7 @@ export default function LandingPage() {
             </div>
 
             {/* Modern Grid */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -936,10 +936,10 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Modern Grid</h3>
               <p className="text-sm text-gray-500">Card-based grid layout</p>
-            </div>
+        </div>
 
             {/* Classic Traditional */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -967,7 +967,7 @@ export default function LandingPage() {
             </div>
 
             {/* Minimalist Clean */}
-            <div 
+            <div
               className="group cursor-pointer"
               onClick={() => router.push("/register")}
             >
@@ -977,7 +977,7 @@ export default function LandingPage() {
                   <div className="mb-3">
                     <div className="h-2.5 w-24 bg-gray-900 rounded mb-1" />
                     <div className="h-1 w-32 bg-gray-300 rounded" />
-                  </div>
+          </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="w-0.5 h-3 bg-gray-400" />
@@ -1048,7 +1048,7 @@ export default function LandingPage() {
                 {index < 2 && (
                   <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-px bg-gradient-to-r from-blue-300 to-transparent" />
                 )}
-                
+
                 <div className="relative z-10 inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white mb-6 shadow-xl shadow-blue-600/25">
                   <item.icon className="w-10 h-10" />
                   <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white border-2 border-blue-600 text-blue-600 text-sm font-bold flex items-center justify-center shadow-md">
@@ -1109,8 +1109,8 @@ export default function LandingPage() {
                 </div>
                 <p className="text-gray-700 mb-6 leading-relaxed">"{testimonial.quote}"</p>
                 <div className="flex items-center gap-3">
-                  <img 
-                    src={testimonial.avatarUrl} 
+                  <img
+                    src={testimonial.avatarUrl}
                     alt={testimonial.author}
                     className="w-12 h-12 rounded-full bg-gray-100 border-2 border-white shadow-md object-cover"
                   />
@@ -1153,7 +1153,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-gray-500 mt-2">Full access for 3 days</p>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -1167,11 +1167,11 @@ export default function LandingPage() {
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
                     <CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                     <span>{feature}</span>
-                  </li>
+              </li>
                 ))}
               </ul>
 
-              <Button 
+              <Button
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 onClick={() => router.push("/register")}
               >
@@ -1194,7 +1194,7 @@ export default function LandingPage() {
                 <p className="text-gray-500 mt-2">Billed monthly</p>
                 <div className="mt-2 h-6"></div>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -1211,18 +1211,18 @@ export default function LandingPage() {
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
                     <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                     <span className="leading-tight">{feature}</span>
-                  </li>
+              </li>
                 ))}
-              </ul>
+            </ul>
 
               <div className="mt-auto">
-                <Button 
+                <Button
                   className="w-full bg-gray-900 hover:bg-gray-800"
                   onClick={() => router.push("/register")}
                 >
                   Get Pro Monthly
                 </Button>
-              </div>
+          </div>
             </div>
 
             {/* Pro Quarterly - Most Popular */}
@@ -1245,7 +1245,7 @@ export default function LandingPage() {
                   Save 34%
                 </div>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -1262,12 +1262,12 @@ export default function LandingPage() {
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
                     <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                     <span className="leading-tight">{feature}</span>
-                  </li>
+              </li>
                 ))}
               </ul>
 
               <div className="mt-auto">
-                <Button 
+                <Button
                   className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/25"
                   onClick={() => router.push("/register")}
                 >
@@ -1296,7 +1296,7 @@ export default function LandingPage() {
                   Save 44%
                 </div>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -1313,19 +1313,19 @@ export default function LandingPage() {
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
                     <CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                     <span className="leading-tight">{feature}</span>
-                  </li>
+              </li>
                 ))}
-              </ul>
+            </ul>
 
               <div className="mt-auto">
-                <Button 
+                <Button
                   className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25"
                   onClick={() => router.push("/register")}
                 >
                   Get Best Value
                 </Button>
-              </div>
-            </div>
+          </div>
+      </div>
           </div>
 
           <div className="text-center mt-12">
@@ -1344,7 +1344,7 @@ export default function LandingPage() {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
-        
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 text-purple-700 text-sm font-medium mb-4">
@@ -1396,8 +1396,8 @@ export default function LandingPage() {
             Make one that's truly you. Join millions who have landed their dream jobs with LinimpactAI.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="text-base px-10 py-6 h-14 bg-white text-blue-600 hover:bg-gray-100 shadow-xl"
               onClick={() => router.push("/register")}
             >
@@ -1417,9 +1417,9 @@ export default function LandingPage() {
           {/* Logo & Description - full width on mobile */}
           <div className="mb-10">
             <Link href="/" className="inline-flex items-center mb-3">
-              <img 
-                src="/logo.png" 
-                alt="LinImpact.ai Logo" 
+              <img
+                src="/logo.png"
+                alt="LinImpact.ai Logo"
                 className="w-12 h-12 object-contain"
               />
               <span className="text-lg font-extrabold tracking-tight -ml-1" style={{ fontFamily: 'var(--font-poppins)' }}>

@@ -192,19 +192,35 @@ ${resumeText}${jobSection}
 
 **TASK:** Based on eye-tracking research (F-pattern scanning, Ladders study showing 7.4 sec average scan time), analyze:
 
-1. **Scan Zones**: Identify 5-8 key areas recruiters look at, in order of attention
+1. **Scan Zones**: Identify the key areas recruiters look at, in order of attention
 2. **Attention Level**: Rate each zone (high/medium/low/none) based on typical recruiter behavior
 3. **Time Allocation**: Distribute 6 seconds across zones realistically
 4. **Readability Issues**: Check for common problems that hurt scannability
 
-**EYE-TRACKING RESEARCH FACTS TO USE:**
+**MANDATORY SCAN ZONES (always include ALL of these if present in the resume):**
+1. Name & Title (section: "basics") — always first, high attention
+2. Current/Most Recent Job (section: "experience") — always second, high attention
+3. Summary/Profile (section: "summary") — if present
+4. Skills (section: "skills") — if present
+5. Education (section: "education") — if present
+6. Contact Info & Location (section: "contact") — ALWAYS include this, recruiters ALWAYS glance at location/email
+7. Projects (section: "projects") — if present
+8. Certificates (section: "certificates") — if present
+
+**EYE-TRACKING RESEARCH FACTS:**
 - Recruiters spend 80% of time on: Name, current title, current company, start/end dates, previous company, education
-- Professional title gets ~2 seconds
-- Most recent job gets ~2 seconds
-- Skills section gets ~1 second
-- Summary often skipped if too long (>4 lines)
-- Contact info scanned in ~0.5 seconds
-- Education checked briefly (~0.5 seconds)
+- Professional title gets ~1.5-2 seconds
+- Most recent job gets ~1.5-2 seconds  
+- Skills section gets ~0.5-1 second
+- Summary gets ~0.5-1 second
+- Contact info & location gets ~0.5 second (recruiter ALWAYS checks location for commute/relocation)
+- Education gets ~0.5-1 second
+- Projects/Certificates get ~0.5-1 second depending on size
+
+**CRITICAL TIME RULE:**
+- MINIMUM timeSpent for ANY zone must be 0.5 seconds. No zone can have less than 0.5s.
+- Total time must add up to exactly 6.0 seconds (including scroll time if resume is multi-page)
+- Larger sections with more content should get proportionally more time
 
 **READABILITY FACTORS TO CHECK:**
 - Summary length (>4 sentences = hard to scan)
@@ -365,6 +381,48 @@ export async function POST(request: NextRequest) {
           attentionFlow: [],
           recommendations: ["Please try the analysis again."]
         };
+      }
+    }
+
+    // Enforce minimum 0.5s per zone and redistribute to total 6.0s
+    if (result.scanZones && result.scanZones.length > 0) {
+      const MIN_TIME = 0.5;
+      const TOTAL = 6.0;
+
+      // Clamp all zones to minimum
+      result.scanZones.forEach(z => {
+        if (z.timeSpent < MIN_TIME) z.timeSpent = MIN_TIME;
+      });
+
+      // Redistribute: scale proportionally to hit TOTAL
+      const rawTotal = result.scanZones.reduce((s, z) => s + z.timeSpent, 0);
+      if (Math.abs(rawTotal - TOTAL) > 0.01) {
+        const ratio = TOTAL / rawTotal;
+        result.scanZones.forEach(z => {
+          z.timeSpent = Math.round(z.timeSpent * ratio * 10) / 10;
+        });
+
+        // Re-enforce minimum after scaling
+        for (let pass = 0; pass < 3; pass++) {
+          const below = result.scanZones.filter(z => z.timeSpent < MIN_TIME);
+          const above = result.scanZones.filter(z => z.timeSpent > MIN_TIME);
+          if (below.length === 0 || above.length === 0) break;
+
+          let deficit = 0;
+          below.forEach(z => { deficit += MIN_TIME - z.timeSpent; z.timeSpent = MIN_TIME; });
+          const surplus = above.reduce((s, z) => s + (z.timeSpent - MIN_TIME), 0);
+          if (surplus <= 0) break;
+          above.forEach(z => {
+            const share = ((z.timeSpent - MIN_TIME) / surplus) * deficit;
+            z.timeSpent = Math.round((z.timeSpent - share) * 10) / 10;
+          });
+        }
+
+        // Final rounding fix
+        const adjusted = result.scanZones.reduce((s, z) => s + z.timeSpent, 0);
+        if (Math.abs(adjusted - TOTAL) > 0.01) {
+          result.scanZones[0].timeSpent = Math.round((result.scanZones[0].timeSpent + (TOTAL - adjusted)) * 10) / 10;
+        }
       }
     }
 

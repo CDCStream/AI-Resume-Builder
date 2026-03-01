@@ -601,6 +601,17 @@ function calculateSmartPageBreaks(content: HTMLElement, totalHeight: number): nu
     currentPageStart = bestBreak;
   }
 
+  // Trim trailing empty pages: if the last page has no visible text elements, remove the break
+  while (breaks.length > 0) {
+    const lastBreak = breaks[breaks.length - 1];
+    const hasContent = leafElements.some(e => e.top >= lastBreak && e.bottom > lastBreak);
+    if (!hasContent) {
+      breaks.pop();
+    } else {
+      break;
+    }
+  }
+
   return breaks;
 }
 

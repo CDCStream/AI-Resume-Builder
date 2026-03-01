@@ -87,6 +87,7 @@ const A4_HEIGHT = 1122;
 const SECTION_TYPE_MAP: Record<string, string> = {
   header: "Header / Name & Title",
   basics: "Contact Information",
+  contact: "Contact Information",
   summary: "Professional Summary",
   experience: "Work Experience",
   education: "Education",
@@ -162,8 +163,7 @@ export default function HeatmapScanModal({
 
     const container = resumeContainerRef.current;
     const pageWrappers = container.querySelectorAll(".page-content-wrapper");
-    const rects: SectionRect[] = [];
-    const seenTypes = new Set<string>();
+    const allCandidates: SectionRect[] = [];
 
     pageWrappers.forEach((pageWrapper, pageIndex) => {
       const pageRect = pageWrapper.getBoundingClientRect();
@@ -177,19 +177,13 @@ export default function HeatmapScanModal({
         const relTop = rect.top - pageRect.top;
         const relLeft = rect.left - pageRect.left;
 
-        // Only include sections actually visible within this page's bounds
         const visibleTop = Math.max(0, relTop);
         const visibleBottom = Math.min(A4_HEIGHT, relTop + rect.height);
         const visibleHeight = visibleBottom - visibleTop;
 
-        if (visibleHeight < 20) return; // Too small / not visible on this page
+        if (visibleHeight < 20) return;
 
-        // Deduplicate: each section type should appear only once (on the page where it's most visible)
-        const uniqueKey = `${sectionType}-p${pageIndex}`;
-        if (seenTypes.has(uniqueKey)) return;
-        seenTypes.add(uniqueKey);
-
-        rects.push({
+        allCandidates.push({
           id: `p${pageIndex}-${sectionType}`,
           type: sectionType,
           label: SECTION_TYPE_MAP[sectionType] || sectionType,
@@ -213,9 +207,9 @@ export default function HeatmapScanModal({
           const relLeft = rect.left - pageRect.left;
 
           if (relTop >= 0 && relTop < A4_HEIGHT) {
-            const alreadyHasHeader = rects.some(r => r.type === "header");
+            const alreadyHasHeader = allCandidates.some(r => r.type === "header");
             if (!alreadyHasHeader) {
-              rects.unshift({
+              allCandidates.unshift({
                 id: `p0-header`,
                 type: "header",
                 label: "Header / Name & Title",
@@ -234,7 +228,16 @@ export default function HeatmapScanModal({
       }
     });
 
-    return rects;
+    // Deduplicate: for each section type, keep only the instance with the largest visible height
+    const bestByType = new Map<string, SectionRect>();
+    for (const rect of allCandidates) {
+      const existing = bestByType.get(rect.type);
+      if (!existing || rect.height > existing.height) {
+        bestByType.set(rect.type, rect);
+      }
+    }
+
+    return Array.from(bestByType.values());
   }, []);
 
   const convertScanZonesToHeatmap = useCallback((zones: ScanZoneInput[], sections: SectionRect[]): HeatmapZoneData[] => {
@@ -253,7 +256,8 @@ export default function HeatmapScanModal({
 
     const sectionAliases: Record<string, string[]> = {
       header: ["header", "basics"],
-      basics: ["basics", "header"],
+      basics: ["basics", "header", "contact"],
+      contact: ["contact", "basics"],
       experience: ["experience", "work"],
       work: ["experience", "work"],
       summary: ["summary"],
@@ -513,7 +517,7 @@ export default function HeatmapScanModal({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[200]">
+        <div key="heatmap-modal" className="fixed inset-0 z-[200]">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -789,7 +793,7 @@ export default function HeatmapScanModal({
       )}
       {/* Recruiter Verdict Modal */}
       {showVerdict && verdict && (
-        <div className="fixed inset-0 z-[300]">
+        <div key="verdict-modal" className="fixed inset-0 z-[300]">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -957,6 +961,7 @@ function ResumeRendererWithOverlay({
   const [pageBreaks, setPageBreaks] = useState<number[]>([]);
   const [totalHeight, setTotalHeight] = useState(A4_HEIGHT);
   const [measured, setMeasured] = useState(false);
+  const [bgInfo, setBgInfo] = useState<{ type: 'none' | 'sidebar' | 'fullpage'; sidebarWidth?: number; sidebarColor?: string; pageColor?: string; gradient?: string }>({ type: 'none' });
 
   useEffect(() => {
     import("@/components/templates").then(mod => {
@@ -969,33 +974,214 @@ function ResumeRendererWithOverlay({
     const measure = () => {
       const el = measureRef.current;
       if (!el) return;
+
+      // Ensure resume-page has overflow visible for accurate measurement
+      const resumePage = el.querySelector('.resume-page') as HTMLElement;
+      if (resumePage) {
+        resumePage.style.overflow = 'visible';
+        resumePage.style.minHeight = 'auto';
+        resumePage.style.maxHeight = 'none';
+        resumePage.style.height = 'auto';
+      }
+
+      void el.offsetHeight;
       const height = el.scrollHeight;
       setTotalHeight(height);
+
+      // Detect background layout
+      if (resumePage) {
+        const pageStyle = window.getComputedStyle(resumePage);
+        const pageBgColor = pageStyle.backgroundColor;
+        const pageBgImage = pageStyle.backgroundImage;
+        const hasGradient = pageBgImage && pageBgImage !== 'none';
+        const hasCustomBg = pageBgColor && pageBgColor !== 'rgba(0, 0, 0, 0)' && pageBgColor !== 'rgb(255, 255, 255)' && pageBgColor !== 'transparent';
+
+        if (hasGradient || hasCustomBg) {
+          setBgInfo({ type: 'fullpage', pageColor: pageBgColor, gradient: hasGradient ? pageBgImage : undefined });
+        } else {
+          const isFlex = pageStyle.display === 'flex' || pageStyle.display === 'inline-flex';
+          const children = resumePage.children;
+          if (children.length >= 2 && isFlex) {
+            const firstChild = children[0] as HTMLElement;
+            if (firstChild.tagName.toLowerCase() !== 'header') {
+              const firstStyle = window.getComputedStyle(firstChild);
+              const secondStyle = window.getComputedStyle(children[1] as HTMLElement);
+              const firstBg = firstStyle.backgroundColor;
+              const secondBg = secondStyle.backgroundColor;
+              const firstHasBg = firstBg && firstBg !== 'rgba(0, 0, 0, 0)' && firstBg !== 'rgb(255, 255, 255)';
+              const secondHasBg = secondBg && secondBg !== 'rgba(0, 0, 0, 0)' && secondBg !== 'rgb(255, 255, 255)';
+              if (firstHasBg || secondHasBg) {
+                const sidebar = firstHasBg ? firstChild : children[1] as HTMLElement;
+                setBgInfo({ type: 'sidebar', sidebarWidth: sidebar.offsetWidth, sidebarColor: window.getComputedStyle(sidebar).backgroundColor });
+              } else {
+                setBgInfo({ type: 'none' });
+              }
+            } else {
+              setBgInfo({ type: 'none' });
+            }
+          } else {
+            setBgInfo({ type: 'none' });
+          }
+        }
+      }
+
       if (height <= A4_HEIGHT) {
         setPageBreaks([]);
         setMeasured(true);
         return;
       }
+
+      // Smart page break calculation using Range API (same as ResumePaginator)
+      const elRect = el.getBoundingClientRect();
+      const SAFETY = 5;
+
+      const leafEls: { top: number; bottom: number; el: HTMLElement }[] = [];
+      el.querySelectorAll("p, li, span, h1, h2, h3, h4, h5, h6").forEach(node => {
+        const htmlEl = node as HTMLElement;
+        const hasDirectText = Array.from(htmlEl.childNodes).some(
+          n => n.nodeType === Node.TEXT_NODE && n.textContent?.trim()
+        );
+        if (!hasDirectText && htmlEl.children.length > 0) return;
+        const r = htmlEl.getBoundingClientRect();
+        if (r.height < 5) return;
+        leafEls.push({ top: r.top - elRect.top, bottom: r.bottom - elRect.top, el: htmlEl });
+      });
+
+      // Collect text line boundaries using Range API
+      function getLines(element: HTMLElement): { top: number; bottom: number }[] {
+        const textNodes: Text[] = [];
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let n: Node | null;
+        while ((n = walker.nextNode())) {
+          if (n.textContent?.trim()) textNodes.push(n as Text);
+        }
+        if (textNodes.length === 0) return [];
+        const lines: { top: number; bottom: number }[] = [];
+        let prevTop = -Infinity;
+        for (const tn of textNodes) {
+          const range = document.createRange();
+          for (let i = 0; i < tn.length; i++) {
+            range.setStart(tn, i);
+            range.setEnd(tn, Math.min(i + 1, tn.length));
+            const rects = range.getClientRects();
+            for (let r = 0; r < rects.length; r++) {
+              const rc = rects[r];
+              if (rc.width < 1 || rc.height < 1) continue;
+              const rTop = rc.top - elRect.top;
+              const rBot = rc.bottom - elRect.top;
+              if (rTop - prevTop > 2) {
+                lines.push({ top: rTop, bottom: rBot });
+                prevTop = rTop;
+              } else if (lines.length > 0) {
+                lines[lines.length - 1].bottom = Math.max(lines[lines.length - 1].bottom, rBot);
+              }
+            }
+          }
+        }
+        return lines;
+      }
+
       const breaks: number[] = [];
-      let currentBreak = A4_HEIGHT;
-      while (currentBreak < height) {
-        const sections = el.querySelectorAll("[data-section], section, .resume-item");
-        let bestBreak = currentBreak;
-        sections.forEach(section => {
-          const rect = section.getBoundingClientRect();
-          const elRect = el.getBoundingClientRect();
-          const sectionTop = rect.top - elRect.top;
-          if (sectionTop > currentBreak - 100 && sectionTop < currentBreak + 50) {
-            bestBreak = sectionTop;
+      let pageStart = 0;
+
+      while (pageStart + A4_HEIGHT < height) {
+        const ideal = pageStart + A4_HEIGHT;
+        let best = ideal;
+
+        // Find crossing leaf elements and use line-level precision
+        const crossing = leafEls.filter(e => e.top < ideal && e.bottom > ideal - SAFETY);
+        if (crossing.length > 0) {
+          let resolved = false;
+          for (const ce of crossing) {
+            const lines = getLines(ce.el);
+            if (lines.length === 0) continue;
+            let lastFit = -1;
+            for (const ln of lines) {
+              if (ln.bottom + SAFETY <= ideal) lastFit = ln.bottom;
+            }
+            if (lastFit > pageStart + 50) {
+              best = Math.ceil(lastFit) + SAFETY;
+              resolved = true;
+              break;
+            }
+            if (ce.top > pageStart + 50) {
+              best = Math.floor(ce.top) - SAFETY;
+              resolved = true;
+              break;
+            }
+          }
+          if (!resolved) {
+            const ce = crossing[0];
+            const st = window.getComputedStyle(ce.el);
+            let lh = parseFloat(st.lineHeight);
+            if (isNaN(lh) || lh === 0) lh = (parseFloat(st.fontSize) || 14) * 1.5;
+            const pad = parseFloat(st.paddingTop) || 0;
+            const tStart = ce.top + pad;
+            const full = Math.floor((ideal - tStart) / lh);
+            if (full >= 1) best = Math.floor(tStart + full * lh) + SAFETY;
+            if (best <= pageStart + 50) best = ideal;
+          }
+        }
+
+        // Final validation passes
+        for (let pass = 0; pass < 3; pass++) {
+          let adj = false;
+          for (const le of leafEls) {
+            if (le.top >= best || le.bottom <= best) continue;
+            const lines = getLines(le.el);
+            let lastFit = -1;
+            let hasCross = false;
+            for (const ln of lines) {
+              if (ln.bottom <= best) lastFit = ln.bottom;
+              if (ln.top < best && ln.bottom > best) hasCross = true;
+            }
+            if (hasCross) {
+              if (lastFit > pageStart + 50) best = Math.ceil(lastFit);
+              else if (le.top > pageStart + 50) best = Math.floor(le.top) - SAFETY;
+              adj = true;
+            }
+            if (adj) break;
+          }
+          if (!adj) break;
+        }
+
+        // Prevent orphaned section headings
+        el.querySelectorAll("section").forEach(sec => {
+          const h = sec.querySelector("h2, h3") as HTMLElement;
+          if (!h) return;
+          const hr = h.getBoundingClientRect();
+          const hTop = hr.top - elRect.top;
+          const hBot = hr.bottom - elRect.top;
+          if (hTop >= pageStart && hBot <= best && hTop > pageStart + 50) {
+            const sr = sec.getBoundingClientRect();
+            if (sr.bottom - elRect.top > best) {
+              const items = sec.querySelectorAll(".resume-item, p, li");
+              const hasContent = Array.from(items).some(item => {
+                const ir = (item as HTMLElement).getBoundingClientRect();
+                return ir.top - elRect.top >= hBot && ir.bottom - elRect.top <= best;
+              });
+              if (!hasContent) best = Math.floor(hTop) - SAFETY;
+            }
           }
         });
-        breaks.push(bestBreak);
-        currentBreak = bestBreak + A4_HEIGHT;
+
+        if (best <= pageStart) best = ideal;
+        breaks.push(best);
+        pageStart = best;
       }
+
+      // Trim trailing empty pages
+      while (breaks.length > 0) {
+        const lastBrk = breaks[breaks.length - 1];
+        const hasContent = leafEls.some(e => e.top >= lastBrk && e.bottom > lastBrk);
+        if (!hasContent) breaks.pop();
+        else break;
+      }
+
       setPageBreaks(breaks);
       setMeasured(true);
     };
-    const timer = setTimeout(measure, 200);
+    const timer = setTimeout(measure, 300);
     return () => clearTimeout(timer);
   }, [TemplateComponent, resume]);
 
@@ -1030,6 +1216,9 @@ function ResumeRendererWithOverlay({
       {/* Visible pages stacked */}
       {measured && Array.from({ length: numPages }, (_, pageIndex) => {
         const startY = pageIndex === 0 ? 0 : pageBreaks[pageIndex - 1];
+        const endY = pageIndex < pageBreaks.length ? pageBreaks[pageIndex] : totalHeight;
+        const isLastPage = pageIndex === numPages - 1;
+        const clipHeight = isLastPage ? A4_HEIGHT : Math.min(Math.ceil(endY - startY), A4_HEIGHT);
         const pageSections = sectionRects.filter(s => s.pageIndex === pageIndex);
 
         return (
@@ -1048,22 +1237,56 @@ function ResumeRendererWithOverlay({
                 width: A4_WIDTH,
                 height: A4_HEIGHT,
                 overflow: "hidden",
-                background: "#ffffff",
+                position: "relative",
               }}
             >
+              {/* Background layer */}
               <div
-                className="page-content"
                 style={{
-                  transform: `translateY(-${startY}px)`,
-                  position: "relative",
+                  position: "absolute",
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  backgroundColor: bgInfo.type === 'fullpage' ? bgInfo.pageColor : '#ffffff',
+                  backgroundImage: bgInfo.type === 'fullpage' ? bgInfo.gradient : undefined,
+                  zIndex: 0,
+                }}
+              />
+              {/* Sidebar background */}
+              {bgInfo.type === 'sidebar' && bgInfo.sidebarColor && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0, left: 0,
+                    width: bgInfo.sidebarWidth,
+                    height: "100%",
+                    backgroundColor: bgInfo.sidebarColor,
+                    zIndex: 1,
+                  }}
+                />
+              )}
+              {/* Content clipped to page */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, right: 0,
+                  height: clipHeight,
+                  overflow: "hidden",
+                  zIndex: 2,
                 }}
               >
-                <TemplateComponent resume={resume} />
+                <div
+                  className="page-content"
+                  style={{
+                    transform: `translateY(-${startY}px)`,
+                    width: A4_WIDTH,
+                  }}
+                >
+                  <TemplateComponent resume={resume} />
+                </div>
               </div>
 
               {/* Heatmap overlay for this page */}
               {showHeat && (
-                <div className="absolute inset-0 pointer-events-none z-10">
+                <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
                   {heatmapData.map((zone, idx) => {
                     const section = pageSections.find(s => s.id === zone.sectionId);
                     if (!section) return null;

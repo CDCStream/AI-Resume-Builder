@@ -192,6 +192,38 @@ Rules:
       result = JSON.parse(fixed);
     }
 
+    // Server-side location mismatch check
+    if (hasJob && resume.basics?.location) {
+      const candidateCity = (resume.basics.location.city || "").toLowerCase().trim();
+      const candidateCountry = (resume.basics.location.country || "").toLowerCase().trim();
+      const candidateRegion = (resume.basics.location.region || "").toLowerCase().trim();
+      const jobText = jobDescription.trim().toLowerCase();
+
+      const isRemote = /\b(remote|uzaktan|home\s*office|work\s*from\s*home|fully\s*remote|100%\s*remote)\b/i.test(jobText);
+
+      if (!isRemote && (candidateCity || candidateCountry)) {
+        const candidateTokens = [candidateCity, candidateCountry, candidateRegion].filter(Boolean);
+        const locationMatch = candidateTokens.some(token => token && jobText.includes(token));
+
+        if (!locationMatch) {
+          const alreadyHasLocationWarning = result.negatives?.some(
+            (n: { title?: string; detail?: string }) =>
+              /(location|şehir|lokasyon|city|relocation|taşınma)/i.test((n.title || "") + " " + (n.detail || ""))
+          );
+
+          if (!alreadyHasLocationWarning) {
+            const locationLabel = [candidateCity, candidateRegion, candidateCountry].filter(Boolean).join(", ");
+            if (!result.negatives) result.negatives = [];
+            result.negatives.push({
+              icon: "alert-triangle",
+              title: "Location Mismatch",
+              detail: `Candidate is in ${locationLabel} — the job posting does not mention this location and is not listed as remote.`,
+            });
+          }
+        }
+      }
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("Recruiter verdict error:", error);

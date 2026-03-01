@@ -99,6 +99,35 @@ export default function ResumeScanPreview({
   } | null>(null);
   const cancelledRef = useRef(false);
 
+  // Build a fingerprint of which sections exist and their item counts
+  const sectionFingerprint = [
+    resume.work?.length ?? 0,
+    resume.education?.length ?? 0,
+    resume.skills?.length ?? 0,
+    resume.languages?.length ?? 0,
+    resume.projects?.length ?? 0,
+    resume.publications?.length ?? 0,
+    resume.certificates?.length ?? 0,
+    resume.awards?.length ?? 0,
+    resume.volunteer?.length ?? 0,
+    resume.internships?.length ?? 0,
+    resume.courses?.length ?? 0,
+    resume.references?.length ?? 0,
+    resume.hobbies?.length ?? 0,
+    resume.activities?.length ?? 0,
+    resume.customSections?.length ?? 0,
+  ].join(",");
+
+  const prevFingerprintRef = useRef(sectionFingerprint);
+
+  useEffect(() => {
+    if (prevFingerprintRef.current !== sectionFingerprint && result) {
+      setResult(null);
+      setError(null);
+    }
+    prevFingerprintRef.current = sectionFingerprint;
+  }, [sectionFingerprint]);
+
   const handleAnalyze = async () => {
     setIsLoading(true);
     setError(null);
@@ -602,41 +631,21 @@ export default function ResumeScanPreview({
                 </div>
               )}
 
-              {/* Score Overview */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Scan Score */}
-                <div className="p-4 bg-white rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Eye className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-medium text-gray-500">Scan Score</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className={`text-3xl font-bold ${getScoreColor(result.overallScore)}`}>
-                      {result.overallScore}
-                    </span>
-                    <span className="text-sm text-gray-400">/100</span>
-                  </div>
-                  <p className={`text-xs mt-1 ${getScoreColor(result.overallScore)}`}>
-                    {getScoreLabel(result.overallScore)}
-                  </p>
+              {/* Readability Score */}
+              <div className="p-4 bg-white rounded-xl border border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Type className="w-4 h-4 text-amber-600" />
+                  <span className="text-xs font-medium text-gray-500">Readability</span>
                 </div>
-
-                {/* Readability Score */}
-                <div className="p-4 bg-white rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Type className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-medium text-gray-500">Readability</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className={`text-3xl font-bold ${getScoreColor(result.readabilityScore)}`}>
-                      {result.readabilityScore}
-                    </span>
-                    <span className="text-sm text-gray-400">/100</span>
-                  </div>
-                  <p className={`text-xs mt-1 ${getScoreColor(result.readabilityScore)}`}>
-                    {getScoreLabel(result.readabilityScore)}
-                  </p>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-3xl font-bold ${getScoreColor(result.readabilityScore)}`}>
+                    {result.readabilityScore}
+                  </span>
+                  <span className="text-sm text-gray-400">/100</span>
                 </div>
+                <p className={`text-xs mt-1 ${getScoreColor(result.readabilityScore)}`}>
+                  {getScoreLabel(result.readabilityScore)}
+                </p>
               </div>
 
               {/* First Impression Summary */}
@@ -652,69 +661,6 @@ export default function ResumeScanPreview({
                 <Sparkles className="w-4 h-4 mr-2" />
                 View Visual Heatmap
               </Button>
-
-              {/* Attention Zones */}
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <button
-                  onClick={() => toggleSection("zones")}
-                  className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-2">
-                    <Scan className="w-4 h-4 text-amber-600" />
-                    <span className="font-medium text-sm">Attention Zones</span>
-                    <span className="text-xs text-gray-500">({result.scanZones.length} areas)</span>
-                  </div>
-                  {expandedSections.has("zones") ? (
-                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
-                {expandedSections.has("zones") && (
-                  <div className="px-3 pb-3 space-y-2">
-                    {result.scanZones.map((zone) => (
-                      <div
-                        key={zone.id}
-                        onMouseEnter={() => handleZoneHover(zone)}
-                        onMouseLeave={() => handleZoneHover(null)}
-                        className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                          activeZone === zone.id
-                            ? "border-amber-400 bg-amber-50 shadow-sm"
-                            : "border-gray-100 bg-gray-50 hover:border-amber-200"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${getAttentionColor(zone.attention)}`} />
-                            <span className="text-sm font-medium">{zone.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-3 h-3 text-gray-400" />
-                            <span className="text-xs text-gray-500">{zone.timeSpent}s</span>
-                          </div>
-                        </div>
-                        <p className={`text-xs ${
-                          zone.attention === "high" ? "text-green-600" :
-                          zone.attention === "medium" ? "text-yellow-600" :
-                          zone.attention === "low" ? "text-orange-600" :
-                          "text-red-600"
-                        }`}>
-                          {getAttentionLabel(zone.attention)}
-                        </p>
-                        {zone.issue && (
-                          <p className="text-xs text-red-600 mt-1">{zone.issue}</p>
-                        )}
-                        {zone.suggestion && (
-                          <p className="text-xs text-green-600 mt-1 flex items-start gap-1">
-                            <Lightbulb className="w-3 h-3 mt-0.5 shrink-0" />
-                            {zone.suggestion}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               {/* Readability Issues */}
               {result.readabilityIssues.length > 0 && (
