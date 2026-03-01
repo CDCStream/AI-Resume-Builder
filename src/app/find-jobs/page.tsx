@@ -971,12 +971,19 @@ function FindJobsContent() {
               Back
             </Button>
             <div className="flex items-center gap-3">
-              <img 
-                src="/logo.png" 
-                alt="LinImpact.ai Logo" 
-                className="w-10 h-10 object-contain"
-              />
-              <div>
+              <div className="flex items-center cursor-pointer" onClick={() => router.push("/dashboard")}>
+                <img 
+                  src="/logo.png" 
+                  alt="LinImpact.ai Logo" 
+                  className="w-14 h-14 object-contain"
+                />
+                <span className="text-xl font-extrabold tracking-tight -ml-1" style={{ fontFamily: 'var(--font-poppins)' }}>
+                  <span className="text-cyan-500">Lin</span>
+                  <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">Impact</span>
+                  <span className="text-slate-500 font-semibold">.ai</span>
+                </span>
+              </div>
+              <div className="border-l border-gray-200 pl-3">
                 <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Find Jobs</h1>
                 <p className="text-sm text-gray-500">Search LinkedIn jobs and analyze ATS compatibility</p>
               </div>

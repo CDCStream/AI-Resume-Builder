@@ -1371,6 +1371,23 @@ export default function ResumeEditor({
 
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6">
+      {/* Logo */}
+      <div
+        className="flex items-center cursor-pointer no-print -mb-3"
+        onClick={() => router.push("/dashboard")}
+      >
+        <img
+          src="/logo.png"
+          alt="LinImpact.ai Logo"
+          className="w-16 h-16 object-contain"
+        />
+        <span className="text-2xl font-extrabold tracking-tight -ml-2" style={{ fontFamily: 'var(--font-poppins)' }}>
+          <span className="text-cyan-500">Lin</span>
+          <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">Impact</span>
+          <span className="text-slate-500 font-semibold">.ai</span>
+        </span>
+      </div>
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-2">
