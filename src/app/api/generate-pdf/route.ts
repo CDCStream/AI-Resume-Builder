@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium-min";
+import { createClient } from "@/lib/supabase/server";
 
 const CHROMIUM_PACK_URL =
   "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
+
+const FREE_TRIAL_DAYS = 3;
 
 interface PageData {
   html: string;
@@ -34,6 +37,31 @@ export const maxDuration = 60;
 const A4_HEIGHT_PX = 1122;
 const LINE_SAFETY_PX = 5;
 
+async function checkIsPro(): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    // Check if within free trial period
+    const daysSinceCreation = Math.floor(
+      (Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (daysSinceCreation < FREE_TRIAL_DAYS) return true;
+
+    // Check for active paid subscription
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("status, plan")
+      .eq("user_id", user.id)
+      .single();
+
+    return data?.status === "active" && data?.plan !== "FREE";
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   let browser = null;
 
@@ -46,6 +74,8 @@ export async function POST(request: NextRequest) {
       backgroundColor = "#ffffff",
       backgroundInfo,
     } = body;
+
+    const isPro = await checkIsPro();
 
     if (!pagesData || pagesData.length === 0) {
       return NextResponse.json(
@@ -71,7 +101,7 @@ export async function POST(request: NextRequest) {
     const page = await browser.newPage();
     await page.setViewport({ width: 794, height: 1122 });
 
-    const cssBlock = buildCssBlock(styles, backgroundColor);
+    const cssBlock = buildCssBlock(styles, backgroundColor, !isPro);
 
     // --- Pass 1: Load content and calculate page breaks in Puppeteer's rendering ---
     const measureHtml = `<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -289,9 +319,10 @@ export async function POST(request: NextRequest) {
     console.log(`Puppeteer-calculated breaks: [${breakData.breaks.join(', ')}] (${breakData.breaks.length + 1} pages, height: ${breakData.totalHeight})`);
 
     // --- Pass 2: Replace body content in-place (preserves loaded fonts & CSS) ---
+    const showWatermark = !isPro;
     const bodyHtml = breakData.breaks.length > 0
-      ? buildPrePaginatedHtml(contentHtml, breakData.breaks, breakData.totalHeight, backgroundInfo)
-      : contentHtml;
+      ? buildPrePaginatedHtml(contentHtml, breakData.breaks, breakData.totalHeight, backgroundInfo, showWatermark)
+      : (showWatermark ? wrapSinglePageWithWatermark(contentHtml) : contentHtml);
 
     await page.evaluate((html) => {
       document.body.innerHTML = html;
@@ -332,7 +363,49 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildCssBlock(styles: string, backgroundColor: string): string {
+function buildCssBlock(styles: string, backgroundColor: string, showWatermark: boolean = false): string {
+  const watermarkCss = showWatermark ? `
+    .pdf-watermark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .pdf-watermark-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-35deg);
+      font-family: 'Geist', 'Inter', Arial, sans-serif;
+      font-size: 60px;
+      font-weight: 700;
+      color: rgba(180, 180, 180, 0.18);
+      white-space: nowrap;
+      letter-spacing: 8px;
+      user-select: none;
+      text-transform: uppercase;
+    }
+
+    .pdf-watermark-sub {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Geist', 'Inter', Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(150, 150, 150, 0.35);
+      white-space: nowrap;
+      letter-spacing: 1px;
+      user-select: none;
+    }
+  ` : '';
+
   return `
     ${styles}
 
@@ -437,14 +510,29 @@ function buildCssBlock(styles: string, backgroundColor: string): string {
       size: A4;
       margin: 0;
     }
+
+    ${watermarkCss}
   `;
+}
+
+const WATERMARK_HTML = `<div class="pdf-watermark">
+  <div class="pdf-watermark-text">LinImpact.ai</div>
+  <div class="pdf-watermark-sub">Created with LinImpact.ai — Upgrade to Pro to remove watermark</div>
+</div>`;
+
+function wrapSinglePageWithWatermark(contentHtml: string): string {
+  return `<div style="position:relative;width:794px;min-height:1122px;">
+    ${contentHtml}
+    ${WATERMARK_HTML}
+  </div>`;
 }
 
 function buildPrePaginatedHtml(
   contentHtml: string,
   pageBreaks: number[],
   totalContentHeight: number,
-  backgroundInfo?: BackgroundInfo
+  backgroundInfo?: BackgroundInfo,
+  showWatermark: boolean = false
 ): string {
   const numPages = pageBreaks.length + 1;
   const bg = backgroundInfo || { type: 'none' as const, bgColor: '#ffffff' };
@@ -476,6 +564,7 @@ function buildPrePaginatedHtml(
             ${contentHtml}
           </div>
         </div>
+        ${showWatermark ? WATERMARK_HTML : ''}
       </div>
     `);
   }
