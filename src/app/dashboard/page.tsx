@@ -70,7 +70,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const checkoutStatus = searchParams.get("checkout");
     const sessionToken = searchParams.get("customer_session_token");
-    
+
     if (checkoutStatus === "success") {
       fetch("/api/checkout/verify", {
         method: "POST",
@@ -101,7 +101,7 @@ export default function DashboardPage() {
         .catch(console.error);
     }
   }, [searchParams]);
-  
+
   const {
     resumes,
     loading: resumesLoading,
@@ -109,7 +109,7 @@ export default function DashboardPage() {
     duplicateResume,
     updateResume,
   } = useResumes();
-  
+
   const {
     coverLetters,
     loading: coverLettersLoading,
@@ -138,13 +138,13 @@ export default function DashboardPage() {
 
   const handleDelete = async () => {
     if (!deleteDialog) return;
-    
+
     if (deleteDialog.type === "resume") {
       await deleteResume(deleteDialog.id);
     } else {
       await deleteCoverLetter(deleteDialog.id);
     }
-    
+
     setDeleteDialog(null);
   };
 
@@ -163,13 +163,13 @@ export default function DashboardPage() {
 
   const handleRename = async () => {
     if (!renameDialog || !newName.trim()) return;
-    
+
     if (renameDialog.type === "resume") {
       await updateResume(renameDialog.id, { name: newName.trim() });
     } else {
       await updateCoverLetter(renameDialog.id, { name: newName.trim() });
     }
-    
+
     setRenameDialog(null);
     setNewName("");
   };
@@ -215,8 +215,8 @@ export default function DashboardPage() {
               Your 3-day free trial has expired. Upgrade to Pro to continue using all premium features and take your career to the next level.
             </p>
             <div className="space-y-3">
-              <Button 
-                onClick={() => router.push("/pricing")} 
+              <Button
+                onClick={() => router.push("/pricing")}
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg h-12 text-lg"
               >
                 <Crown className="h-5 w-5 mr-2" />
@@ -240,8 +240,8 @@ export default function DashboardPage() {
                 Free Trial: {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining
               </span>
             </div>
-            <Button 
-              onClick={() => router.push("/pricing")} 
+            <Button
+              onClick={() => router.push("/pricing")}
               variant="secondary"
               className="bg-white/20 hover:bg-white/30 text-white border-0 h-8 px-4"
             >
@@ -255,9 +255,9 @@ export default function DashboardPage() {
       <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <img 
-              src="/logo.png" 
-              alt="LinImpact.ai Logo" 
+            <img
+              src="/logo.png"
+              alt="LinImpact.ai Logo"
               className="w-20 h-20 object-contain"
             />
             <span className="text-3xl font-extrabold tracking-tight -ml-3" style={{ fontFamily: 'var(--font-poppins)' }}>
@@ -279,7 +279,7 @@ export default function DashboardPage() {
                   <Avatar className="w-11 h-11 border-2 border-blue-200">
                     <AvatarImage src={user?.user_metadata?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-semibold text-sm">
-                      {user?.user_metadata?.full_name 
+                      {user?.user_metadata?.full_name
                         ? user.user_metadata.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
                         : user?.email?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
@@ -337,8 +337,8 @@ export default function DashboardPage() {
           </TabsList>
 
           <TabsContent value="resumes">
-            <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
+            <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden !py-0 !gap-0">
+              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100 pt-5 pb-5">
                 <div>
                   <CardTitle className="text-blue-900">Resumes</CardTitle>
                   <CardDescription>Your saved resumes</CardDescription>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
                   Create New Resume
                 </Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="py-6">
                 {resumes.length === 0 ? (
                   <div className="text-center py-12 bg-gradient-to-br from-blue-50/50 to-cyan-50/50 rounded-lg">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
@@ -438,8 +438,8 @@ export default function DashboardPage() {
           </TabsContent>
 
           <TabsContent value="coverLetters">
-            <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
+            <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden !py-0 !gap-0">
+              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100 pt-5 pb-5">
                 <div>
                   <CardTitle className="text-blue-900">Cover Letters</CardTitle>
                   <CardDescription>Your saved cover letters</CardDescription>
@@ -449,7 +449,7 @@ export default function DashboardPage() {
                   Create New Cover Letter
                 </Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="py-6">
                 {coverLetters.length === 0 ? (
                   <div className="text-center py-12 bg-gradient-to-br from-blue-50/50 to-cyan-50/50 rounded-lg">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">

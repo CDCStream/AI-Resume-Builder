@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080, height=1920">
+<title>LinImpact.ai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transform: scale(0.3);
+    animation: logoReveal 4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .logo-img {
+    width: 360px;
+    height: 360px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 40px rgba(0, 150, 255, 0.15));
+  }
+
+  .brand-text {
+    font-size: 138px;
+    font-weight: 800;
+    letter-spacing: -3px;
+    margin-top: 20px;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .brand-lin {
+    color: #06b6d4;
+  }
+
+  .brand-impact {
+    background: linear-gradient(to right, #22d3ee, #3b82f6, #2563eb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .brand-dot-ai {
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .tagline {
+    font-size: 38px;
+    color: #94a3b8;
+    letter-spacing: 12px;
+    text-transform: uppercase;
+    margin-top: 30px;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0;
+    animation: taglineFade 1.5s ease-out 2s forwards;
+  }
+
+  .glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+    animation: glowPulse 4s ease-in-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes logoReveal {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+      filter: blur(12px);
+    }
+    30% {
+      opacity: 1;
+      filter: blur(0px);
+    }
+    60% {
+      transform: scale(1.06);
+    }
+    80% {
+      transform: scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0px);
+    }
+  }
+
+  @keyframes taglineFade {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+      letter-spacing: 18px;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+      letter-spacing: 12px;
+    }
+  }
+
+  @keyframes glowPulse {
+    0% {
+      transform: scale(0.2);
+      opacity: 0;
+    }
+    40% {
+      opacity: 1;
+    }
+    70% {
+      transform: scale(1.8);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="container">
+    <img src="logo.png" alt="LinImpact.ai" class="logo-img">
+    <span class="brand-text">
+      <span class="brand-lin">Lin</span><span class="brand-impact">Impact</span><span class="brand-dot-ai">.ai</span>
+    </span>
+    <div class="tagline">AI-Powered Resume Builder</div>
+  </div>
+</body>
+</html>

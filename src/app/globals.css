@@ -214,6 +214,15 @@
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Resume page content - ensure background extends to fill page */
 .page-content .resume-page {
   min-height: var(--page-total-height, 1122px);
