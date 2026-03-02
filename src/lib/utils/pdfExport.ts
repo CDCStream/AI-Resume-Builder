@@ -96,6 +96,9 @@ export async function exportResumeToPDF(
     }
   }
 
+  // Convert all images to inline base64 so Puppeteer can render them without network requests
+  await inlineAllImages(tempDiv);
+
   fullContentHtml = tempDiv.innerHTML;
 
   // Get total content height from hidden measurement div (add buffer for margin/border precision)
@@ -370,6 +373,51 @@ function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: numbe
       tgtChild.style.paddingBottom = cs.paddingBottom;
     }
   }
+}
+
+async function inlineAllImages(container: HTMLElement): Promise<void> {
+  const imgs = container.querySelectorAll("img");
+  const promises = Array.from(imgs).map(async (img) => {
+    const src = img.getAttribute("src");
+    if (!src || src.startsWith("data:")) return;
+
+    try {
+      // Try loading from existing browser cache first via canvas
+      const loaded = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = loaded.naturalWidth;
+      canvas.height = loaded.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(loaded, 0, 0);
+        const dataUrl = canvas.toDataURL("image/png");
+        img.setAttribute("src", dataUrl);
+      }
+    } catch {
+      // If canvas approach fails (CORS), try fetching as blob
+      try {
+        const resp = await fetch(src);
+        const blob = await resp.blob();
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        img.setAttribute("src", dataUrl);
+      } catch {
+        // Can't convert — leave as-is
+      }
+    }
+  });
+
+  await Promise.all(promises);
 }
 
 function collectStyles(): string {

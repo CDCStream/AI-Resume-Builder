@@ -13,15 +13,19 @@ import {
   Search,
   MessageSquare,
   Play,
+  Pause,
   ChevronRight,
+  Maximize2,
+  X,
 } from "lucide-react";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 
 interface SubFeature {
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   gifSrc?: string;
+  videoSrc?: string;
   gifAlt?: string;
 }
 
@@ -32,6 +36,7 @@ interface GuideSection {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   gifSrc?: string;
+  videoSrc?: string;
   gifAlt: string;
   subFeatures: SubFeature[];
 }
@@ -51,6 +56,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Paste your LinkedIn URL and watch your resume auto-populate with your experience, education, and skills.",
         icon: Linkedin,
+        videoSrc: "/videos/linkedin-import.mp4",
         gifAlt: "Importing resume from LinkedIn profile",
       },
       {
@@ -182,33 +188,175 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
 ];
 
-function GifPlaceholder({
-  src,
-  alt,
-  compact = false,
-}: {
-  src?: string;
-  alt: string;
-  compact?: boolean;
-}) {
-  const frameClasses = compact
-    ? "relative rounded-lg overflow-hidden shadow-md border border-gray-200/80 bg-white"
-    : "relative rounded-xl overflow-hidden shadow-2xl border border-gray-200/80 bg-white";
+function VideoPlayer({ src, onExpand }: { src: string; onExpand?: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scrubRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showPlayIcon, setShowPlayIcon] = useState(false);
+  const isDragging = useRef(false);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(container);
+
+    const onTimeUpdate = () => {
+      if (!isDragging.current && video.duration) {
+        setProgress((video.currentTime / video.duration) * 100);
+      }
+    };
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+
+    video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+
+    return () => {
+      observer.disconnect();
+      video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+    };
+  }, []);
+
+  const seekTo = useCallback((clientX: number) => {
+    const video = videoRef.current;
+    const bar = scrubRef.current;
+    if (!video || !bar || !video.duration) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    video.currentTime = ratio * video.duration;
+    setProgress(ratio * 100);
+  }, []);
+
+  const onScrubDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    seekTo(e.clientX);
+
+    const onMove = (ev: MouseEvent) => seekTo(ev.clientX);
+    const onUp = () => {
+      isDragging.current = false;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [seekTo]);
+
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+    setShowPlayIcon(true);
+    setTimeout(() => setShowPlayIcon(false), 600);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative group">
+      <video
+        ref={videoRef}
+        src={src}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className="w-full h-auto block"
+        onClick={togglePlay}
+      />
+
+      {/* Play/Pause overlay icon */}
+      <div
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+          showPlayIcon ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          {isPlaying ? (
+            <Pause className="w-7 h-7 text-white" />
+          ) : (
+            <Play className="w-7 h-7 text-white ml-0.5" />
+          )}
+        </div>
+      </div>
+
+      {/* Hover play/pause hint */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {!showPlayIcon && (
+          <div className="w-12 h-12 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center">
+            {isPlaying ? (
+              <Pause className="w-5 h-5 text-white/80" />
+            ) : (
+              <Play className="w-5 h-5 text-white/80 ml-0.5" />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Expand button */}
+      {onExpand && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onExpand(); }}
+          className="absolute top-3 right-3 w-8 h-8 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-black/60 cursor-pointer"
+        >
+          <Maximize2 className="w-4 h-4 text-white" />
+        </button>
+      )}
+
+      {/* Scrub bar */}
+      <div
+        ref={scrubRef}
+        className="absolute bottom-0 left-0 right-0 h-6 flex items-end cursor-pointer group/scrub"
+        onMouseDown={onScrubDown}
+      >
+        <div className="w-full h-1 group-hover/scrub:h-2 bg-black/20 transition-all duration-200 relative">
+          <div
+            className="absolute inset-y-0 left-0 bg-blue-500 rounded-r-full transition-[width] duration-75"
+            style={{ width: `${progress}%` }}
+          />
+          <div
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-blue-500 shadow-md opacity-0 group-hover/scrub:opacity-100 transition-opacity duration-200"
+            style={{ left: `${progress}%`, marginLeft: "-6px" }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SafariToolbar({ compact = false }: { compact?: boolean }) {
   const toolbarHeight = compact ? "h-8" : "h-10";
   const dotSize = compact ? "w-[9px] h-[9px]" : "w-3 h-3";
   const dotGap = compact ? "gap-[5px]" : "gap-[6px]";
 
-  const safariToolbar = (
+  return (
     <div className={`${toolbarHeight} flex items-center px-3 bg-gradient-to-b from-[#e8e6e8] to-[#d4d2d4] border-b border-[#b5b3b5] relative`}>
-      {/* Traffic lights */}
       <div className={`flex ${dotGap} flex-shrink-0`}>
         <div className={`${dotSize} rounded-full bg-[#ff5f57] border border-[#e0443e]`} />
         <div className={`${dotSize} rounded-full bg-[#febc2e] border border-[#dea123]`} />
         <div className={`${dotSize} rounded-full bg-[#28c840] border border-[#1aab29]`} />
       </div>
-
-      {/* Center address bar */}
       <div className="flex-1 flex justify-center px-4">
         <div className={`${compact ? "max-w-[200px] h-5" : "max-w-[320px] h-[26px]"} w-full bg-white/80 rounded-md border border-[#c0bec0] flex items-center justify-center px-3`}>
           <svg className={`${compact ? "w-2.5 h-2.5" : "w-3 h-3"} text-[#9b999b] mr-1 flex-shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -219,8 +367,6 @@ function GifPlaceholder({
           </span>
         </div>
       </div>
-
-      {/* Right side spacer to balance */}
       <div className={`flex ${dotGap} flex-shrink-0 invisible`}>
         <div className={dotSize} />
         <div className={dotSize} />
@@ -228,24 +374,218 @@ function GifPlaceholder({
       </div>
     </div>
   );
+}
+
+function FullscreenVideoModal({
+  src,
+  onClose,
+}: {
+  src: string;
+  onClose: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scrubRef = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [showPlayIcon, setShowPlayIcon] = useState(false);
+  const isDragging = useRef(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.play().catch(() => {});
+
+    const onTimeUpdate = () => {
+      if (!isDragging.current && video.duration) {
+        setProgress((video.currentTime / video.duration) * 100);
+      }
+    };
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+
+    video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === " ") {
+        e.preventDefault();
+        if (video.paused) video.play().catch(() => {});
+        else video.pause();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  const seekTo = useCallback((clientX: number) => {
+    const video = videoRef.current;
+    const bar = scrubRef.current;
+    if (!video || !bar || !video.duration) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    video.currentTime = ratio * video.duration;
+    setProgress(ratio * 100);
+  }, []);
+
+  const onScrubDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    seekTo(e.clientX);
+    const onMove = (ev: MouseEvent) => seekTo(ev.clientX);
+    const onUp = () => {
+      isDragging.current = false;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [seekTo]);
+
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+    setShowPlayIcon(true);
+    setTimeout(() => setShowPlayIcon(false), 600);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="relative w-full max-w-6xl rounded-xl overflow-hidden shadow-2xl bg-black"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SafariToolbar />
+
+        <div className="relative group">
+          <video
+            ref={videoRef}
+            src={src}
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="w-full h-auto block"
+            onClick={togglePlay}
+          />
+
+          {/* Play/Pause overlay */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+              showPlayIcon ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <div className="w-20 h-20 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              {isPlaying ? (
+                <Pause className="w-9 h-9 text-white" />
+              ) : (
+                <Play className="w-9 h-9 text-white ml-1" />
+              )}
+            </div>
+          </div>
+
+          {/* Hover hint */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {!showPlayIcon && (
+              <div className="w-14 h-14 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center">
+                {isPlaying ? (
+                  <Pause className="w-6 h-6 text-white/80" />
+                ) : (
+                  <Play className="w-6 h-6 text-white/80 ml-0.5" />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Scrub bar */}
+          <div
+            ref={scrubRef}
+            className="absolute bottom-0 left-0 right-0 h-8 flex items-end cursor-pointer group/scrub"
+            onMouseDown={onScrubDown}
+          >
+            <div className="w-full h-1.5 group-hover/scrub:h-3 bg-white/20 transition-all duration-200 relative">
+              <div
+                className="absolute inset-y-0 left-0 bg-blue-500 rounded-r-full transition-[width] duration-75"
+                style={{ width: `${progress}%` }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-blue-500 shadow-md opacity-0 group-hover/scrub:opacity-100 transition-opacity duration-200"
+                style={{ left: `${progress}%`, marginLeft: "-8px" }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-14 right-3 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors cursor-pointer"
+        >
+          <X className="w-5 h-5 text-white" />
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function MediaPlaceholder({
+  src,
+  videoSrc,
+  alt,
+  compact = false,
+  onExpand,
+}: {
+  src?: string;
+  videoSrc?: string;
+  alt: string;
+  compact?: boolean;
+  onExpand?: () => void;
+}) {
+  const frameClasses = compact
+    ? "relative rounded-lg overflow-hidden shadow-md border border-gray-200/80 bg-white"
+    : "relative rounded-xl overflow-hidden shadow-2xl border border-gray-200/80 bg-white";
+
+  if (videoSrc) {
+    return (
+      <div className={frameClasses}>
+        <SafariToolbar compact={compact} />
+        <VideoPlayer src={videoSrc} onExpand={onExpand} />
+      </div>
+    );
+  }
 
   if (src) {
     return (
       <div className={frameClasses}>
-        {safariToolbar}
-        <img
-          src={src}
-          alt={alt}
-          className="w-full h-auto"
-          loading="lazy"
-        />
+        <SafariToolbar compact={compact} />
+        <img src={src} alt={alt} className="w-full h-auto" loading="lazy" />
       </div>
     );
   }
 
   return (
     <div className={frameClasses}>
-      {safariToolbar}
+      <SafariToolbar compact={compact} />
       <div className={`${compact ? "aspect-[16/9]" : "aspect-[16/10]"} bg-gradient-to-br from-[#fafafa] via-[#f5f5f5] to-[#fafafa] flex flex-col items-center justify-center gap-2`}>
         <div className={`${compact ? "w-10 h-10" : "w-16 h-16"} rounded-full bg-blue-50 flex items-center justify-center`}>
           <Play className={`${compact ? "w-4 h-4" : "w-7 h-7"} text-blue-400 ml-0.5`} />
@@ -283,6 +623,7 @@ function AnimatedSection({
 
 export function HowItWorksGuide() {
   const [activeSection, setActiveSection] = useState(0);
+  const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const pillNavRef = useRef<HTMLDivElement>(null);
@@ -486,10 +827,12 @@ export function HowItWorksGuide() {
                             </div>
                           </div>
                           <div className="px-5 pb-5">
-                            <GifPlaceholder
+                            <MediaPlaceholder
                               src={sub.gifSrc}
+                              videoSrc={sub.videoSrc}
                               alt={sub.gifAlt || sub.title}
                               compact
+                              onExpand={sub.videoSrc ? () => setFullscreenVideo(sub.videoSrc!) : undefined}
                             />
                           </div>
                         </div>
@@ -502,6 +845,16 @@ export function HowItWorksGuide() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {fullscreenVideo && (
+          <FullscreenVideoModal
+            key="fullscreen-video"
+            src={fullscreenVideo}
+            onClose={() => setFullscreenVideo(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }
