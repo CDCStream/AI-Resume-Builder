@@ -6,12 +6,14 @@ import { Resume } from "@/lib/types/resume";
 interface LinkedInImportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onBack?: () => void;
   onImport: (resume: Resume) => void;
 }
 
 export default function LinkedInImportModal({
   isOpen,
   onClose,
+  onBack,
   onImport,
 }: LinkedInImportModalProps) {
   const [url, setUrl] = useState("");
@@ -83,25 +85,11 @@ export default function LinkedInImportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={handleClose}
-      />
+      {/* Backdrop — not dismissible */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in duration-200">
-        {/* Close button */}
-        {!loading && (
-          <button
-            onClick={handleClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors z-10"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
 
         {/* Header */}
         <div className="px-8 pt-8 pb-4 text-center">
@@ -149,20 +137,31 @@ export default function LinkedInImportModal({
                 )}
               </div>
 
-              <button
-                onClick={handleImport}
-                disabled={!url.trim()}
-                className={`w-full mt-4 h-12 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
-                  url.trim()
-                    ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Import Profile
-              </button>
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => { resetState(); onBack ? onBack() : onClose(); }}
+                  className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back
+                </button>
+                <button
+                  onClick={handleImport}
+                  disabled={!url.trim()}
+                  className={`flex-1 h-12 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+                    url.trim()
+                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Import Profile
+                </button>
+              </div>
 
               <p className="text-xs text-gray-400 text-center mt-3">
                 Make sure your LinkedIn profile is public for best results

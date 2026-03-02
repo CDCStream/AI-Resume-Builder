@@ -298,12 +298,14 @@ function ResumeEditorContent() {
       <LinkedInImportModal
         isOpen={showLinkedInModal}
         onClose={() => setShowLinkedInModal(false)}
+        onBack={() => { setShowLinkedInModal(false); setShowGettingStarted(true); }}
         onImport={handleLinkedInImport}
       />
 
       <UploadResumeModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
+        onBack={() => { setShowUploadModal(false); setShowGettingStarted(true); }}
         onImport={handleUploadImport}
       />
 

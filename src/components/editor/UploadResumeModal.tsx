@@ -6,12 +6,14 @@ import { Resume } from "@/lib/types/resume";
 interface UploadResumeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onBack?: () => void;
   onImport: (resume: Resume) => void;
 }
 
 export default function UploadResumeModal({
   isOpen,
   onClose,
+  onBack,
   onImport,
 }: UploadResumeModalProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -116,23 +118,11 @@ export default function UploadResumeModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      {/* Backdrop — not dismissible */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in duration-200">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors z-10"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
 
         {/* Header */}
         <div className="px-8 pt-8 pb-4 text-center">
@@ -248,10 +238,13 @@ export default function UploadResumeModal({
         {/* Footer */}
         <div className="px-6 pb-6 flex gap-3">
           <button
-            onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            onClick={() => { resetSelection(); onBack ? onBack() : onClose(); }}
+            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
           >
-            Cancel
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
           </button>
           <button
             onClick={handleUpload}
