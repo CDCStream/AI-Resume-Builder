@@ -64,6 +64,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Upload your current resume (PDF/DOCX) and our AI will parse and enhance it with better formatting.",
         icon: Upload,
+        videoSrc: "/videos/upload-from-cv.mp4",
         gifAlt: "Uploading and parsing an existing CV",
       },
       {
