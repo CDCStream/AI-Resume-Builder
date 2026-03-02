@@ -375,14 +375,51 @@ function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: numbe
   }
 }
 
+const MAX_IMG_DIMENSION = 400;
+const IMG_QUALITY = 0.7;
+
+function resizeToCanvas(image: HTMLImageElement): string {
+  let w = image.naturalWidth;
+  let h = image.naturalHeight;
+
+  if (w > MAX_IMG_DIMENSION || h > MAX_IMG_DIMENSION) {
+    const ratio = Math.min(MAX_IMG_DIMENSION / w, MAX_IMG_DIMENSION / h);
+    w = Math.round(w * ratio);
+    h = Math.round(h * ratio);
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return image.src;
+  ctx.drawImage(image, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", IMG_QUALITY);
+}
+
 async function inlineAllImages(container: HTMLElement): Promise<void> {
   const imgs = container.querySelectorAll("img");
   const promises = Array.from(imgs).map(async (img) => {
     const src = img.getAttribute("src");
-    if (!src || src.startsWith("data:")) return;
+    if (!src) return;
+
+    // Compress existing data URLs that are too large (>100KB)
+    if (src.startsWith("data:")) {
+      if (src.length > 100_000) {
+        try {
+          const loaded = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = src;
+          });
+          img.setAttribute("src", resizeToCanvas(loaded));
+        } catch { /* keep original */ }
+      }
+      return;
+    }
 
     try {
-      // Try loading from existing browser cache first via canvas
       const loaded = await new Promise<HTMLImageElement>((resolve, reject) => {
         const image = new Image();
         image.crossOrigin = "anonymous";
@@ -390,27 +427,23 @@ async function inlineAllImages(container: HTMLElement): Promise<void> {
         image.onerror = reject;
         image.src = src;
       });
-
-      const canvas = document.createElement("canvas");
-      canvas.width = loaded.naturalWidth;
-      canvas.height = loaded.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(loaded, 0, 0);
-        const dataUrl = canvas.toDataURL("image/png");
-        img.setAttribute("src", dataUrl);
-      }
+      img.setAttribute("src", resizeToCanvas(loaded));
     } catch {
-      // If canvas approach fails (CORS), try fetching as blob
       try {
         const resp = await fetch(src);
         const blob = await resp.blob();
-        const dataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-        img.setAttribute("src", dataUrl);
+        const bmpSrc = URL.createObjectURL(blob);
+        try {
+          const loaded = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = bmpSrc;
+          });
+          img.setAttribute("src", resizeToCanvas(loaded));
+        } finally {
+          URL.revokeObjectURL(bmpSrc);
+        }
       } catch {
         // Can't convert — leave as-is
       }
