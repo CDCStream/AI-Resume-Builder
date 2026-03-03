@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Script from "next/script";
-import { 
-  CheckCircle2, 
+import {
+  CheckCircle2,
   ArrowRight,
   Zap,
   Menu,
@@ -18,7 +18,8 @@ import {
   Shield,
   Clock,
   FileText,
-  Star
+  Star,
+  Info
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { trackPricingPageViewed, trackCheckoutStarted, trackPlanSelected } from "@/lib/mixpanel";
@@ -87,7 +88,7 @@ const pricingSchema = {
       "availability": "https://schema.org/InStock"
     },
     {
-      "@type": "Offer", 
+      "@type": "Offer",
       "name": "Pro Monthly",
       "price": "13.98",
       "priceCurrency": "USD",
@@ -160,7 +161,7 @@ export default function PricingPage() {
 
     setLoadingPlan(plan);
     trackCheckoutStarted(plan, details.name, details.price);
-    
+
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -202,16 +203,16 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center">
-              <img 
-                src="/logo.png" 
-                alt="LinImpact.ai Logo" 
+              <img
+                src="/logo.png"
+                alt="LinImpact.ai Logo"
                 className="w-10 h-10 object-contain"
               />
               <span className="text-xl font-extrabold tracking-tight -ml-2" style={{ fontFamily: 'var(--font-poppins)' }}>
                 <span className="text-cyan-500">Lin</span><span className="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 bg-clip-text text-transparent">Impact</span><span className="text-slate-500 font-semibold">.ai</span>
               </span>
             </Link>
-            
+
             <div className="hidden lg:flex items-center gap-8">
               <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                 Home
@@ -226,7 +227,7 @@ export default function PricingPage() {
                 Pricing
               </Link>
             </div>
-            
+
             <div className="hidden lg:flex items-center gap-3">
               <Button variant="ghost" onClick={() => router.push("/login")}>
                 Log in
@@ -236,7 +237,7 @@ export default function PricingPage() {
               </Button>
             </div>
 
-            <button 
+            <button
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -289,7 +290,7 @@ export default function PricingPage() {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Create professional, ATS-friendly resumes with our AI-powered resume builder. Start with a free trial and upgrade when you need unlimited access to all features.
             </p>
-            
+
             {/* Trust badges */}
             <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm text-gray-500">
               <div className="flex items-center gap-2">
@@ -320,7 +321,7 @@ export default function PricingPage() {
                 </div>
                 <p className="text-gray-500 mt-2">Full access for 3 days</p>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -329,16 +330,20 @@ export default function PricingPage() {
                   "ATS score analysis",
                   "LinkedIn import",
                   "Interview prep AI",
-                  "6-second resume scan"
+                  "6-second resume scan",
                 ].map((feature, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
                     <CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                     <span>{feature}</span>
                   </li>
                 ))}
+                <li className="flex items-start gap-2 text-sm text-gray-400 min-h-[24px]">
+                  <Info className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <span>PDF downloads with watermark</span>
+                </li>
               </ul>
 
-              <Button 
+              <Button
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 onClick={() => handleCheckout("FREE")}
               >
@@ -361,7 +366,7 @@ export default function PricingPage() {
                 <p className="text-gray-500 mt-2">Billed monthly</p>
                 <div className="mt-2 h-6"></div>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -383,7 +388,7 @@ export default function PricingPage() {
               </ul>
 
               <div className="mt-auto">
-                <Button 
+                <Button
                   className="w-full bg-gray-900 hover:bg-gray-800"
                   onClick={() => handleCheckout("PRO_MONTHLY")}
                   disabled={loadingPlan === "PRO_MONTHLY"}
@@ -417,7 +422,7 @@ export default function PricingPage() {
                   Save 34%
                 </div>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -439,7 +444,7 @@ export default function PricingPage() {
               </ul>
 
               <div className="mt-auto">
-                <Button 
+                <Button
                   className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/25"
                   onClick={() => handleCheckout("PRO_QUARTERLY")}
                   disabled={loadingPlan === "PRO_QUARTERLY"}
@@ -473,7 +478,7 @@ export default function PricingPage() {
                   Save 44%
                 </div>
               </div>
-              
+
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
@@ -495,7 +500,7 @@ export default function PricingPage() {
               </ul>
 
               <div className="mt-auto">
-                <Button 
+                <Button
                   className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25"
                   onClick={() => handleCheckout("PRO_SEMI_ANNUAL")}
                   disabled={loadingPlan === "PRO_SEMI_ANNUAL"}
@@ -524,11 +529,11 @@ export default function PricingPage() {
                 Everything you need to know about our AI resume builder plans and pricing
               </p>
             </div>
-            
+
             <div className="space-y-4">
               {pricingFaqs.map((faq, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-blue-200 transition-colors"
                 >
                   <button
