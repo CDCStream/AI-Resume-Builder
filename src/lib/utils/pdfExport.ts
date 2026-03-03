@@ -271,7 +271,8 @@ function applyFullStyles(source: HTMLElement, target: HTMLElement, isRoot: boole
     if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') target.style.gap = cs.gap;
   }
 
-  // Sizing (for flex children or elements with explicit sizes)
+  // Sizing — only set width on flex children, never set computed height on text containers
+  // (height differences between browsers cause text overlap)
   if (!isRoot && parentIsFlex) {
     target.style.width = cs.width;
     target.style.flex = cs.flex;
@@ -280,26 +281,30 @@ function applyFullStyles(source: HTMLElement, target: HTMLElement, isRoot: boole
     if (cs.minWidth !== '0px') target.style.minWidth = cs.minWidth;
     if (cs.maxWidth !== 'none') target.style.maxWidth = cs.maxWidth;
   }
-  if (cs.height !== 'auto' && cs.height !== '0px') target.style.height = cs.height;
-  if (cs.minHeight !== '0px') target.style.minHeight = cs.minHeight;
 
-  // Positioning
-  if (cs.position !== 'static') {
+  // Only set height on image containers and decorative elements, not text containers
+  const tag = source.tagName.toLowerCase();
+  const isImgContainer = tag === 'img' || source.querySelector('img') !== null && source.children.length <= 1;
+  if (isImgContainer && cs.height !== 'auto' && cs.height !== '0px') {
+    target.style.height = cs.height;
+  }
+
+  // Positioning — only transfer for truly positioned elements (decorative overlays, images)
+  if (cs.position === 'absolute' || cs.position === 'fixed') {
     target.style.position = cs.position;
     if (cs.top !== 'auto') target.style.top = cs.top;
     if (cs.left !== 'auto') target.style.left = cs.left;
     if (cs.right !== 'auto') target.style.right = cs.right;
     if (cs.bottom !== 'auto') target.style.bottom = cs.bottom;
     if (cs.zIndex !== 'auto') target.style.zIndex = cs.zIndex;
+  } else if (cs.position === 'relative') {
+    target.style.position = 'relative';
+    if (cs.zIndex !== 'auto') target.style.zIndex = cs.zIndex;
   }
 
-  if (cs.overflow !== 'visible') target.style.overflow = cs.overflow;
   if (cs.opacity !== '1') target.style.opacity = cs.opacity;
-  if (cs.transform !== 'none') target.style.transform = cs.transform;
   if (cs.filter !== 'none') target.style.filter = cs.filter;
 }
-
-const SKIP_STYLE_TAGS = new Set(['img', 'svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'input', 'textarea', 'br', 'hr']);
 
 function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: number = 0): void {
   if (depth > 10) return;
@@ -311,9 +316,6 @@ function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: numbe
     const srcChild = srcChildren[i];
     const tgtChild = tgtChildren[i];
     if (!srcChild || !tgtChild) continue;
-
-    const tag = srcChild.tagName.toLowerCase();
-    if (SKIP_STYLE_TAGS.has(tag)) continue;
 
     const parentDisplay = window.getComputedStyle(source).display;
     const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
