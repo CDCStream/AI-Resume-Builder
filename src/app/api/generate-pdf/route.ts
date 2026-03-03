@@ -308,7 +308,6 @@ export async function POST(request: NextRequest) {
         }
 
         // Prevent splitting sidebar atomic blocks (e.g. skill name + dots)
-        // If break falls inside a small parent wrapper, move the whole item to next page
         const asideEl = content.querySelector('aside');
         if (asideEl) {
           const sidebarItems = asideEl.querySelectorAll('[data-section] > div > div');
@@ -319,6 +318,31 @@ export async function POST(request: NextRequest) {
             if (iTop < best && iBot > best && iBot - iTop < 60 && iTop > pageStart + 50) {
               best = Math.floor(iTop) - safePx;
             }
+          }
+
+          // After sidebar adjustment, re-validate main column text isn't cut
+          for (let pass = 0; pass < 3; pass++) {
+            let adj = false;
+            for (const le of leafEls) {
+              if (le.top >= best || le.bottom <= best) continue;
+              const lines = getLines(le.el);
+              let lastFit = -1;
+              let hasCross = false;
+              for (const ln of lines) {
+                if (ln.bottom <= best) lastFit = ln.bottom;
+                if (ln.top < best && ln.bottom > best) hasCross = true;
+              }
+              if (hasCross) {
+                if (lastFit > pageStart + 50) {
+                  best = Math.ceil(lastFit);
+                } else if (le.top > pageStart + 50) {
+                  best = Math.floor(le.top) - safePx;
+                }
+                adj = true;
+              }
+              if (adj) break;
+            }
+            if (!adj) break;
           }
         }
 
