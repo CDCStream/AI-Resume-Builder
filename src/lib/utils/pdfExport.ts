@@ -299,6 +299,8 @@ function applyFullStyles(source: HTMLElement, target: HTMLElement, isRoot: boole
   if (cs.filter !== 'none') target.style.filter = cs.filter;
 }
 
+const SKIP_STYLE_TAGS = new Set(['img', 'svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'input', 'textarea', 'br', 'hr']);
+
 function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: number = 0): void {
   if (depth > 10) return;
 
@@ -309,6 +311,9 @@ function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: numbe
     const srcChild = srcChildren[i];
     const tgtChild = tgtChildren[i];
     if (!srcChild || !tgtChild) continue;
+
+    const tag = srcChild.tagName.toLowerCase();
+    if (SKIP_STYLE_TAGS.has(tag)) continue;
 
     const parentDisplay = window.getComputedStyle(source).display;
     const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
