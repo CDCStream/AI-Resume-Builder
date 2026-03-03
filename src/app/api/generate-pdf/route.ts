@@ -34,6 +34,7 @@ interface RequestBody {
 export const maxDuration = 60;
 
 const A4_HEIGHT_PX = 1122;
+const LINE_SAFETY_PX = 5;
 
 async function checkIsPro(): Promise<boolean> {
   try {
@@ -111,16 +112,135 @@ export async function POST(request: NextRequest) {
     await page.setContent(measureHtml, { waitUntil: "networkidle0", timeout: 30000 });
     await page.evaluateHandle(() => document.fonts.ready);
 
-    // Measure actual content height in Puppeteer for fallback
-    const puppeteerHeight = await page.evaluate(() => {
+    // Validate and refine page breaks against Puppeteer's actual text rendering
+    const refined = await page.evaluate((inputBreaks: number[], safetyPx: number) => {
       const content = document.querySelector('.resume-page') as HTMLElement;
-      return content ? content.scrollHeight : 0;
-    });
+      if (!content) return { breaks: inputBreaks, totalHeight: 0 };
 
-    const finalBreaks = clientBreaks.length > 0 ? clientBreaks : [];
-    const finalTotalHeight = clientTotalHeight > 0 ? clientTotalHeight : puppeteerHeight;
+      const totalHeight = content.scrollHeight;
+      const cRect = content.getBoundingClientRect();
 
-    console.log(`Using ${clientBreaks.length > 0 ? 'client' : 'fallback'} breaks: [${finalBreaks.join(', ')}] (${finalBreaks.length + 1} pages, height: ${finalTotalHeight})`);
+      function getTextLines(el: HTMLElement): { top: number; bottom: number }[] {
+        const textNodes: Text[] = [];
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let n: Node | null;
+        while ((n = walker.nextNode())) {
+          if (n.textContent?.trim()) textNodes.push(n as Text);
+        }
+        if (textNodes.length === 0) return [];
+        const lines: { top: number; bottom: number }[] = [];
+        let prevTop = -Infinity;
+        for (const tn of textNodes) {
+          const range = document.createRange();
+          for (let i = 0; i < tn.length; i++) {
+            range.setStart(tn, i);
+            range.setEnd(tn, Math.min(i + 1, tn.length));
+            const rects = range.getClientRects();
+            for (let r = 0; r < rects.length; r++) {
+              const rc = rects[r];
+              if (rc.width < 1 || rc.height < 1) continue;
+              const rTop = rc.top - cRect.top;
+              const rBot = rc.bottom - cRect.top;
+              if (rTop - prevTop > 2) {
+                lines.push({ top: rTop, bottom: rBot });
+                prevTop = rTop;
+              } else if (lines.length > 0) {
+                lines[lines.length - 1].bottom = Math.max(lines[lines.length - 1].bottom, rBot);
+              }
+            }
+          }
+        }
+        return lines;
+      }
+
+      // Collect all leaf text elements
+      const leafEls: { el: HTMLElement; top: number; bottom: number }[] = [];
+      const allEls = content.querySelectorAll('p, li, span, h1, h2, h3, h4, h5, h6');
+      for (const el of Array.from(allEls)) {
+        const htmlEl = el as HTMLElement;
+        const hasTxt = Array.from(htmlEl.childNodes).some(
+          nd => nd.nodeType === Node.TEXT_NODE && nd.textContent?.trim()
+        );
+        if (!hasTxt && htmlEl.children.length > 0) continue;
+        const r = htmlEl.getBoundingClientRect();
+        if (r.height < 5) continue;
+        leafEls.push({ el: htmlEl, top: r.top - cRect.top, bottom: r.bottom - cRect.top });
+      }
+
+      // If no client breaks provided, calculate from scratch
+      if (inputBreaks.length === 0) {
+        const a4H = 1122;
+        if (totalHeight <= a4H) return { breaks: [], totalHeight };
+
+        const calcBreaks: number[] = [];
+        let pageStart = 0;
+        while (pageStart + a4H < totalHeight) {
+          const ideal = pageStart + a4H;
+          let best = ideal;
+          for (const le of leafEls) {
+            if (le.top >= best || le.bottom <= best) continue;
+            const lines = getTextLines(le.el);
+            let lastFit = -1;
+            let hasCross = false;
+            for (const ln of lines) {
+              if (ln.bottom + safetyPx <= best) lastFit = ln.bottom;
+              if (ln.top < best && ln.bottom > best) hasCross = true;
+            }
+            if (hasCross) {
+              if (lastFit > pageStart + 50) {
+                best = Math.ceil(lastFit) + safetyPx;
+              } else if (le.top > pageStart + 50) {
+                best = Math.floor(le.top) - safetyPx;
+              }
+            }
+          }
+          calcBreaks.push(best);
+          pageStart = best;
+        }
+        return { breaks: calcBreaks, totalHeight };
+      }
+
+      // Refine each break point: if it cuts through a text line, adjust it
+      const refined: number[] = [];
+      for (let bi = 0; bi < inputBreaks.length; bi++) {
+        let bp = inputBreaks[bi];
+        const pageStart = bi === 0 ? 0 : refined[bi - 1];
+
+        for (let pass = 0; pass < 5; pass++) {
+          let adjusted = false;
+          for (const le of leafEls) {
+            if (le.top >= bp || le.bottom <= bp) continue;
+            // This element spans the break point - check individual lines
+            const lines = getTextLines(le.el);
+            let hasCross = false;
+            let lastFit = -1;
+            for (const ln of lines) {
+              if (ln.bottom + safetyPx <= bp) lastFit = ln.bottom;
+              if (ln.top < bp && ln.bottom > bp) hasCross = true;
+            }
+            if (hasCross) {
+              if (lastFit > pageStart + 50) {
+                bp = Math.ceil(lastFit) + safetyPx;
+              } else if (le.top > pageStart + 50) {
+                bp = Math.floor(le.top) - safetyPx;
+              }
+              adjusted = true;
+              break;
+            }
+          }
+          if (!adjusted) break;
+        }
+
+        refined.push(bp);
+      }
+
+      return { breaks: refined, totalHeight };
+    }, clientBreaks, LINE_SAFETY_PX);
+
+    const finalBreaks = refined.breaks;
+    const finalTotalHeight = clientTotalHeight > 0 ? clientTotalHeight : refined.totalHeight;
+
+    console.log(`Breaks: [${finalBreaks.join(', ')}] (${finalBreaks.length + 1} pages, height: ${finalTotalHeight})`);
 
     // Build paginated HTML using the page breaks
     const showWatermark = !isPro;
