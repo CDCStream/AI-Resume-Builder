@@ -317,6 +317,11 @@ function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: numbe
     const tgtChild = tgtChildren[i];
     if (!srcChild || !tgtChild) continue;
 
+    const tag = srcChild.tagName.toLowerCase();
+    // Skip SVG elements — applying box-model styles breaks their sizing
+    if (tag === 'svg' || tag === 'path' || tag === 'circle' || tag === 'rect' ||
+        tag === 'line' || tag === 'polyline' || tag === 'polygon') continue;
+
     const parentDisplay = window.getComputedStyle(source).display;
     const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
 
