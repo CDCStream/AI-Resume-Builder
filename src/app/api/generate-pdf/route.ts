@@ -108,16 +108,12 @@ export async function POST(request: NextRequest) {
     await page.setContent(measureHtml, { waitUntil: "networkidle0", timeout: 30000 });
     await page.evaluateHandle(() => document.fonts.ready);
 
-    const showWatermark = !isPro;
-    const WATERMARK_BOTTOM_RESERVE = 30;
-
-    const breakData = await page.evaluate((a4H, safePx, wmReserve) => {
+    const breakData = await page.evaluate((a4H, safePx) => {
       const content = document.querySelector('.resume-page') as HTMLElement;
       if (!content) return { breaks: [] as number[], totalHeight: 0 };
 
       const cRect = content.getBoundingClientRect();
       const totalHeight = content.scrollHeight;
-      const effectivePageH = a4H - wmReserve;
 
       function getLines(el: HTMLElement): { top: number; bottom: number }[] {
         const textNodes: Text[] = [];
@@ -169,8 +165,8 @@ export async function POST(request: NextRequest) {
       const breaks: number[] = [];
       let pageStart = 0;
 
-      while (pageStart + effectivePageH < totalHeight) {
-        const ideal = pageStart + effectivePageH;
+      while (pageStart + a4H < totalHeight) {
+        const ideal = pageStart + a4H;
         let best = ideal;
 
         const crossing = leafEls.filter(
@@ -307,55 +303,17 @@ export async function POST(request: NextRequest) {
           if (!adj) break;
         }
 
-        // Prevent splitting sidebar atomic blocks (e.g. skill name + dots)
-        const asideEl = content.querySelector('aside');
-        if (asideEl) {
-          const sidebarItems = asideEl.querySelectorAll('[data-section] > div > div');
-          for (const item of Array.from(sidebarItems)) {
-            const r = (item as HTMLElement).getBoundingClientRect();
-            const iTop = r.top - cRect.top;
-            const iBot = r.bottom - cRect.top;
-            if (iTop < best && iBot > best && iBot - iTop < 60 && iTop > pageStart + 50) {
-              best = Math.floor(iTop) - safePx;
-            }
-          }
-
-          // After sidebar adjustment, re-validate main column text isn't cut
-          for (let pass = 0; pass < 3; pass++) {
-            let adj = false;
-            for (const le of leafEls) {
-              if (le.top >= best || le.bottom <= best) continue;
-              const lines = getLines(le.el);
-              let lastFit = -1;
-              let hasCross = false;
-              for (const ln of lines) {
-                if (ln.bottom <= best) lastFit = ln.bottom;
-                if (ln.top < best && ln.bottom > best) hasCross = true;
-              }
-              if (hasCross) {
-                if (lastFit > pageStart + 50) {
-                  best = Math.ceil(lastFit);
-                } else if (le.top > pageStart + 50) {
-                  best = Math.floor(le.top) - safePx;
-                }
-                adj = true;
-              }
-              if (adj) break;
-            }
-            if (!adj) break;
-          }
-        }
-
         breaks.push(best);
         pageStart = best;
       }
 
       return { breaks, totalHeight };
-    }, A4_HEIGHT_PX, LINE_SAFETY_PX, showWatermark ? WATERMARK_BOTTOM_RESERVE : 0);
+    }, A4_HEIGHT_PX, LINE_SAFETY_PX);
 
     console.log(`Puppeteer-calculated breaks: [${breakData.breaks.join(', ')}] (${breakData.breaks.length + 1} pages, height: ${breakData.totalHeight})`);
 
     // --- Pass 2: Replace body content in-place (preserves loaded fonts & CSS) ---
+    const showWatermark = !isPro;
     const bodyHtml = breakData.breaks.length > 0
       ? buildPrePaginatedHtml(contentHtml, breakData.breaks, breakData.totalHeight, backgroundInfo, showWatermark)
       : (showWatermark ? wrapSinglePageWithWatermark(contentHtml) : contentHtml);
@@ -427,19 +385,6 @@ function buildCssBlock(styles: string, backgroundColor: string, showWatermark: b
       text-transform: uppercase;
     }
 
-    .pdf-watermark-sub {
-      position: absolute;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Geist', 'Inter', Arial, sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      color: rgba(150, 150, 150, 0.35);
-      white-space: nowrap;
-      letter-spacing: 1px;
-      user-select: none;
-    }
   ` : '';
 
   return `
@@ -553,7 +498,6 @@ function buildCssBlock(styles: string, backgroundColor: string, showWatermark: b
 
 const WATERMARK_HTML = `<div class="pdf-watermark">
   <div class="pdf-watermark-text">LinImpact.ai</div>
-  <div class="pdf-watermark-sub">Created with LinImpact.ai — Upgrade to Pro to remove watermark</div>
 </div>`;
 
 function wrapSinglePageWithWatermark(contentHtml: string): string {
