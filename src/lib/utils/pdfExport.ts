@@ -239,7 +239,6 @@ function applyFullStyles(source: HTMLElement, target: HTMLElement, isRoot: boole
   target.style.fontStyle = cs.fontStyle;
   target.style.letterSpacing = cs.letterSpacing;
   target.style.wordSpacing = cs.wordSpacing;
-  target.style.textRendering = 'geometricPrecision';
   if (cs.textTransform !== 'none') target.style.textTransform = cs.textTransform;
   if (cs.textAlign !== 'start') target.style.textAlign = cs.textAlign;
   if (cs.textDecoration !== 'none') target.style.textDecoration = cs.textDecoration;

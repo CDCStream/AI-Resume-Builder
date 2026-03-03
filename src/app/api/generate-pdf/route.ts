@@ -353,7 +353,7 @@ function buildCssBlock(styles: string, backgroundColor: string, showWatermark: b
       padding: 0 !important;
       background: ${backgroundColor} !important;
       -webkit-font-smoothing: antialiased !important;
-      text-rendering: geometricPrecision !important;
+      text-rendering: auto !important;
     }
 
     .resume-page {
