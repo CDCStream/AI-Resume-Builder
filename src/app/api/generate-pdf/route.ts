@@ -307,6 +307,21 @@ export async function POST(request: NextRequest) {
           if (!adj) break;
         }
 
+        // Prevent splitting sidebar atomic blocks (e.g. skill name + dots)
+        // If break falls inside a small parent wrapper, move the whole item to next page
+        const asideEl = content.querySelector('aside');
+        if (asideEl) {
+          const sidebarItems = asideEl.querySelectorAll('[data-section] > div > div');
+          for (const item of Array.from(sidebarItems)) {
+            const r = (item as HTMLElement).getBoundingClientRect();
+            const iTop = r.top - cRect.top;
+            const iBot = r.bottom - cRect.top;
+            if (iTop < best && iBot > best && iBot - iTop < 60 && iTop > pageStart + 50) {
+              best = Math.floor(iTop) - safePx;
+            }
+          }
+        }
+
         breaks.push(best);
         pageStart = best;
       }
