@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 const CHROMIUM_PACK_URL =
   "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
 
-const FREE_TRIAL_DAYS = 3;
 
 interface PageData {
   html: string;
@@ -43,13 +42,8 @@ async function checkIsPro(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    // Check if within free trial period
-    const daysSinceCreation = Math.floor(
-      (Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24)
-    );
-    if (daysSinceCreation < FREE_TRIAL_DAYS) return true;
-
-    // Check for active paid subscription
+    // Only paid Pro subscribers get watermark-free PDFs
+    
     const { data } = await supabase
       .from("subscriptions")
       .select("status, plan")
