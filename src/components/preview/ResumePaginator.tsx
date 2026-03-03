@@ -12,6 +12,7 @@ export interface ResumePaginatorProps {
 export interface ResumePaginatorRef {
   moveElement: (direction: "up" | "down") => void;
   resetMargins: () => void;
+  getPageBreaks: () => { breaks: number[]; totalHeight: number };
 }
 
 const A4_HEIGHT_PX = 1122;
@@ -823,13 +824,19 @@ const ResumePaginator = forwardRef<ResumePaginatorRef, ResumePaginatorProps>(
       setCustomMargins(new Map());
     }, []);
 
+    const getPageBreaks = useCallback(() => ({
+      breaks: pageBreaks,
+      totalHeight: totalContentHeight,
+    }), [pageBreaks, totalContentHeight]);
+
     useImperativeHandle(
       ref,
       () => ({
         moveElement,
         resetMargins,
+        getPageBreaks,
       }),
-      [moveElement, resetMargins]
+      [moveElement, resetMargins, getPageBreaks]
     );
 
     useEffect(() => {

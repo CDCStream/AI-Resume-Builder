@@ -2,6 +2,8 @@
 
 interface ExportOptions {
   filename?: string;
+  pageBreaks?: number[];
+  totalContentHeight?: number;
 }
 
 interface BackgroundExportInfo {
@@ -38,8 +40,8 @@ export async function exportResumeToPDF(
     throw new Error("No resume pages found");
   }
 
-  // Extract page break positions from visible page wrappers
-  const pageBreaks = extractPageBreaks(previewElement);
+  // Use provided page breaks (from ResumePaginator state) or extract from DOM
+  const pageBreaks = options.pageBreaks || extractPageBreaks(previewElement);
   const bgInfo = extractBackgroundInfo(previewElement);
 
   console.log(`Found ${pageBreaks.length} page breaks: [${pageBreaks.join(', ')}]`);
@@ -91,10 +93,6 @@ export async function exportResumeToPDF(
           inlineComputedStyles(srcChildren[i], tgtChildren[i] as HTMLElement, false, parentIsFlex);
         }
 
-        // Set exact height on .resume-page to lock layout for Puppeteer
-        const rpRect = sourceResumePage.getBoundingClientRect();
-        targetResumePage.style.height = `${rpRect.height}px`;
-
         inlineDeepStyles(sourceResumePage, targetResumePage, 0);
       }
     }
@@ -105,8 +103,8 @@ export async function exportResumeToPDF(
 
   fullContentHtml = tempDiv.innerHTML;
 
-  // Get total content height from hidden measurement div (add buffer for margin/border precision)
-  const totalContentHeight = hiddenContent ? hiddenContent.scrollHeight + 10 : 1122;
+  // Use provided total height or measure from hidden content
+  const totalContentHeight = options.totalContentHeight || (hiddenContent ? hiddenContent.scrollHeight + 10 : 1122);
 
   const pagesData = [{
     html: fullContentHtml,
@@ -291,7 +289,7 @@ function inlineComputedStyles(
 }
 
 function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: number = 0): void {
-  if (depth > 15) return;
+  if (depth > 3) return;
 
   const srcChildren = Array.from(source.children) as HTMLElement[];
   const tgtChildren = Array.from(target.children) as HTMLElement[];
@@ -301,111 +299,80 @@ function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: numbe
     const tgtChild = tgtChildren[i];
     const tag = srcChild.tagName.toLowerCase();
 
-    if (tag === 'img' || tag === 'br' || tag === 'hr' || tag === 'input' || tag === 'svg') {
-      continue;
-    }
+    if (tag === 'section' || srcChild.classList.contains('resume-item') ||
+        tag === 'header' || tag === 'main' || tag === 'aside' || tag === 'nav' ||
+        tag === 'div' || tag === 'ul' || tag === 'ol') {
+      const cs = window.getComputedStyle(srcChild);
+      const parentDisplay = window.getComputedStyle(srcChild.parentElement!).display;
+      const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
 
-    const cs = window.getComputedStyle(srcChild);
-    const parentDisplay = srcChild.parentElement
-      ? window.getComputedStyle(srcChild.parentElement).display
-      : 'block';
-    const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
+      tgtChild.style.paddingTop = cs.paddingTop;
+      tgtChild.style.paddingRight = cs.paddingRight;
+      tgtChild.style.paddingBottom = cs.paddingBottom;
+      tgtChild.style.paddingLeft = cs.paddingLeft;
+      tgtChild.style.marginTop = cs.marginTop;
+      tgtChild.style.marginRight = cs.marginRight;
+      tgtChild.style.marginBottom = cs.marginBottom;
+      tgtChild.style.marginLeft = cs.marginLeft;
+      tgtChild.style.boxSizing = 'border-box';
 
-    tgtChild.style.boxSizing = 'border-box';
-    tgtChild.style.paddingTop = cs.paddingTop;
-    tgtChild.style.paddingRight = cs.paddingRight;
-    tgtChild.style.paddingBottom = cs.paddingBottom;
-    tgtChild.style.paddingLeft = cs.paddingLeft;
-    tgtChild.style.marginTop = cs.marginTop;
-    tgtChild.style.marginRight = cs.marginRight;
-    tgtChild.style.marginBottom = cs.marginBottom;
-    tgtChild.style.marginLeft = cs.marginLeft;
-
-    tgtChild.style.color = cs.color;
-    tgtChild.style.fontFamily = cs.fontFamily;
-    tgtChild.style.fontSize = cs.fontSize;
-    tgtChild.style.lineHeight = cs.lineHeight;
-    tgtChild.style.fontWeight = cs.fontWeight;
-    tgtChild.style.letterSpacing = cs.letterSpacing;
-    tgtChild.style.textRendering = 'geometricPrecision';
-
-    if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-      tgtChild.style.backgroundColor = cs.backgroundColor;
-    }
-    if (cs.backgroundImage !== 'none') {
-      tgtChild.style.backgroundImage = cs.backgroundImage;
-    }
-
-    const display = cs.display;
-    if (display === 'flex' || display === 'inline-flex') {
-      tgtChild.style.display = display;
-      tgtChild.style.flexDirection = cs.flexDirection;
-      if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
-        tgtChild.style.gap = cs.gap;
+      if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+        tgtChild.style.backgroundColor = cs.backgroundColor;
       }
-      tgtChild.style.alignItems = cs.alignItems;
-      tgtChild.style.justifyContent = cs.justifyContent;
-      tgtChild.style.flexWrap = cs.flexWrap;
-    } else if (display === 'grid' || display === 'inline-grid') {
-      tgtChild.style.display = display;
-      tgtChild.style.gridTemplateColumns = cs.gridTemplateColumns;
-      if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
-        tgtChild.style.gap = cs.gap;
+      if (cs.backgroundImage !== 'none') {
+        tgtChild.style.backgroundImage = cs.backgroundImage;
       }
-    }
 
-    if (parentIsFlex) {
-      tgtChild.style.width = cs.width;
-      tgtChild.style.flex = cs.flex;
-      tgtChild.style.flexShrink = cs.flexShrink;
-      tgtChild.style.flexGrow = cs.flexGrow;
-    }
+      tgtChild.style.color = cs.color;
+      tgtChild.style.fontFamily = cs.fontFamily;
+      tgtChild.style.fontSize = cs.fontSize;
+      tgtChild.style.lineHeight = cs.lineHeight;
+      tgtChild.style.fontWeight = cs.fontWeight;
 
-    const rect = srcChild.getBoundingClientRect();
-    tgtChild.style.minHeight = `${rect.height}px`;
+      const display = cs.display;
+      if (display === 'flex' || display === 'inline-flex') {
+        tgtChild.style.display = display;
+        tgtChild.style.flexDirection = cs.flexDirection;
+        if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
+          tgtChild.style.gap = cs.gap;
+        }
+        tgtChild.style.alignItems = cs.alignItems;
+        tgtChild.style.flexWrap = cs.flexWrap;
+      } else if (display === 'grid' || display === 'inline-grid') {
+        tgtChild.style.display = display;
+        tgtChild.style.gridTemplateColumns = cs.gridTemplateColumns;
+        if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
+          tgtChild.style.gap = cs.gap;
+        }
+      }
 
-    if (cs.overflow !== 'visible') {
-      tgtChild.style.overflow = cs.overflow;
-    }
+      if (parentIsFlex) {
+        tgtChild.style.width = cs.width;
+        tgtChild.style.flex = cs.flex;
+      }
 
-    if (cs.position !== 'static') {
-      tgtChild.style.position = cs.position;
-      if (cs.top !== 'auto') tgtChild.style.top = cs.top;
-      if (cs.left !== 'auto') tgtChild.style.left = cs.left;
-      if (cs.right !== 'auto') tgtChild.style.right = cs.right;
-      if (cs.bottom !== 'auto') tgtChild.style.bottom = cs.bottom;
-      if (cs.width !== 'auto') tgtChild.style.width = cs.width;
-      if (cs.height !== 'auto') tgtChild.style.height = cs.height;
-    }
+      if (cs.overflow !== 'visible') {
+        tgtChild.style.overflow = cs.overflow;
+      }
 
-    if (cs.borderBottom && cs.borderBottom !== 'none') {
-      tgtChild.style.borderBottom = cs.borderBottom;
-    }
-    if (cs.borderTop && cs.borderTop !== 'none') {
-      tgtChild.style.borderTop = cs.borderTop;
-    }
-    if (cs.borderLeft && cs.borderLeft !== 'none') {
-      tgtChild.style.borderLeft = cs.borderLeft;
-    }
-    if (cs.borderRight && cs.borderRight !== 'none') {
-      tgtChild.style.borderRight = cs.borderRight;
-    }
+      if (cs.borderBottom && cs.borderBottom !== 'none') {
+        tgtChild.style.borderBottom = cs.borderBottom;
+      }
 
-    if (cs.textAlign !== 'start') {
-      tgtChild.style.textAlign = cs.textAlign;
-    }
-    if (cs.textTransform !== 'none') {
-      tgtChild.style.textTransform = cs.textTransform;
-    }
-    if (cs.whiteSpace !== 'normal') {
-      tgtChild.style.whiteSpace = cs.whiteSpace;
-    }
-    if (cs.wordBreak !== 'normal') {
-      tgtChild.style.wordBreak = cs.wordBreak;
-    }
-
-    if (srcChild.children.length > 0) {
       inlineDeepStyles(srcChild, tgtChild, depth + 1);
+    } else if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' ||
+               tag === 'h5' || tag === 'h6' || tag === 'p' || tag === 'li' || tag === 'span') {
+      const cs = window.getComputedStyle(srcChild);
+      tgtChild.style.fontFamily = cs.fontFamily;
+      tgtChild.style.fontSize = cs.fontSize;
+      tgtChild.style.lineHeight = cs.lineHeight;
+      tgtChild.style.fontWeight = cs.fontWeight;
+      tgtChild.style.color = cs.color;
+      tgtChild.style.letterSpacing = cs.letterSpacing;
+      tgtChild.style.marginTop = cs.marginTop;
+      tgtChild.style.marginBottom = cs.marginBottom;
+      tgtChild.style.paddingTop = cs.paddingTop;
+      tgtChild.style.paddingBottom = cs.paddingBottom;
     }
   }
 }

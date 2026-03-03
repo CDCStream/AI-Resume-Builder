@@ -70,7 +70,15 @@ function ResumeEditorContent() {
     try {
       const resumeName = resume.basics?.name || "resume";
       const filename = `${resumeName.replace(/\s+/g, "_")}_CV.pdf`;
-      await exportResumeToPDF(previewRef.current, { filename });
+
+      // Get exact page breaks from ResumePaginator state for pixel-perfect PDF
+      const paginatorBreaks = paginatorRef.current?.getPageBreaks();
+
+      await exportResumeToPDF(previewRef.current, {
+        filename,
+        pageBreaks: paginatorBreaks?.breaks,
+        totalContentHeight: paginatorBreaks?.totalHeight,
+      });
     } catch (error) {
       console.error("Failed to export PDF:", error);
     } finally {

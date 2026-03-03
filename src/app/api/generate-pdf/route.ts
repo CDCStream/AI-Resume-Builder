@@ -34,7 +34,6 @@ interface RequestBody {
 export const maxDuration = 60;
 
 const A4_HEIGHT_PX = 1122;
-const LINE_SAFETY_PX = 5;
 
 async function checkIsPro(): Promise<boolean> {
   try {
@@ -67,8 +66,6 @@ export async function POST(request: NextRequest) {
       filename = "resume.pdf",
       backgroundColor = "#ffffff",
       backgroundInfo,
-      pageBreaks: clientPageBreaks,
-      totalContentHeight: clientTotalHeight,
     } = body;
 
     const isPro = await checkIsPro();
@@ -99,10 +96,11 @@ export async function POST(request: NextRequest) {
 
     const cssBlock = buildCssBlock(styles, backgroundColor, !isPro);
 
-    // Use client-sent page breaks to match the app's paginated view exactly.
-    // Fall back to measuring in Puppeteer only when the client doesn't send breaks.
-    const useClientBreaks = clientPageBreaks && clientPageBreaks.length > 0;
+    // Use client-side page breaks (from ResumePaginator) for pixel-perfect match with preview
+    const clientBreaks = body.pageBreaks || [];
+    const clientTotalHeight = body.totalContentHeight || 0;
 
+    // Load content and fonts in Puppeteer
     const measureHtml = `<!DOCTYPE html><html><head><meta charset="utf-8">
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -113,218 +111,21 @@ export async function POST(request: NextRequest) {
     await page.setContent(measureHtml, { waitUntil: "networkidle0", timeout: 30000 });
     await page.evaluateHandle(() => document.fonts.ready);
 
-    let breakData: { breaks: number[]; totalHeight: number };
+    // Measure actual content height in Puppeteer for fallback
+    const puppeteerHeight = await page.evaluate(() => {
+      const content = document.querySelector('.resume-page') as HTMLElement;
+      return content ? content.scrollHeight : 0;
+    });
 
-    if (useClientBreaks) {
-      const totalHeight = clientTotalHeight || await page.evaluate(() => {
-        const content = document.querySelector('.resume-page') as HTMLElement;
-        return content ? content.scrollHeight : 1122;
-      });
-      breakData = { breaks: clientPageBreaks!, totalHeight };
-      console.log(`Using client page breaks: [${breakData.breaks.join(', ')}] (${breakData.breaks.length + 1} pages, height: ${breakData.totalHeight})`);
-    } else {
-      breakData = await page.evaluate((a4H, safePx) => {
-        const content = document.querySelector('.resume-page') as HTMLElement;
-        if (!content) return { breaks: [] as number[], totalHeight: 0 };
+    const finalBreaks = clientBreaks.length > 0 ? clientBreaks : [];
+    const finalTotalHeight = clientTotalHeight > 0 ? clientTotalHeight : puppeteerHeight;
 
-        const cRect = content.getBoundingClientRect();
-        const totalHeight = content.scrollHeight;
+    console.log(`Using ${clientBreaks.length > 0 ? 'client' : 'fallback'} breaks: [${finalBreaks.join(', ')}] (${finalBreaks.length + 1} pages, height: ${finalTotalHeight})`);
 
-        function getLines(el: HTMLElement): { top: number; bottom: number }[] {
-          const textNodes: Text[] = [];
-          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-          let n: Node | null;
-          while ((n = walker.nextNode())) {
-            if (n.textContent?.trim()) textNodes.push(n as Text);
-          }
-          if (textNodes.length === 0) return [];
-          const lines: { top: number; bottom: number }[] = [];
-          let prevTop = -Infinity;
-          for (const tn of textNodes) {
-            const range = document.createRange();
-            for (let i = 0; i < tn.length; i++) {
-              range.setStart(tn, i);
-              range.setEnd(tn, Math.min(i + 1, tn.length));
-              const rects = range.getClientRects();
-              for (let r = 0; r < rects.length; r++) {
-                const rc = rects[r];
-                if (rc.width < 1 || rc.height < 1) continue;
-                const rTop = rc.top - cRect.top;
-                const rBot = rc.bottom - cRect.top;
-                if (rTop - prevTop > 2) {
-                  lines.push({ top: rTop, bottom: rBot });
-                  prevTop = rTop;
-                } else if (lines.length > 0) {
-                  lines[lines.length - 1].bottom = Math.max(lines[lines.length - 1].bottom, rBot);
-                }
-              }
-            }
-          }
-          return lines;
-        }
-
-        const leafEls: { el: HTMLElement; top: number; bottom: number }[] = [];
-        const allEls = content.querySelectorAll('p, li, span, h1, h2, h3, h4, h5, h6');
-        for (const el of Array.from(allEls)) {
-          const htmlEl = el as HTMLElement;
-          const hasTxt = Array.from(htmlEl.childNodes).some(
-            nd => nd.nodeType === Node.TEXT_NODE && nd.textContent?.trim()
-          );
-          if (!hasTxt && htmlEl.children.length > 0) continue;
-          const r = htmlEl.getBoundingClientRect();
-          if (r.height < 5) continue;
-          leafEls.push({ el: htmlEl, top: r.top - cRect.top, bottom: r.bottom - cRect.top });
-        }
-
-        const breaks: number[] = [];
-        let pageStart = 0;
-
-        while (pageStart + a4H < totalHeight) {
-          const ideal = pageStart + a4H;
-          let best = ideal;
-
-          const crossing = leafEls.filter(
-            e => e.top < ideal && e.bottom > ideal - safePx
-          );
-
-          if (crossing.length > 0) {
-            let resolved = false;
-            for (const ce of crossing) {
-              const lines = getLines(ce.el);
-              if (lines.length === 0) continue;
-              let lastFit = -1;
-              for (const ln of lines) {
-                if (ln.bottom + safePx <= ideal) lastFit = ln.bottom;
-              }
-              if (lastFit > pageStart + 50) {
-                best = Math.ceil(lastFit) + safePx;
-                resolved = true;
-                break;
-              }
-              if (ce.top > pageStart + 50) {
-                best = Math.floor(ce.top) - safePx;
-                resolved = true;
-                break;
-              }
-            }
-            if (!resolved) {
-              const ce = crossing[0];
-              const st = window.getComputedStyle(ce.el);
-              let lh = parseFloat(st.lineHeight);
-              if (isNaN(lh) || lh === 0) lh = (parseFloat(st.fontSize) || 14) * 1.5;
-              const pad = parseFloat(st.paddingTop) || 0;
-              const tStart = ce.top + pad;
-              const full = Math.floor((ideal - tStart) / lh);
-              if (full >= 1) best = Math.floor(tStart + full * lh) + safePx;
-              if (best <= pageStart + 50) best = ideal;
-            }
-          } else {
-            const blockEls = content.querySelectorAll('.resume-item, section, header, div');
-            for (const el of Array.from(blockEls)) {
-              const r = (el as HTMLElement).getBoundingClientRect();
-              const t = r.top - cRect.top;
-              const b = r.bottom - cRect.top;
-              if (t < ideal && b > ideal && b - t < a4H * 0.5) {
-                if (t > pageStart + 50) { best = Math.floor(t) - safePx; break; }
-              }
-            }
-          }
-
-          for (let pass = 0; pass < 3; pass++) {
-            let adj = false;
-            for (const le of leafEls) {
-              if (le.top >= best || le.bottom <= best) continue;
-              const lines = getLines(le.el);
-              for (const ln of lines) {
-                if (ln.top < best && ln.bottom > best) {
-                  let lastFit = -1;
-                  for (const l of lines) {
-                    if (l.bottom <= best) lastFit = l.bottom;
-                  }
-                  if (lastFit > pageStart + 50) {
-                    best = Math.ceil(lastFit);
-                  } else if (le.top > pageStart + 50) {
-                    best = Math.floor(le.top) - safePx;
-                  }
-                  adj = true;
-                  break;
-                }
-              }
-              if (adj) break;
-            }
-            if (!adj) break;
-          }
-
-          const items = content.querySelectorAll('.resume-item');
-          for (const item of Array.from(items)) {
-            const r = (item as HTMLElement).getBoundingClientRect();
-            const iTop = r.top - cRect.top;
-            const iBot = r.bottom - cRect.top;
-            if (iTop < best && iBot > best && iTop > pageStart + 50) {
-              const lines = getLines(item as HTMLElement);
-              const hasVis = lines.some(l => l.top >= iTop && l.bottom <= best);
-              if (!hasVis) best = Math.floor(iTop) - safePx;
-            }
-          }
-
-          const sections = content.querySelectorAll('section');
-          for (const sec of Array.from(sections)) {
-            const h = sec.querySelector('h2, h3') as HTMLElement;
-            if (!h) continue;
-            const hr = h.getBoundingClientRect();
-            const hTop = hr.top - cRect.top;
-            const hBot = hr.bottom - cRect.top;
-            if (hTop >= pageStart && hBot <= best && hTop > pageStart + 50) {
-              const sr = sec.getBoundingClientRect();
-              if (sr.bottom - cRect.top > best) {
-                const els = sec.querySelectorAll('.resume-item, p, li');
-                const hasC = Array.from(els).some(el => {
-                  const er = (el as HTMLElement).getBoundingClientRect();
-                  return er.top - cRect.top >= hBot && er.bottom - cRect.top <= best;
-                });
-                if (!hasC) best = Math.floor(hTop) - safePx;
-              }
-            }
-          }
-
-          for (let pass = 0; pass < 3; pass++) {
-            let adj = false;
-            for (const le of leafEls) {
-              if (le.top >= best || le.bottom <= best) continue;
-              const lines = getLines(le.el);
-              let lastFit = -1;
-              let hasCross = false;
-              for (const ln of lines) {
-                if (ln.bottom <= best) lastFit = ln.bottom;
-                if (ln.top < best && ln.bottom > best) hasCross = true;
-              }
-              if (hasCross) {
-                if (lastFit > pageStart + 50) {
-                  best = Math.ceil(lastFit);
-                } else if (le.top > pageStart + 50) {
-                  best = Math.floor(le.top) - safePx;
-                }
-                adj = true;
-              }
-              if (adj) break;
-            }
-            if (!adj) break;
-          }
-
-          breaks.push(best);
-          pageStart = best;
-        }
-
-        return { breaks, totalHeight };
-      }, A4_HEIGHT_PX, LINE_SAFETY_PX);
-
-      console.log(`Puppeteer-calculated breaks: [${breakData.breaks.join(', ')}] (${breakData.breaks.length + 1} pages, height: ${breakData.totalHeight})`);
-    }
-
-    // --- Pass 2: Replace body content in-place (preserves loaded fonts & CSS) ---
+    // Build paginated HTML using the page breaks
     const showWatermark = !isPro;
-    const bodyHtml = breakData.breaks.length > 0
-      ? buildPrePaginatedHtml(contentHtml, breakData.breaks, breakData.totalHeight, backgroundInfo, showWatermark)
+    const bodyHtml = finalBreaks.length > 0
+      ? buildPrePaginatedHtml(contentHtml, finalBreaks, finalTotalHeight, backgroundInfo, showWatermark)
       : (showWatermark ? wrapSinglePageWithWatermark(contentHtml) : contentHtml);
 
     await page.evaluate((html) => {
@@ -381,7 +182,7 @@ function buildCssBlock(styles: string, backgroundColor: string, showWatermark: b
 
     .pdf-watermark-text {
       position: absolute;
-      top: 50%;
+      top: 46%;
       left: 50%;
       transform: translate(-50%, -50%) rotate(-35deg);
       font-family: 'Geist', 'Inter', Arial, sans-serif;
@@ -392,6 +193,20 @@ function buildCssBlock(styles: string, backgroundColor: string, showWatermark: b
       letter-spacing: 8px;
       user-select: none;
       text-transform: uppercase;
+    }
+
+    .pdf-watermark-sub {
+      position: absolute;
+      top: 54%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-35deg);
+      font-family: 'Geist', 'Inter', Arial, sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: rgba(180, 180, 180, 0.18);
+      white-space: nowrap;
+      letter-spacing: 2px;
+      user-select: none;
     }
 
   ` : '';
@@ -507,6 +322,7 @@ function buildCssBlock(styles: string, backgroundColor: string, showWatermark: b
 
 const WATERMARK_HTML = `<div class="pdf-watermark">
   <div class="pdf-watermark-text">LinImpact.ai</div>
+  <div class="pdf-watermark-sub">Upgrade to Pro to remove watermark</div>
 </div>`;
 
 function wrapSinglePageWithWatermark(contentHtml: string): string {
