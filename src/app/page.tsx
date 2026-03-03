@@ -950,7 +950,7 @@ export default function LandingPage() {
                   <div className="text-center border-b border-gray-300 pb-2 mb-2">
                     <div className="h-3 w-20 bg-gray-800 rounded mx-auto mb-1" />
                     <div className="h-1 w-24 bg-gray-400 rounded mx-auto" />
-                  </div>
+          </div>
                   <div className="space-y-2">
                     <div className="h-1.5 w-16 bg-gray-700 rounded border-b border-gray-300 pb-1" />
                     <div className="h-1 w-full bg-gray-200 rounded" />

@@ -12,6 +12,7 @@ import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
 import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X, Loader2 } from "lucide-react";
 import { exportResumeToPDF } from "@/lib/utils/pdfExport";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
+import { useSubscription } from "@/hooks/useSubscription";
 
 type ViewMode = "edit" | "page";
 
@@ -63,6 +64,9 @@ function ResumeEditorContent() {
   const previewRef = useRef<HTMLDivElement>(null);
   const paginatorRef = useRef<ResumePaginatorRef>(null);
 
+  const { isPro, isTrialing } = useSubscription();
+  const hasPaidPlan = isPro && !isTrialing;
+
   const handleDownloadPDF = useCallback(async () => {
     if (!previewRef.current || isExportingPDF) return;
 
@@ -71,20 +75,16 @@ function ResumeEditorContent() {
       const resumeName = resume.basics?.name || "resume";
       const filename = `${resumeName.replace(/\s+/g, "_")}_CV.pdf`;
 
-      // Get exact page breaks from ResumePaginator state for pixel-perfect PDF
-      const paginatorBreaks = paginatorRef.current?.getPageBreaks();
-
       await exportResumeToPDF(previewRef.current, {
         filename,
-        pageBreaks: paginatorBreaks?.breaks,
-        totalContentHeight: paginatorBreaks?.totalHeight,
+        showWatermark: !hasPaidPlan,
       });
     } catch (error) {
       console.error("Failed to export PDF:", error);
     } finally {
       setIsExportingPDF(false);
     }
-  }, [resume.basics?.name, isExportingPDF]);
+  }, [resume.basics?.name, isExportingPDF, hasPaidPlan]);
 
   useEffect(() => {
     const currentState = JSON.stringify({ resume, selectedTemplate });
