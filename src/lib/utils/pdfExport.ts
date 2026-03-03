@@ -227,7 +227,7 @@ function applyFullStyles(source: HTMLElement, target: HTMLElement, isRoot: boole
   }
   if (cs.backgroundClip && cs.backgroundClip !== 'border-box') {
     target.style.backgroundClip = cs.backgroundClip;
-    target.style.webkitBackgroundClip = (cs as Record<string, string>).webkitBackgroundClip || cs.backgroundClip;
+    target.style.webkitBackgroundClip = (cs as unknown as Record<string, string>).webkitBackgroundClip || cs.backgroundClip;
   }
 
   // Typography
