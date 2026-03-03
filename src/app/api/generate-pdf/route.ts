@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     await page.evaluateHandle(() => document.fonts.ready);
 
     const showWatermark = !isPro;
-    const WATERMARK_BOTTOM_RESERVE = 45;
+    const WATERMARK_BOTTOM_RESERVE = 30;
 
     const breakData = await page.evaluate((a4H, safePx, wmReserve) => {
       const content = document.querySelector('.resume-page') as HTMLElement;
@@ -152,9 +152,8 @@ export async function POST(request: NextRequest) {
         return lines;
       }
 
-      // Collect leaf text elements (including sidebar items)
+      // Collect leaf text elements
       const leafEls: { el: HTMLElement; top: number; bottom: number }[] = [];
-      const seen = new Set<HTMLElement>();
       const allEls = content.querySelectorAll('p, li, span, h1, h2, h3, h4, h5, h6');
       for (const el of Array.from(allEls)) {
         const htmlEl = el as HTMLElement;
@@ -164,25 +163,7 @@ export async function POST(request: NextRequest) {
         if (!hasTxt && htmlEl.children.length > 0) continue;
         const r = htmlEl.getBoundingClientRect();
         if (r.height < 5) continue;
-        seen.add(htmlEl);
         leafEls.push({ el: htmlEl, top: r.top - cRect.top, bottom: r.bottom - cRect.top });
-      }
-
-      // Also collect sidebar atomic blocks (skill/language items with dots)
-      // These use div wrappers that aren't in the standard text selectors
-      const aside = content.querySelector('aside');
-      if (aside) {
-        const sidebarBlocks = aside.querySelectorAll('[data-section] > div > div, [data-section] > div > *');
-        for (const el of Array.from(sidebarBlocks)) {
-          const htmlEl = el as HTMLElement;
-          if (seen.has(htmlEl)) continue;
-          const r = htmlEl.getBoundingClientRect();
-          if (r.height < 5 || r.height > 80) continue;
-          const hasText = htmlEl.textContent?.trim();
-          if (!hasText) continue;
-          seen.add(htmlEl);
-          leafEls.push({ el: htmlEl, top: r.top - cRect.top, bottom: r.bottom - cRect.top });
-        }
       }
 
       const breaks: number[] = [];
@@ -280,8 +261,8 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Prevent orphaned section headings (main + sidebar)
-        const sections = content.querySelectorAll('section, [data-section]');
+        // Prevent orphaned section headings
+        const sections = content.querySelectorAll('section');
         for (const sec of Array.from(sections)) {
           const h = sec.querySelector('h2, h3') as HTMLElement;
           if (!h) continue;
