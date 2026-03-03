@@ -82,17 +82,7 @@ export async function exportResumeToPDF(
     if (sourceResumePage) {
       const targetResumePage = tempDiv.querySelector('.resume-page') as HTMLElement;
       if (targetResumePage) {
-        inlineComputedStyles(sourceResumePage, targetResumePage, true);
-
-        const resumePageDisplay = window.getComputedStyle(sourceResumePage).display;
-        const parentIsFlex = resumePageDisplay === 'flex' || resumePageDisplay === 'inline-flex';
-
-        const srcChildren = Array.from(sourceResumePage.children) as HTMLElement[];
-        const tgtChildren = Array.from(targetResumePage.children) as HTMLElement[];
-        for (let i = 0; i < Math.min(srcChildren.length, tgtChildren.length); i++) {
-          inlineComputedStyles(srcChildren[i], tgtChildren[i] as HTMLElement, false, parentIsFlex);
-        }
-
+        applyFullStyles(sourceResumePage, targetResumePage, true, false);
         inlineDeepStyles(sourceResumePage, targetResumePage, 0);
       }
     }
@@ -213,83 +203,104 @@ function extractBackgroundInfo(previewElement: HTMLElement): BackgroundExportInf
   return { type: 'none', bgColor: '#ffffff' };
 }
 
-function inlineComputedStyles(
-  source: HTMLElement,
-  target: HTMLElement,
-  isResumePage: boolean,
-  parentIsFlex: boolean = false
-): void {
+function applyFullStyles(source: HTMLElement, target: HTMLElement, isRoot: boolean, parentIsFlex: boolean): void {
   const cs = window.getComputedStyle(source);
 
+  // Box model
   target.style.paddingTop = cs.paddingTop;
   target.style.paddingRight = cs.paddingRight;
   target.style.paddingBottom = cs.paddingBottom;
   target.style.paddingLeft = cs.paddingLeft;
-  target.style.boxSizing = 'border-box';
-
   target.style.marginTop = cs.marginTop;
   target.style.marginRight = cs.marginRight;
   target.style.marginBottom = cs.marginBottom;
   target.style.marginLeft = cs.marginLeft;
+  target.style.boxSizing = 'border-box';
 
+  // Background
   target.style.backgroundColor = cs.backgroundColor;
   if (cs.backgroundImage !== 'none') {
     target.style.backgroundImage = cs.backgroundImage;
+    target.style.backgroundSize = cs.backgroundSize;
+    target.style.backgroundPosition = cs.backgroundPosition;
+    target.style.backgroundRepeat = cs.backgroundRepeat;
+  }
+  if (cs.backgroundClip && cs.backgroundClip !== 'border-box') {
+    target.style.backgroundClip = cs.backgroundClip;
+    target.style.webkitBackgroundClip = (cs as Record<string, string>).webkitBackgroundClip || cs.backgroundClip;
   }
 
+  // Typography
   target.style.color = cs.color;
   target.style.fontFamily = cs.fontFamily;
   target.style.fontSize = cs.fontSize;
   target.style.lineHeight = cs.lineHeight;
   target.style.fontWeight = cs.fontWeight;
+  target.style.fontStyle = cs.fontStyle;
   target.style.letterSpacing = cs.letterSpacing;
   target.style.wordSpacing = cs.wordSpacing;
   target.style.textRendering = 'geometricPrecision';
-
-  if (cs.borderBottom && cs.borderBottom !== 'none') {
-    target.style.borderBottom = cs.borderBottom;
+  if (cs.textTransform !== 'none') target.style.textTransform = cs.textTransform;
+  if (cs.textAlign !== 'start') target.style.textAlign = cs.textAlign;
+  if (cs.textDecoration !== 'none') target.style.textDecoration = cs.textDecoration;
+  if (cs.whiteSpace !== 'normal') target.style.whiteSpace = cs.whiteSpace;
+  if (cs.webkitTextFillColor && cs.webkitTextFillColor !== cs.color) {
+    target.style.webkitTextFillColor = cs.webkitTextFillColor;
   }
-  if (cs.borderTop && cs.borderTop !== 'none') {
-    target.style.borderTop = cs.borderTop;
-  }
 
+  // Borders (all sides)
+  if (cs.borderTop !== 'none' && cs.borderTopWidth !== '0px') target.style.borderTop = cs.borderTop;
+  if (cs.borderBottom !== 'none' && cs.borderBottomWidth !== '0px') target.style.borderBottom = cs.borderBottom;
+  if (cs.borderLeft !== 'none' && cs.borderLeftWidth !== '0px') target.style.borderLeft = cs.borderLeft;
+  if (cs.borderRight !== 'none' && cs.borderRightWidth !== '0px') target.style.borderRight = cs.borderRight;
+  if (cs.borderRadius !== '0px') target.style.borderRadius = cs.borderRadius;
+
+  // Layout
   const display = cs.display;
   if (display === 'flex' || display === 'inline-flex') {
     target.style.display = display;
     target.style.flexDirection = cs.flexDirection;
-    if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
-      target.style.gap = cs.gap;
-    }
     target.style.alignItems = cs.alignItems;
+    target.style.justifyContent = cs.justifyContent;
     target.style.flexWrap = cs.flexWrap;
+    if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') target.style.gap = cs.gap;
   } else if (display === 'grid' || display === 'inline-grid') {
     target.style.display = display;
     target.style.gridTemplateColumns = cs.gridTemplateColumns;
-    if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
-      target.style.gap = cs.gap;
-    }
+    if (cs.gridTemplateRows !== 'none') target.style.gridTemplateRows = cs.gridTemplateRows;
+    if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') target.style.gap = cs.gap;
   }
 
-  if (!isResumePage && parentIsFlex) {
+  // Sizing (for flex children or elements with explicit sizes)
+  if (!isRoot && parentIsFlex) {
     target.style.width = cs.width;
-    if (cs.minWidth !== '0px') target.style.minWidth = cs.minWidth;
-    if (cs.maxWidth !== 'none') target.style.maxWidth = cs.maxWidth;
     target.style.flex = cs.flex;
     target.style.flexShrink = cs.flexShrink;
     target.style.flexGrow = cs.flexGrow;
+    if (cs.minWidth !== '0px') target.style.minWidth = cs.minWidth;
+    if (cs.maxWidth !== 'none') target.style.maxWidth = cs.maxWidth;
   }
+  if (cs.height !== 'auto' && cs.height !== '0px') target.style.height = cs.height;
+  if (cs.minHeight !== '0px') target.style.minHeight = cs.minHeight;
 
-  if (cs.overflow !== 'visible') {
-    target.style.overflow = cs.overflow;
-  }
-
+  // Positioning
   if (cs.position !== 'static') {
     target.style.position = cs.position;
+    if (cs.top !== 'auto') target.style.top = cs.top;
+    if (cs.left !== 'auto') target.style.left = cs.left;
+    if (cs.right !== 'auto') target.style.right = cs.right;
+    if (cs.bottom !== 'auto') target.style.bottom = cs.bottom;
+    if (cs.zIndex !== 'auto') target.style.zIndex = cs.zIndex;
   }
+
+  if (cs.overflow !== 'visible') target.style.overflow = cs.overflow;
+  if (cs.opacity !== '1') target.style.opacity = cs.opacity;
+  if (cs.transform !== 'none') target.style.transform = cs.transform;
+  if (cs.filter !== 'none') target.style.filter = cs.filter;
 }
 
 function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: number = 0): void {
-  if (depth > 3) return;
+  if (depth > 10) return;
 
   const srcChildren = Array.from(source.children) as HTMLElement[];
   const tgtChildren = Array.from(target.children) as HTMLElement[];
@@ -297,82 +308,15 @@ function inlineDeepStyles(source: HTMLElement, target: HTMLElement, depth: numbe
   for (let i = 0; i < Math.min(srcChildren.length, tgtChildren.length); i++) {
     const srcChild = srcChildren[i];
     const tgtChild = tgtChildren[i];
-    const tag = srcChild.tagName.toLowerCase();
+    if (!srcChild || !tgtChild) continue;
 
-    if (tag === 'section' || srcChild.classList.contains('resume-item') ||
-        tag === 'header' || tag === 'main' || tag === 'aside' || tag === 'nav' ||
-        tag === 'div' || tag === 'ul' || tag === 'ol') {
-      const cs = window.getComputedStyle(srcChild);
-      const parentDisplay = window.getComputedStyle(srcChild.parentElement!).display;
-      const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
+    const parentDisplay = window.getComputedStyle(source).display;
+    const parentIsFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
 
-      tgtChild.style.paddingTop = cs.paddingTop;
-      tgtChild.style.paddingRight = cs.paddingRight;
-      tgtChild.style.paddingBottom = cs.paddingBottom;
-      tgtChild.style.paddingLeft = cs.paddingLeft;
-      tgtChild.style.marginTop = cs.marginTop;
-      tgtChild.style.marginRight = cs.marginRight;
-      tgtChild.style.marginBottom = cs.marginBottom;
-      tgtChild.style.marginLeft = cs.marginLeft;
-      tgtChild.style.boxSizing = 'border-box';
+    applyFullStyles(srcChild, tgtChild, false, parentIsFlex);
 
-      if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-        tgtChild.style.backgroundColor = cs.backgroundColor;
-      }
-      if (cs.backgroundImage !== 'none') {
-        tgtChild.style.backgroundImage = cs.backgroundImage;
-      }
-
-      tgtChild.style.color = cs.color;
-      tgtChild.style.fontFamily = cs.fontFamily;
-      tgtChild.style.fontSize = cs.fontSize;
-      tgtChild.style.lineHeight = cs.lineHeight;
-      tgtChild.style.fontWeight = cs.fontWeight;
-
-      const display = cs.display;
-      if (display === 'flex' || display === 'inline-flex') {
-        tgtChild.style.display = display;
-        tgtChild.style.flexDirection = cs.flexDirection;
-        if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
-          tgtChild.style.gap = cs.gap;
-        }
-        tgtChild.style.alignItems = cs.alignItems;
-        tgtChild.style.flexWrap = cs.flexWrap;
-      } else if (display === 'grid' || display === 'inline-grid') {
-        tgtChild.style.display = display;
-        tgtChild.style.gridTemplateColumns = cs.gridTemplateColumns;
-        if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') {
-          tgtChild.style.gap = cs.gap;
-        }
-      }
-
-      if (parentIsFlex) {
-        tgtChild.style.width = cs.width;
-        tgtChild.style.flex = cs.flex;
-      }
-
-      if (cs.overflow !== 'visible') {
-        tgtChild.style.overflow = cs.overflow;
-      }
-
-      if (cs.borderBottom && cs.borderBottom !== 'none') {
-        tgtChild.style.borderBottom = cs.borderBottom;
-      }
-
+    if (srcChild.children.length > 0) {
       inlineDeepStyles(srcChild, tgtChild, depth + 1);
-    } else if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' ||
-               tag === 'h5' || tag === 'h6' || tag === 'p' || tag === 'li' || tag === 'span') {
-      const cs = window.getComputedStyle(srcChild);
-      tgtChild.style.fontFamily = cs.fontFamily;
-      tgtChild.style.fontSize = cs.fontSize;
-      tgtChild.style.lineHeight = cs.lineHeight;
-      tgtChild.style.fontWeight = cs.fontWeight;
-      tgtChild.style.color = cs.color;
-      tgtChild.style.letterSpacing = cs.letterSpacing;
-      tgtChild.style.marginTop = cs.marginTop;
-      tgtChild.style.marginBottom = cs.marginBottom;
-      tgtChild.style.paddingTop = cs.paddingTop;
-      tgtChild.style.paddingBottom = cs.paddingBottom;
     }
   }
 }
