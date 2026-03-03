@@ -63,6 +63,8 @@ async function capturePaginatedMode(
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
 
+    const gradientFixes = fixGradientTextElements(page);
+
     let watermarkEl: HTMLElement | null = null;
     if (showWatermark) {
       watermarkEl = createWatermarkOverlay();
@@ -83,6 +85,8 @@ async function capturePaginatedMode(
       page.removeChild(watermarkEl);
     }
 
+    restoreGradientTextElements(gradientFixes);
+
     const imgData = canvas.toDataURL("image/jpeg", 0.92);
     if (i > 0) pdf.addPage();
     pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
@@ -94,7 +98,8 @@ async function captureEditMode(
   pdf: jsPDF,
   showWatermark: boolean
 ): Promise<void> {
-  // Capture the full tall content once
+  const gradientFixes = fixGradientTextElements(page);
+
   const fullCanvas = await html2canvas(page, {
     scale: CAPTURE_SCALE,
     useCORS: true,
@@ -103,6 +108,8 @@ async function captureEditMode(
     width: A4_WIDTH_PX,
     logging: false,
   });
+
+  restoreGradientTextElements(gradientFixes);
 
   const numPages = Math.ceil(fullCanvas.height / (A4_HEIGHT_PX * CAPTURE_SCALE));
 
@@ -134,6 +141,63 @@ async function captureEditMode(
     const imgData = sliceCanvas.toDataURL("image/jpeg", 0.92);
     if (i > 0) pdf.addPage();
     pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
+  }
+}
+
+interface GradientFix {
+  el: HTMLElement;
+  bgClip: string;
+  wkBgClip: string;
+  bgImage: string;
+  bgColor: string;
+  color: string;
+  wkFill: string;
+}
+
+function fixGradientTextElements(container: HTMLElement): GradientFix[] {
+  const fixes: GradientFix[] = [];
+  const allEls = container.querySelectorAll("*");
+
+  for (const el of Array.from(allEls)) {
+    const htmlEl = el as HTMLElement;
+    const cs = window.getComputedStyle(htmlEl);
+    const clip = cs.backgroundClip || (cs as unknown as Record<string, string>).webkitBackgroundClip;
+    if (clip !== "text") continue;
+
+    fixes.push({
+      el: htmlEl,
+      bgClip: htmlEl.style.backgroundClip,
+      wkBgClip: htmlEl.style.webkitBackgroundClip,
+      bgImage: htmlEl.style.backgroundImage,
+      bgColor: htmlEl.style.backgroundColor,
+      color: htmlEl.style.color,
+      wkFill: htmlEl.style.webkitTextFillColor,
+    });
+
+    // Extract first color from gradient for a solid fallback
+    let solidColor = "#22D3EE";
+    const rgbMatch = cs.backgroundImage.match(/rgba?\([^)]+\)/);
+    if (rgbMatch) solidColor = rgbMatch[0];
+
+    htmlEl.style.backgroundClip = "border-box";
+    htmlEl.style.webkitBackgroundClip = "border-box";
+    htmlEl.style.backgroundImage = "none";
+    htmlEl.style.backgroundColor = "transparent";
+    htmlEl.style.color = solidColor;
+    htmlEl.style.webkitTextFillColor = solidColor;
+  }
+
+  return fixes;
+}
+
+function restoreGradientTextElements(fixes: GradientFix[]): void {
+  for (const f of fixes) {
+    f.el.style.backgroundClip = f.bgClip;
+    f.el.style.webkitBackgroundClip = f.wkBgClip;
+    f.el.style.backgroundImage = f.bgImage;
+    f.el.style.backgroundColor = f.bgColor;
+    f.el.style.color = f.color;
+    f.el.style.webkitTextFillColor = f.wkFill;
   }
 }
 
