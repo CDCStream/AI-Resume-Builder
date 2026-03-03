@@ -43,7 +43,7 @@ async function checkIsPro(): Promise<boolean> {
     if (!user) return false;
 
     // Only paid Pro subscribers get watermark-free PDFs
-    
+
     const { data } = await supabase
       .from("subscriptions")
       .select("status, plan")
@@ -108,12 +108,16 @@ export async function POST(request: NextRequest) {
     await page.setContent(measureHtml, { waitUntil: "networkidle0", timeout: 30000 });
     await page.evaluateHandle(() => document.fonts.ready);
 
-    const breakData = await page.evaluate((a4H, safePx) => {
+    const showWatermark = !isPro;
+    const WATERMARK_BOTTOM_RESERVE = 45;
+
+    const breakData = await page.evaluate((a4H, safePx, wmReserve) => {
       const content = document.querySelector('.resume-page') as HTMLElement;
       if (!content) return { breaks: [] as number[], totalHeight: 0 };
 
       const cRect = content.getBoundingClientRect();
       const totalHeight = content.scrollHeight;
+      const effectivePageH = a4H - wmReserve;
 
       function getLines(el: HTMLElement): { top: number; bottom: number }[] {
         const textNodes: Text[] = [];
@@ -165,8 +169,8 @@ export async function POST(request: NextRequest) {
       const breaks: number[] = [];
       let pageStart = 0;
 
-      while (pageStart + a4H < totalHeight) {
-        const ideal = pageStart + a4H;
+      while (pageStart + effectivePageH < totalHeight) {
+        const ideal = pageStart + effectivePageH;
         let best = ideal;
 
         const crossing = leafEls.filter(
@@ -308,12 +312,11 @@ export async function POST(request: NextRequest) {
       }
 
       return { breaks, totalHeight };
-    }, A4_HEIGHT_PX, LINE_SAFETY_PX);
+    }, A4_HEIGHT_PX, LINE_SAFETY_PX, showWatermark ? WATERMARK_BOTTOM_RESERVE : 0);
 
     console.log(`Puppeteer-calculated breaks: [${breakData.breaks.join(', ')}] (${breakData.breaks.length + 1} pages, height: ${breakData.totalHeight})`);
 
     // --- Pass 2: Replace body content in-place (preserves loaded fonts & CSS) ---
-    const showWatermark = !isPro;
     const bodyHtml = breakData.breaks.length > 0
       ? buildPrePaginatedHtml(contentHtml, breakData.breaks, breakData.totalHeight, backgroundInfo, showWatermark)
       : (showWatermark ? wrapSinglePageWithWatermark(contentHtml) : contentHtml);
