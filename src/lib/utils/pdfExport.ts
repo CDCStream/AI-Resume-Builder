@@ -270,13 +270,15 @@ function applyFullStyles(source: HTMLElement, target: HTMLElement, isRoot: boole
     if (cs.gap && cs.gap !== 'normal' && cs.gap !== '0px') target.style.gap = cs.gap;
   }
 
-  // Sizing — only set width on flex children, never set computed height on text containers
-  // (height differences between browsers cause text overlap)
+  // Sizing — only lock width on structural flex children (flex-basis != auto),
+  // auto-sized elements must remain flexible for font rendering differences
   if (!isRoot && parentIsFlex) {
-    target.style.width = cs.width;
     target.style.flex = cs.flex;
     target.style.flexShrink = cs.flexShrink;
     target.style.flexGrow = cs.flexGrow;
+    if (cs.flexBasis !== 'auto') {
+      target.style.width = cs.width;
+    }
     if (cs.minWidth !== '0px') target.style.minWidth = cs.minWidth;
     if (cs.maxWidth !== 'none') target.style.maxWidth = cs.maxWidth;
   }
