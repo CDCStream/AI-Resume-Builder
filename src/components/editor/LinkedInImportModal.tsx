@@ -23,14 +23,22 @@ export default function LinkedInImportModal({
 
   if (!isOpen) return null;
 
+  const normalizeLinkedInUrl = (raw: string): string => {
+    let u = raw.trim();
+    if (/^(www\.)?linkedin\.com/i.test(u)) u = `https://${u}`;
+    if (/^https?:\/\/linkedin\.com/i.test(u)) u = u.replace(/^https?:\/\/linkedin\.com/i, "https://www.linkedin.com");
+    return u;
+  };
+
   const handleImport = async () => {
     if (!url.trim()) {
       setError("Please enter a LinkedIn profile URL");
       return;
     }
 
-    // Basic URL validation
-    if (!/linkedin\.com\/in\//i.test(url)) {
+    const normalizedUrl = normalizeLinkedInUrl(url);
+
+    if (!/linkedin\.com\/in\//i.test(normalizedUrl)) {
       setError("Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/username)");
       return;
     }
@@ -43,7 +51,7 @@ export default function LinkedInImportModal({
       const response = await fetch("/api/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ linkedinUrl: url.trim() }),
+        body: JSON.stringify({ linkedinUrl: normalizedUrl }),
       });
 
       const data = await response.json();

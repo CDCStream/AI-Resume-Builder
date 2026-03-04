@@ -490,9 +490,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate LinkedIn URL — allow Unicode chars (ç, ö, ü, etc.) and percent-encoded segments
+    // Normalize: auto-prepend https:// if missing
+    let normalizedUrl: string = linkedinUrl.trim();
+    if (/^(www\.)?linkedin\.com/i.test(normalizedUrl)) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+
     const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/in\/[\w\u00C0-\u024F\u0100-\u017F%-]+\/?$/;
-    if (!linkedinRegex.test(linkedinUrl)) {
+    if (!linkedinRegex.test(normalizedUrl)) {
       return NextResponse.json(
         { error: "Please provide a valid LinkedIn profile URL (e.g., https://linkedin.com/in/username)" },
         { status: 400 }
@@ -509,7 +514,7 @@ export async function POST(request: NextRequest) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ urls: [linkedinUrl] }),
+          body: JSON.stringify({ urls: [normalizedUrl] }),
           signal: controller.signal,
         }
       );
