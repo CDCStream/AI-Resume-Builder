@@ -53,7 +53,16 @@ export default function RegisterPage() {
           gaSignUp("email");
           gadsSignUpConversion();
         } catch {}
-        setSuccess(true);
+
+        // Send welcome email in background
+        fetch("/api/send-welcome-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, name: fullName }),
+        }).catch(() => {});
+
+        router.push("/resume");
+        return;
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
