@@ -48,7 +48,7 @@ export default function LoginPage() {
       setLoading(false);
     } else {
       trackLogin("temp_id", email, "email");
-      router.push("/resume");
+      router.push("/dashboard");
     }
   };
 

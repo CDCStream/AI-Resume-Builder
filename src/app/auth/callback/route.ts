@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const token = searchParams.get("token");
   const type = searchParams.get("type");
   const redirectTo = searchParams.get("redirect_to");
-  const next = searchParams.get("next") ?? "/resume";
+  const next = searchParams.get("next") ?? "/dashboard";
 
   const supabase = await createClient();
 
