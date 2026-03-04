@@ -469,6 +469,8 @@ function mapToResume(profile: ApifyLinkedInProfile): Resume {
   return resume;
 }
 
+export const maxDuration = 90;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -497,78 +499,71 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Start the Apify actor run
-    // HarvestAPI actor uses "urls" array parameter
-    const runResponse = await fetch(
-      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_API_TOKEN}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          urls: [linkedinUrl],
-        }),
+    // 80s timeout for Apify call
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 80000);
+
+    try {
+      const runResponse = await fetch(
+        `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_API_TOKEN}&timeout=75`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ urls: [linkedinUrl] }),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeout);
+
+      if (!runResponse.ok) {
+        const errorText = await runResponse.text();
+        console.error("Apify API error:", runResponse.status, errorText);
+        return NextResponse.json(
+          { error: "Failed to fetch LinkedIn profile. Please try again." },
+          { status: 502 }
+        );
       }
-    );
 
-    if (!runResponse.ok) {
-      const errorText = await runResponse.text();
-      console.error("Apify API error:", runResponse.status, errorText);
-      return NextResponse.json(
-        { error: "Failed to fetch LinkedIn profile. Please try again." },
-        { status: 502 }
-      );
+      const results = await runResponse.json();
+
+      if (!results || results.length === 0) {
+        return NextResponse.json(
+          { error: "No profile data found. Please check the LinkedIn URL and try again." },
+          { status: 404 }
+        );
+      }
+
+      const firstResult = results[0];
+      if (firstResult && firstResult.error) {
+        return NextResponse.json(
+          { error: "LinkedIn import service error. Please try again or use a different import method." },
+          { status: 502 }
+        );
+      }
+
+      const profileData = firstResult as ApifyLinkedInProfile;
+
+      if (!profileData.fullName && !profileData.headline && !profileData.experiences) {
+        return NextResponse.json(
+          { error: "Could not retrieve profile data. The profile may be private or the URL may be incorrect." },
+          { status: 404 }
+        );
+      }
+
+      const resume = mapToResume(profileData);
+
+      return NextResponse.json({ resume });
+    } catch (fetchError) {
+      clearTimeout(timeout);
+      if (fetchError instanceof Error && fetchError.name === "AbortError") {
+        return NextResponse.json(
+          { error: "LinkedIn import timed out. Please try again." },
+          { status: 504 }
+        );
+      }
+      throw fetchError;
     }
-
-    const results = await runResponse.json();
-
-    // Debug: Log raw API response
-    console.log("Apify raw response:", JSON.stringify(results, null, 2));
-
-    if (!results || results.length === 0) {
-      return NextResponse.json(
-        { error: "No profile data found. Please check the LinkedIn URL and try again." },
-        { status: 404 }
-      );
-    }
-
-    // Check for Apify error response
-    const firstResult = results[0];
-    if (firstResult && firstResult.error) {
-      console.error("Apify actor error:", firstResult.error);
-      return NextResponse.json(
-        { error: "LinkedIn import service requires a paid Apify plan. Please upgrade your Apify subscription or try a different import method." },
-        { status: 402 }
-      );
-    }
-
-    // Use the first result
-    const profileData = firstResult as ApifyLinkedInProfile;
-
-    // Validate that we have actual profile data
-    if (!profileData.fullName && !profileData.headline && !profileData.experiences) {
-      console.error("Empty profile data received:", profileData);
-      return NextResponse.json(
-        { error: "Could not retrieve profile data. The profile may be private or the URL may be incorrect." },
-        { status: 404 }
-      );
-    }
-
-    const resume = mapToResume(profileData);
-
-    // Debug logging
-    console.log("=== LinkedIn Import Debug ===");
-    console.log("Name:", resume.basics?.name);
-    console.log("Work experiences:", resume.work?.length || 0);
-    console.log("Education:", resume.education?.length || 0);
-    console.log("Skills:", resume.skills?.length || 0);
-    console.log("Certifications:", resume.certificates?.length || 0);
-    console.log("Certificates data:", JSON.stringify(resume.certificates, null, 2));
-
-    return NextResponse.json({
-      resume,
-    });
   } catch (error) {
     console.error("Import error:", error);
     return NextResponse.json(
