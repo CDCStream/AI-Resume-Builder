@@ -9,7 +9,7 @@ import UploadResumeModal from "@/components/editor/UploadResumeModal";
 import ResumePaginator, { ResumePaginatorRef } from "@/components/preview/ResumePaginator";
 import { templates } from "@/components/templates";
 import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
-import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X, Loader2 } from "lucide-react";
+import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X, Loader2, PanelLeft, FileText } from "lucide-react";
 import { exportResumeToPDF } from "@/lib/utils/pdfExport";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -58,6 +58,7 @@ function ResumeEditorContent() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedState, setLastSavedState] = useState<string>("");
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [mobilePanel, setMobilePanel] = useState<"editor" | "preview">("editor");
   const documentLoadedRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -318,7 +319,7 @@ function ResumeEditorContent() {
       />
 
       <div className="flex h-screen bg-gradient-to-br from-blue-50 via-gray-50 to-cyan-50">
-        <div className="w-[480px] bg-white border-r border-gray-200 flex-shrink-0 no-print">
+        <div className={`w-full lg:w-[480px] bg-white border-r border-gray-200 flex-shrink-0 no-print ${mobilePanel === "preview" ? "hidden lg:block" : "block"}`}>
           <ResumeEditor
             resume={resume}
             onResumeChange={setResume}
@@ -337,7 +338,7 @@ function ResumeEditorContent() {
           />
         </div>
 
-        <div ref={containerRef} className="flex-1 overflow-auto">
+        <div ref={containerRef} className={`flex-1 overflow-auto ${mobilePanel === "editor" ? "hidden lg:block" : "block"}`}>
           <div
             className="py-8 flex justify-center print:scale-100 print:transform-none print:py-0"
             style={{
@@ -380,6 +381,14 @@ function ResumeEditorContent() {
             </div>
           </div>
         </div>
+
+        <button
+          onClick={() => setMobilePanel(mobilePanel === "editor" ? "preview" : "editor")}
+          className="fixed bottom-6 left-6 z-50 lg:hidden p-3.5 rounded-full shadow-xl bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 no-print"
+          title={mobilePanel === "editor" ? "Show Preview" : "Show Editor"}
+        >
+          {mobilePanel === "editor" ? <FileText className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
+        </button>
 
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 no-print">
           {viewMode === "edit" && isTextEditMode && hasSelection && (
