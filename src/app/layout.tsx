@@ -12,17 +12,20 @@ import { organizationSchema, softwareSchema } from "./seo-metadata";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -101,10 +104,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
         />
         {/* Ahrefs Web Analytics */}
-        <script
+        <Script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="wbGYng8gzWDJQHAsZKprxg"
-          async={true}
+          strategy="lazyOnload"
         />
       </head>
       <body

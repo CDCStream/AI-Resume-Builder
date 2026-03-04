@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AnimatedGridBackground } from "@/components/ui/animated-grid-background";
-import { CompanyOrbit } from "@/components/ui/company-logos";
 import Link from "next/link";
+import Image from "next/image";
 import {
   FileText,
   Sparkles,
@@ -32,7 +33,9 @@ import {
 } from "lucide-react";
 import Script from "next/script";
 import { faqSchema } from "./seo-metadata";
-import { HowItWorksGuide } from "@/components/landing/HowItWorksGuide";
+
+const CompanyOrbit = dynamic(() => import("@/components/ui/company-logos").then(m => m.CompanyOrbit), { ssr: false });
+const HowItWorksGuide = dynamic(() => import("@/components/landing/HowItWorksGuide").then(m => m.HowItWorksGuide), { ssr: false });
 
 // FAQ Data for SEO/AEO - targeting low competition keywords
 const faqs = [
@@ -121,10 +124,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center flex-shrink-0">
-              <img
+              <Image
                 src="/logo.png"
                 alt="LinImpact.ai Logo"
+                width={96}
+                height={96}
                 className="w-24 h-24 object-contain"
+                priority
               />
               <span className="text-3xl font-extrabold tracking-tight -ml-4" style={{ fontFamily: 'var(--font-poppins)' }}>
                 <span className="text-cyan-500">Lin</span><span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">Impact</span><span className="text-slate-500 font-semibold">.ai</span>
@@ -206,8 +212,6 @@ export default function LandingPage() {
       <AnimatedGridBackground
         className="bg-gradient-to-b from-slate-50 via-blue-50/30 to-white"
         gridSize={50}
-        speedX={0.2}
-        speedY={0.15}
         revealRadius={400}
         baseOpacity={0.04}
         revealOpacity={0.25}
@@ -1064,6 +1068,9 @@ export default function LandingPage() {
                     src={testimonial.avatarUrl}
                     alt={testimonial.author}
                     className="w-12 h-12 rounded-full bg-gray-100 border-2 border-white shadow-md object-cover"
+                    loading="lazy"
+                    width={48}
+                    height={48}
                   />
                   <div>
                     <div className="font-semibold text-gray-900">{testimonial.author}</div>
@@ -1368,10 +1375,13 @@ export default function LandingPage() {
           {/* Logo & Description - full width on mobile */}
           <div className="mb-10">
             <Link href="/" className="inline-flex items-center mb-3">
-              <img
+              <Image
                 src="/logo.png"
                 alt="LinImpact.ai Logo"
+                width={48}
+                height={48}
                 className="w-12 h-12 object-contain"
+                loading="lazy"
               />
               <span className="text-lg font-extrabold tracking-tight -ml-1" style={{ fontFamily: 'var(--font-poppins)' }}>
                 <span className="text-cyan-400">Lin</span><span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-blue-500 bg-clip-text text-transparent">Impact</span><span className="text-slate-400 font-semibold">.ai</span>
