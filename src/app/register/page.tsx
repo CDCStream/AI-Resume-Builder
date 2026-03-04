@@ -41,17 +41,24 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const { error } = await signUp(email, password, fullName);
-    
-    if (error) {
-      setError(error.message);
-      trackError("sign_up_failed", error.message);
-      setLoading(false);
-    } else {
-      trackSignUpCompleted("temp_id", email, "email");
-      gaSignUp("email");
-      gadsSignUpConversion();
-      setSuccess(true);
+    try {
+      const { error } = await signUp(email, password, fullName);
+      
+      if (error) {
+        setError(error.message);
+        trackError("sign_up_failed", error.message);
+      } else {
+        try {
+          trackSignUpCompleted("temp_id", email, "email");
+          gaSignUp("email");
+          gadsSignUpConversion();
+        } catch {}
+        setSuccess(true);
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+      console.error("Sign up error:", err);
+    } finally {
       setLoading(false);
     }
   };
