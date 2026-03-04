@@ -309,17 +309,17 @@ export default function LandingPage() {
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="relative">
                     {/* Illustration */}
-                    <div className="relative h-36 mb-4 flex items-center justify-center">
+                    <div className="h-36 mb-4 flex items-center justify-center gap-1">
                       {/* LinkedIn Card */}
-                      <div className="absolute left-1 top-2 w-[88px] bg-white rounded-lg shadow-md border border-gray-200 p-2 group-hover:translate-x-[-4px] transition-transform duration-700">
+                      <div className="w-[38%] flex-shrink-0 bg-white rounded-lg shadow-md border border-gray-200 p-2 group-hover:translate-x-[-4px] transition-transform duration-700">
                         <div className="w-full h-6 bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-md mb-1.5" />
                         <div className="flex items-center gap-1.5 mb-1.5">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-2 border-white shadow-sm">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-2 border-white shadow-sm flex-shrink-0">
                             <svg viewBox="0 0 24 24" className="w-4 h-4 text-white fill-current">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
                             </svg>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="h-1.5 w-10 bg-gray-800 rounded" />
                             <div className="h-1 w-8 bg-blue-500 rounded mt-0.5" />
                           </div>
@@ -336,22 +336,22 @@ export default function LandingPage() {
                       </div>
 
                       {/* Arrow Animation */}
-                      <div className="absolute left-[96px] top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-                        <svg width="40" height="20" viewBox="0 0 40 20" className="text-blue-400">
+                      <div className="flex-1 flex items-center justify-center min-w-[24px]">
+                        <svg width="100%" height="20" viewBox="0 0 40 20" preserveAspectRatio="xMidYMid meet" className="text-blue-400 max-w-[50px]">
                           <path d="M2 10 L30 10" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" className="animate-dash" />
                           <path d="M28 5 L35 10 L28 15" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </div>
 
                       {/* Resume Card */}
-                      <div className="absolute right-1 top-2 w-[88px] bg-white rounded-lg shadow-md border border-gray-200 p-2 group-hover:translate-x-[4px] transition-transform duration-700">
+                      <div className="w-[38%] flex-shrink-0 bg-white rounded-lg shadow-md border border-gray-200 p-2 group-hover:translate-x-[4px] transition-transform duration-700">
                         <div className="flex items-center gap-1.5 mb-1.5">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-2 border-white shadow-sm">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-2 border-white shadow-sm flex-shrink-0">
                             <svg viewBox="0 0 24 24" className="w-4 h-4 text-white fill-current">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
                             </svg>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="h-1.5 w-10 bg-gray-800 rounded" />
                             <div className="h-1 w-8 bg-gray-400 rounded mt-0.5" />
                           </div>
@@ -372,7 +372,7 @@ export default function LandingPage() {
                           <div className="h-3 w-9 bg-blue-100 rounded-full" />
                         </div>
                       </div>
-        </div>
+                    </div>
 
                     {/* Text */}
                     <h3 className="text-sm font-bold text-gray-900 mb-1">LinkedIn to Resume</h3>
@@ -468,35 +468,32 @@ export default function LandingPage() {
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="relative">
                     {/* Illustration */}
-                    <div className="relative h-36 mb-4 flex items-center justify-center">
+                    <div className="relative h-36 mb-4 flex items-center justify-center gap-1">
                       {/* LinkedIn Job Post Card */}
-                      <div className="absolute left-0 top-1 w-[88px] bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden group-hover:translate-x-[-3px] transition-transform duration-700">
+                      <div className="w-[38%] flex-shrink-0 bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden group-hover:translate-x-[-3px] transition-transform duration-700">
                         {/* LinkedIn Header Bar */}
                         <div className="bg-[#0a66c2] px-2 py-1 flex items-center gap-1">
-                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white fill-current">
+                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white fill-current flex-shrink-0">
                             <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
                           </svg>
                           <span className="text-[6px] text-white font-semibold">Jobs</span>
                         </div>
                         <div className="p-2">
-                          {/* Company Logo + Title */}
                           <div className="flex items-start gap-1.5 mb-1.5">
                             <div className="w-6 h-6 rounded bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
                               <span className="text-[6px] text-white font-bold">G</span>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <div className="h-1.5 w-11 bg-gray-800 rounded" />
                               <div className="h-1 w-9 bg-[#0a66c2] rounded mt-0.5" />
                               <div className="h-1 w-12 bg-gray-300 rounded mt-0.5" />
                             </div>
                           </div>
-                          {/* Job Description Lines */}
                           <div className="space-y-0.5 mb-1.5">
                             <div className="h-0.5 w-full bg-gray-200 rounded" />
                             <div className="h-0.5 w-4/5 bg-gray-200 rounded" />
                             <div className="h-0.5 w-full bg-gray-200 rounded" />
                           </div>
-                          {/* Easy Apply Button */}
                           <div className="w-full h-4 bg-[#0a66c2] rounded-full flex items-center justify-center gap-0.5">
                             <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white fill-current"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
                             <span className="text-[7px] text-white font-bold tracking-wide">Easy Apply</span>
@@ -505,9 +502,9 @@ export default function LandingPage() {
                       </div>
 
                       {/* Arrow with Sparkles */}
-                      <div className="absolute left-[94px] top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5">
+                      <div className="flex-1 flex flex-col items-center justify-center gap-0.5 min-w-[24px]">
                         <Sparkles className="w-3 h-3 text-purple-400 animate-pulse" />
-                        <svg width="36" height="16" viewBox="0 0 36 16" className="text-purple-400">
+                        <svg width="100%" height="16" viewBox="0 0 36 16" preserveAspectRatio="xMidYMid meet" className="text-purple-400 max-w-[50px]">
                           <path d="M2 8 L26 8" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" className="animate-dash" />
                           <path d="M24 4 L30 8 L24 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -515,9 +512,9 @@ export default function LandingPage() {
                       </div>
 
                       {/* Cover Letter */}
-                      <div className="absolute right-0 top-1 w-[88px] bg-white rounded-lg shadow-md border border-purple-200 p-2.5 group-hover:translate-x-[3px] transition-transform duration-700">
+                      <div className="w-[38%] flex-shrink-0 bg-white rounded-lg shadow-md border border-purple-200 p-2.5 group-hover:translate-x-[3px] transition-transform duration-700">
                         <div className="flex items-center gap-1 mb-1.5">
-                          <FileText className="w-3 h-3 text-purple-500" />
+                          <FileText className="w-3 h-3 text-purple-500 flex-shrink-0" />
                           <span className="text-[6px] font-semibold text-purple-700">Cover Letter</span>
                         </div>
                         <div className="text-[5px] text-gray-500 mb-1">Dear Hiring Manager,</div>
@@ -533,7 +530,7 @@ export default function LandingPage() {
                       </div>
 
                       {/* Match Badge */}
-                      <div className="absolute -top-1 right-6 bg-purple-100 rounded-full px-2 py-0.5 border border-purple-200 animate-float">
+                      <div className="absolute -top-1 right-0 bg-purple-100 rounded-full px-2 py-0.5 border border-purple-200 animate-float">
                         <span className="text-[7px] font-bold text-purple-600">Job-Matched</span>
                       </div>
                     </div>
