@@ -628,6 +628,7 @@ export function HowItWorksGuide() {
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const pillNavRef = useRef<HTMLDivElement>(null);
+  const hasMounted = useRef(false);
 
   const scrollToSection = useCallback((index: number) => {
     const el = sectionRefs.current[index];
@@ -661,6 +662,10 @@ export function HowItWorksGuide() {
   }, []);
 
   useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
     if (!pillNavRef.current) return;
     const activeBtn = pillNavRef.current.querySelector(
       `[data-pill-index="${activeSection}"]`
