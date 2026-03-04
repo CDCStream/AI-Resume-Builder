@@ -120,7 +120,11 @@ export default function LinkedInImportModal({
                   <input
                     type="url"
                     value={url}
-                    onChange={(e) => { setUrl(e.target.value); setError(""); }}
+                    onChange={(e) => {
+                      try { setUrl(decodeURIComponent(e.target.value)); }
+                      catch { setUrl(e.target.value); }
+                      setError("");
+                    }}
                     placeholder="https://linkedin.com/in/your-profile"
                     className="w-full h-12 pl-10 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all outline-none"
                     onKeyDown={(e) => e.key === "Enter" && handleImport()}
