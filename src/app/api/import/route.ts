@@ -490,8 +490,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate LinkedIn URL
-    const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/in\/[\w-]+\/?$/;
+    // Validate LinkedIn URL — allow Unicode chars (ç, ö, ü, etc.) and percent-encoded segments
+    const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/in\/[\w\u00C0-\u024F\u0100-\u017F%-]+\/?$/;
     if (!linkedinRegex.test(linkedinUrl)) {
       return NextResponse.json(
         { error: "Please provide a valid LinkedIn profile URL (e.g., https://linkedin.com/in/username)" },
