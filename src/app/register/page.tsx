@@ -72,20 +72,34 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <Mail className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-            <p className="text-gray-500 mb-6">
-              We&apos;ve sent a confirmation link to <span className="text-gray-900 font-medium">{email}</span>. 
-              Please click the link to verify your account.
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Almost there!</h2>
+            <p className="text-gray-500 mb-2">
+              We&apos;ve sent a confirmation link to <span className="text-gray-900 font-medium">{email}</span>.
+            </p>
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3 text-left">
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-blue-600 font-bold text-xs">1</span>
+                </div>
+                <p className="text-sm text-blue-800">Open your email and click the verification link</p>
+              </div>
+              <div className="flex items-start gap-3 text-left mt-2">
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-blue-600 font-bold text-xs">2</span>
+                </div>
+                <p className="text-sm text-blue-800">You&apos;ll be taken directly to the resume editor</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              Didn&apos;t receive it? Check your spam folder or try registering again.
             </p>
             <Link
               href="/login"
-              className="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg transition hover:from-blue-700 hover:to-cyan-700 shadow-lg shadow-blue-500/25"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition"
             >
-              Back to Login
+              Already verified? Sign in
             </Link>
           </div>
         </div>

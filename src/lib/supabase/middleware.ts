@@ -59,7 +59,7 @@ export async function updateSession(request: NextRequest) {
   // If user is authenticated and trying to access auth routes (except reset-password)
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/resume";
     return NextResponse.redirect(url);
   }
 

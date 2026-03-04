@@ -118,6 +118,16 @@ export default function DashboardPage() {
     updateCoverLetter,
   } = useCoverLetters();
 
+  // New users with no content → send them straight to the editor
+  useEffect(() => {
+    if (!resumesLoading && !coverLettersLoading && resumes.length === 0 && coverLetters.length === 0) {
+      const isCheckout = searchParams.get("checkout");
+      if (!isCheckout) {
+        router.replace("/resume");
+      }
+    }
+  }, [resumesLoading, coverLettersLoading, resumes.length, coverLetters.length, router, searchParams]);
+
   const [activeTab, setActiveTab] = useState("resumes");
   const [deleteDialog, setDeleteDialog] = useState<{
     type: "resume" | "coverLetter";

@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const token = searchParams.get("token");
   const type = searchParams.get("type");
   const redirectTo = searchParams.get("redirect_to");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/resume";
 
   const supabase = await createClient();
 
@@ -19,8 +19,8 @@ export async function GET(request: Request) {
     });
     
     if (!error) {
-      // Redirect to login with verified flag
-      const redirect = redirectTo || "/login?verified=true";
+      // Send verified users directly to the resume editor
+      const redirect = redirectTo || "/resume";
       return NextResponse.redirect(`${origin}${redirect}`);
     }
     
