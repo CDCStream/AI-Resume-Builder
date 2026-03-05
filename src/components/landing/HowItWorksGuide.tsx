@@ -72,6 +72,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Begin with a blank canvas. Our AI writing assistant helps you craft compelling bullet points.",
         icon: PenTool,
+        videoSrc: "/videos/start-from-scratch.mp4",
         gifAlt: "Creating a resume from scratch with AI assistance",
       },
     ],
