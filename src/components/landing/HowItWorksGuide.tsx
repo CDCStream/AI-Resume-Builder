@@ -191,6 +191,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Rehearse your answers and receive AI feedback on clarity, structure, and impact.",
         icon: Target,
+        videoSrc: "/videos/Interview-Preparation-Practice-Feedback.mp4",
         gifAlt: "Practicing answers with AI feedback",
       },
     ],
