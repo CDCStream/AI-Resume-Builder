@@ -5,12 +5,12 @@ import { Metadata } from "next";
 // cv builder, ats checker, interview prep, linkedin resume, professional resume
 
 export const homeMetadata: Metadata = {
-  title: "Free AI Resume Builder | ATS-Friendly Templates | LinImpact.ai",
-  description: "Create professional, ATS-optimized resumes in minutes with our free AI resume builder. 14+ templates, AI cover letter generator, LinkedIn import & interview prep. Start free today!",
+  title: "AI Resume Builder | ATS-Friendly Templates | LinImpact.ai",
+  description: "Create professional, ATS-optimized resumes in minutes with our AI resume builder. 14+ templates, AI cover letter generator, LinkedIn import & interview prep. Get started today!",
   keywords: [
     "resume builder",
     "ai resume builder", 
-    "free resume builder",
+    "best resume builder",
     "ats friendly resume",
     "ats resume template",
     "cover letter generator",
@@ -48,8 +48,8 @@ export const homeMetadata: Metadata = {
     locale: "en_US",
     url: "https://linimpact.ai",
     siteName: "LinImpact.ai",
-    title: "Free AI Resume Builder | Create ATS-Optimized Resumes | LinImpact.ai",
-    description: "Build professional, ATS-friendly resumes with AI. Free templates, cover letter generator, LinkedIn import & more. Land your dream job faster!",
+    title: "AI Resume Builder | Create ATS-Optimized Resumes | LinImpact.ai",
+    description: "Build professional, ATS-friendly resumes with AI. 14+ templates, cover letter generator, LinkedIn import & more. Land your dream job faster!",
     images: [
       {
         url: "https://linimpact.ai/og-image.png",
@@ -61,8 +61,8 @@ export const homeMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free AI Resume Builder | ATS-Optimized Templates",
-    description: "Create professional resumes with AI. ATS-friendly templates, cover letter generator & more. Start free!",
+    title: "AI Resume Builder | ATS-Optimized Templates",
+    description: "Create professional resumes with AI. ATS-friendly templates, cover letter generator & more.",
     images: ["https://linimpact.ai/og-image.png"],
     creator: "@linimpactai",
   },
@@ -89,7 +89,7 @@ export const pricingMetadata: Metadata = {
   ],
   openGraph: {
     title: "Resume Builder Pricing | LinImpact.ai",
-    description: "Affordable AI resume builder plans. Start free, upgrade anytime. Professional resumes, cover letters & more.",
+    description: "Affordable AI resume builder plans. Professional resumes, cover letters & more. Upgrade anytime.",
     url: "https://linimpact.ai/pricing",
   },
   alternates: {

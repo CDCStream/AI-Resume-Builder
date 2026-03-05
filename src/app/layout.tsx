@@ -31,12 +31,12 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://linimpact.ai"),
   title: {
-    default: "Free AI Resume Builder | ATS-Friendly Templates | LinImpact.ai",
+    default: "AI Resume Builder | ATS-Friendly Templates | LinImpact.ai",
     template: "%s | LinImpact.ai"
   },
-  description: "Create professional, ATS-optimized resumes in minutes with our free AI resume builder. 14+ templates, AI cover letter generator, LinkedIn import & interview prep. Start free today!",
+  description: "Create professional, ATS-optimized resumes in minutes with our AI resume builder. 14+ templates, AI cover letter generator, LinkedIn import & interview prep. Get started today!",
   keywords: [
-    "resume builder", "ai resume builder", "free resume builder", "ats friendly resume",
+    "resume builder", "ai resume builder", "best resume builder", "ats friendly resume",
     "ats resume template", "cover letter generator", "cv builder", "resume maker",
     "professional resume", "linkedin resume builder", "ats checker", "cover letter template",
     "interview prep", "resume examples", "software engineer resume", "best resume builder"
@@ -65,13 +65,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://linimpact.ai",
     siteName: "LinImpact.ai",
-    title: "Free AI Resume Builder | Create ATS-Optimized Resumes",
-    description: "Build professional, ATS-friendly resumes with AI. Free templates, cover letter generator, LinkedIn import & more.",
+    title: "AI Resume Builder | Create ATS-Optimized Resumes",
+    description: "Build professional, ATS-friendly resumes with AI. 14+ templates, cover letter generator, LinkedIn import & more.",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "LinImpact.ai - AI Resume Builder" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free AI Resume Builder | ATS-Optimized Templates",
+    title: "AI Resume Builder | ATS-Optimized Templates",
     description: "Create professional resumes with AI. ATS-friendly templates, cover letter generator & more.",
     images: ["/og-image.png"],
     creator: "@linimpactai",

@@ -161,7 +161,7 @@ export default function LandingPage() {
                 Sign in
               </Button>
               <Button size="sm" className="hidden lg:inline-flex bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/register")}>
-                Get Started Free
+                Get Started
               </Button>
               <button
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -199,7 +199,7 @@ export default function LandingPage() {
                     Sign in
                   </Button>
                   <Button size="sm" className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => { router.push("/register"); setMobileMenuOpen(false); }}>
-                    Get Started Free
+                    Get Started
                   </Button>
                 </div>
               </nav>
@@ -1092,7 +1092,7 @@ export default function LandingPage() {
               Choose your plan
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Start free and upgrade when you need more power. All plans include our core AI features.
+              Simple pricing, powerful features. All plans include our core AI tools.
             </p>
           </div>
 
@@ -1130,7 +1130,7 @@ export default function LandingPage() {
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 onClick={() => router.push("/register")}
               >
-                Start Free Trial
+                Start Trial
               </Button>
             </div>
 
@@ -1356,12 +1356,12 @@ export default function LandingPage() {
               className="text-base px-10 py-6 h-14 bg-white text-blue-600 hover:bg-gray-100 shadow-xl"
               onClick={() => router.push("/register")}
             >
-              Create My Resume Free
+              Create My Resume
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
           <p className="text-sm text-blue-200 mt-6">
-            No credit card required • Free forever plan available
+            No credit card required • Start building in seconds
           </p>
         </div>
       </section>
