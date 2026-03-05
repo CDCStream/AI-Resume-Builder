@@ -628,7 +628,6 @@ export function HowItWorksGuide() {
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const pillNavRef = useRef<HTMLDivElement>(null);
-  const hasMounted = useRef(false);
 
   const scrollToSection = useCallback((index: number) => {
     const el = sectionRefs.current[index];
@@ -662,21 +661,17 @@ export function HowItWorksGuide() {
   }, []);
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      return;
-    }
-    if (!pillNavRef.current) return;
-    const activeBtn = pillNavRef.current.querySelector(
+    const nav = pillNavRef.current;
+    if (!nav) return;
+    const activeBtn = nav.querySelector(
       `[data-pill-index="${activeSection}"]`
-    );
-    if (activeBtn) {
-      (activeBtn as HTMLElement).scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
-    }
+    ) as HTMLElement | null;
+    if (!activeBtn) return;
+    // Only scroll the pill container horizontally — never the page
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    const scrollLeft = nav.scrollLeft + (btnRect.left - navRect.left) - (navRect.width / 2) + (btnRect.width / 2);
+    nav.scrollTo({ left: scrollLeft, behavior: "smooth" });
   }, [activeSection]);
 
   return (
