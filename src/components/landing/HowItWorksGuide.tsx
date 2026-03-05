@@ -137,6 +137,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Watch a realistic eye-tracking heatmap animate across your resume, showing recruiter attention patterns.",
         icon: Eye,
+        videoSrc: "/videos/6-Second-Resume-Scan-Heatmap-Simulation.mp4",
         gifAlt: "Eye-tracking heatmap animation on resume",
       },
       {
