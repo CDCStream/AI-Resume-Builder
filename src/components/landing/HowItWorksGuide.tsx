@@ -145,6 +145,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Receive a readability analysis ensuring your resume is scannable and easy to parse quickly.",
         icon: FileText,
+        videoSrc: "/videos/6-Second-Resume-Scan-Readability-Score.mp4",
         gifAlt: "Resume readability score analysis",
       },
     ],
