@@ -619,6 +619,9 @@ export default function LandingPage() {
         </section>
       </AnimatedGridBackground>
 
+      {/* How It Works */}
+      <HowItWorksGuide />
+
       {/* Logos Section - Orbiting Companies */}
       <section className="py-16 bg-gradient-to-b from-gray-50 to-white border-t border-gray-100 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1015,9 +1018,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* How It Works */}
-      <HowItWorksGuide />
 
       {/* Testimonials */}
       <section className="py-24 bg-white">
