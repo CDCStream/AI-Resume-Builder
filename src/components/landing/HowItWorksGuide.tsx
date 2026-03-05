@@ -183,6 +183,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Get realistic interview questions based on the job description and your resume content.",
         icon: MessageSquare,
+        videoSrc: "/videos/Interview-Preparation-AI-Generated-Questions.mp4",
         gifAlt: "AI generating interview questions",
       },
       {
