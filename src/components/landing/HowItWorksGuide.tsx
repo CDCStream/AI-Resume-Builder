@@ -118,6 +118,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Get instant ATS feedback without a job description — perfect for general resume improvements.",
         icon: Zap,
+        videoSrc: "/videos/ATS-Checker-Quick-Mode.mp4",
         gifAlt: "Quick ATS score check without job description",
       },
     ],
