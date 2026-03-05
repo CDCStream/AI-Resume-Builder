@@ -263,6 +263,14 @@ export default function LandingPage() {
                   Create My Resume
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-base px-8 py-6 h-14 border-gray-300 hover:bg-gray-50 transition-all hover:-translate-y-0.5"
+                  onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  How It Works
+                </Button>
               </div>
 
               {/* Trust indicators */}
