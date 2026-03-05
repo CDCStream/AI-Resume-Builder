@@ -91,6 +91,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Paste the job posting and get a cover letter that mirrors the employer's language and requirements.",
         icon: Target,
+        videoSrc: "/videos/create-cover-letter.mp4",
         gifAlt: "Tailoring cover letter to job description",
       },
     ],
