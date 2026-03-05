@@ -110,6 +110,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Paste a job description and get section-by-section optimization suggestions matched to that role.",
         icon: Target,
+        videoSrc: "/videos/ATS Checker-tailored-mode.mp4",
         gifAlt: "ATS optimization with job description tailoring",
       },
       {
