@@ -164,6 +164,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         description:
           "Search across multiple platforms and filter by role, location, experience level, and more.",
         icon: Search,
+        videoSrc: "/videos/Find-Jobs.mp4",
         gifAlt: "Searching and filtering job listings",
       },
     ],
