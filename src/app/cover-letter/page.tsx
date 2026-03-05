@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
-import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Crown } from "lucide-react";
+import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Crown, Check } from "lucide-react";
 import { ProfessionalCoverLetter } from "@/components/templates/cover-letter";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -88,6 +88,10 @@ function CoverLetterPageContent() {
   const [saveName, setSaveName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedState, setLastSavedState] = useState<string>("");
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [jobDetails, setJobDetails] = useState<{
     title?: string;
     company?: string;
@@ -112,6 +116,7 @@ function CoverLetterPageContent() {
         if (saved) {
           setCoverLetter(saved.coverLetterData);
           setCurrentDocument(saved);
+          setLastSavedState(JSON.stringify(saved.coverLetterData));
         }
       }
     };
@@ -154,6 +159,82 @@ function CoverLetterPageContent() {
       }
     }
   }, [searchParams]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    const currentState = JSON.stringify(coverLetter);
+    if (currentDocument && lastSavedState && currentState !== lastSavedState) {
+      setHasUnsavedChanges(true);
+    }
+  }, [coverLetter, lastSavedState, currentDocument]);
+
+  // Auto-save: update existing doc after 2s, or auto-create new doc when body has content
+  const isAutoSaving = useRef(false);
+  useEffect(() => {
+    if (isAutoSaving.current) return;
+
+    const hasContent = coverLetter.body.trim().length > 0;
+
+    // Existing document: auto-save on changes
+    if (currentDocument && hasUnsavedChanges) {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+      autoSaveTimerRef.current = setTimeout(async () => {
+        isAutoSaving.current = true;
+        setAutoSaveStatus("saving");
+        try {
+          const updated = await updateCoverLetter(currentDocument.id, {
+            name: currentDocument.name,
+            coverLetterData: coverLetter,
+          });
+          if (updated) setCurrentDocument(updated);
+          setLastSavedState(JSON.stringify(coverLetter));
+          setHasUnsavedChanges(false);
+          setAutoSaveStatus("saved");
+          setTimeout(() => setAutoSaveStatus("idle"), 2000);
+        } catch (error) {
+          console.error("Auto-save failed:", error);
+          setAutoSaveStatus("idle");
+        } finally {
+          isAutoSaving.current = false;
+        }
+      }, 2000);
+    }
+
+    // New document: auto-create once body has content
+    if (!currentDocument && hasContent && !documentId) {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+      autoSaveTimerRef.current = setTimeout(async () => {
+        isAutoSaving.current = true;
+        setAutoSaveStatus("saving");
+        try {
+          const autoName = coverLetter.companyName
+            ? `Cover Letter - ${coverLetter.companyName}`
+            : jobDetails?.title
+              ? `Cover Letter - ${jobDetails.title}`
+              : "Cover Letter";
+          const newDoc = await createCoverLetter(autoName, coverLetter, "professional");
+          if (newDoc) {
+            setCurrentDocument(newDoc);
+            setLastSavedState(JSON.stringify(coverLetter));
+            router.replace(`/cover-letter?id=${newDoc.id}`, { scroll: false });
+          }
+          setAutoSaveStatus("saved");
+          setTimeout(() => setAutoSaveStatus("idle"), 2000);
+        } catch (error) {
+          console.error("Auto-save (create) failed:", error);
+          setAutoSaveStatus("idle");
+        } finally {
+          isAutoSaving.current = false;
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [coverLetter, currentDocument, hasUnsavedChanges, updateCoverLetter, createCoverLetter, documentId, jobDetails, router]);
 
   // Auto-fill sender info when resume is selected
   useEffect(() => {
@@ -280,9 +361,12 @@ function CoverLetterPageContent() {
           const newDoc = await createCoverLetter(name, coverLetter, "professional");
           if (newDoc) {
             setCurrentDocument(newDoc);
+            setLastSavedState(JSON.stringify(coverLetter));
             router.push(`/cover-letter?id=${newDoc.id}`, { scroll: false });
           }
         }
+        setLastSavedState(JSON.stringify(coverLetter));
+        setHasUnsavedChanges(false);
         setIsSaveModalOpen(false);
       } catch (err) {
         console.error("Failed to save:", err);
@@ -462,8 +546,20 @@ function CoverLetterPageContent() {
                 <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent line-clamp-1">
                   {currentDocument?.name || "Create Cover Letter"}
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+                <p className="text-xs sm:text-sm text-gray-500 hidden sm:flex items-center gap-2">
                   Generate a personalized cover letter using AI
+                  {autoSaveStatus === "saving" && (
+                    <span className="flex items-center gap-1 text-blue-500 animate-pulse">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Auto-saving...
+                    </span>
+                  )}
+                  {autoSaveStatus === "saved" && (
+                    <span className="flex items-center gap-1 text-green-600">
+                      <Check className="h-3 w-3" />
+                      Auto-saved
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
