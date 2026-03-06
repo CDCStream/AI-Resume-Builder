@@ -247,15 +247,34 @@ interface FaceBBox {
   h: number;
 }
 
+// Deduplicate images by size — full-page PDFs often have identical-sized page layers
+function deduplicateByPage(images: ExtractedImage[]): ExtractedImage[] {
+  const seen = new Map<string, ExtractedImage>();
+  for (const img of images) {
+    const key = `${img.width}x${img.height}`;
+    if (!seen.has(key)) {
+      seen.set(key, img);
+    }
+  }
+  // If all images are the same size (full-page renders), only send the first one
+  if (seen.size === 1 && images.length > 1) {
+    console.log(`All ${images.length} images are same size — using only the first (page 1)`);
+    return [images[0]];
+  }
+  return images;
+}
+
 // Ask Claude Vision to find a human face and return its bounding box
 async function detectFaceWithAI(
   images: ExtractedImage[]
 ): Promise<FaceBBox | null> {
   if (images.length === 0) return null;
 
-  const candidates = images.slice(0, 5);
+  const unique = deduplicateByPage(images);
+  const candidates = unique.slice(0, 3);
+
   for (const c of candidates) {
-    console.log(`Candidate image: ${c.width}x${c.height}`);
+    console.log(`Sending to Claude Vision: ${c.width}x${c.height}`);
   }
 
   try {
@@ -277,21 +296,21 @@ async function detectFaceWithAI(
 
     content.push({
       type: "text",
-      text: `I extracted these image(s) from a PDF resume. I need to find the profile/headshot photograph of a person.
+      text: `These images are extracted from a PDF resume. Find the profile/headshot PHOTOGRAPH of a person.
 
-RULES:
-- Look for a PHOTOGRAPH of a real human person (face clearly visible)
-- If an image IS a standalone portrait photo (just a person's photo), return its bounding box as the full image: x=0, y=0, w=100, h=100
-- If an image is a full resume PAGE that contains a small profile photo somewhere, return the bounding box of JUST the photo area within that page
-- Do NOT select images that are icons, logos, backgrounds, or decorative graphics
-- Do NOT select text areas, charts, or diagrams
-- Only select if you can clearly see a human face
+The photo is often circular or rectangular, typically in a corner of the resume page.
+It shows a person's face and possibly shoulders.
+
+Return the TIGHT bounding box around the photo area.
+
+Example: if the photo is in the top-left corner of a full resume page, it might be approximately:
+{"image": 1, "x": 1, "y": 1, "w": 15, "h": 13}
 
 Reply with ONLY valid JSON:
 {"image": <number>, "x": <left_percent>, "y": <top_percent>, "w": <width_percent>, "h": <height_percent>}
 
-Percentages are 0-100 relative to that image's dimensions.
-If NO image contains a human face photograph, reply: {"image": 0}`,
+All values are percentages (0-100) of the image dimensions.
+If NO human face photo exists, reply: {"image": 0}`,
     });
 
     const message = await anthropic.messages.create({
@@ -316,8 +335,11 @@ If NO image contains a human face photograph, reply: {"image": 0}`,
     const idx = parsed.image - 1;
     if (idx < 0 || idx >= candidates.length) return null;
 
+    // Map back to original image index
+    const originalIdx = images.indexOf(candidates[idx]);
+
     return {
-      imageIndex: idx,
+      imageIndex: originalIdx >= 0 ? originalIdx : idx,
       x: Math.max(0, parsed.x ?? 0),
       y: Math.max(0, parsed.y ?? 0),
       w: Math.min(100, parsed.w ?? 100),
@@ -348,14 +370,24 @@ async function cropProfilePhoto(
     return `data:image/jpeg;base64,${resized.toString("base64")}`;
   }
 
-  const left = Math.round((image.width * bbox.x) / 100);
-  const top = Math.round((image.height * bbox.y) / 100);
-  let width = Math.round((image.width * bbox.w) / 100);
-  let height = Math.round((image.height * bbox.h) / 100);
+  // Add 20% padding around the detected area for safety
+  const padX = bbox.w * 0.2;
+  const padY = bbox.h * 0.2;
 
-  // Clamp to image bounds
+  const x = Math.max(0, bbox.x - padX);
+  const y = Math.max(0, bbox.y - padY);
+  const w = Math.min(100 - x, bbox.w + padX * 2);
+  const h = Math.min(100 - y, bbox.h + padY * 2);
+
+  const left = Math.round((image.width * x) / 100);
+  const top = Math.round((image.height * y) / 100);
+  let width = Math.round((image.width * w) / 100);
+  let height = Math.round((image.height * h) / 100);
+
   width = Math.min(width, image.width - left);
   height = Math.min(height, image.height - top);
+
+  console.log(`Cropping: left=${left} top=${top} w=${width} h=${height} (with padding)`);
 
   if (width < 20 || height < 20) {
     return image.dataUri;
