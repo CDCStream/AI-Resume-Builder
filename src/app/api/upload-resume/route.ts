@@ -287,6 +287,85 @@ async function askClaudeWhichTileHasFace(
   }
 }
 
+// Pass 3: Ask Claude for exact profile photo bounds and crop tightly
+async function refineProfilePhotoCrop(
+  imageBuffer: Buffer,
+  imgWidth: number,
+  imgHeight: number
+): Promise<Buffer> {
+  const sharp = (await import("sharp")).default;
+
+  try {
+    const previewBuf = await sharp(imageBuffer)
+      .resize(400, 400, { fit: "inside" })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+
+    const message = await anthropic.messages.create({
+      model: PRIMARY_MODEL,
+      max_tokens: 20,
+      system:
+        "You are a bounding box detector. Output ONLY numbers separated by spaces, no words.",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/jpeg",
+                data: previewBuf.toString("base64"),
+              },
+            },
+            {
+              type: "text",
+              text: "Profile photo bounding box as: left% top% width% height%",
+            },
+          ],
+        },
+      ],
+    });
+
+    const response =
+      message.content[0].type === "text"
+        ? message.content[0].text.trim()
+        : "";
+    console.log("Pass 3 refinement response:", response);
+
+    const nums = response.match(/\d+/g);
+    if (!nums || nums.length < 4) return imageBuffer;
+
+    const [lPct, tPct, wPct, hPct] = nums.map(Number);
+    if (wPct < 20 || hPct < 20 || wPct > 100 || hPct > 100) return imageBuffer;
+
+    let cropLeft = Math.round((imgWidth * lPct) / 100);
+    let cropTop = Math.round((imgHeight * tPct) / 100);
+    let cropW = Math.round((imgWidth * wPct) / 100);
+    let cropH = Math.round((imgHeight * hPct) / 100);
+
+    // Clamp to image bounds
+    cropW = Math.min(cropW, imgWidth - cropLeft);
+    cropH = Math.min(cropH, imgHeight - cropTop);
+
+    // Make square, centered on the detected area
+    const cropSide = Math.min(cropW, cropH);
+    cropLeft += Math.floor((cropW - cropSide) / 2);
+    cropTop += Math.floor((cropH - cropSide) / 2);
+
+    if (cropSide < 20) return imageBuffer;
+
+    console.log(`Pass 3 crop: left=${cropLeft} top=${cropTop} ${cropSide}x${cropSide}`);
+
+    return await sharp(imageBuffer)
+      .extract({ left: cropLeft, top: cropTop, width: cropSide, height: cropSide })
+      .toBuffer();
+  } catch (error) {
+    console.error("Pass 3 refinement error:", error);
+    return imageBuffer;
+  }
+}
+
 // Two-pass grid face detection with overlapping Pass 2 to avoid boundary cuts
 async function findFaceByGrid(
   imageBuffer: Buffer,
@@ -368,15 +447,21 @@ async function findFaceByGrid(
     w: side,
     h: side,
   };
-  console.log(`Final crop: left=${squareArea.left} top=${squareArea.top} ${squareArea.w}x${squareArea.h}`);
+  console.log(`Square crop: left=${squareArea.left} top=${squareArea.top} ${squareArea.w}x${squareArea.h}`);
 
-  const cropped = await sharp(imageBuffer)
+  const squareBuf = await sharp(imageBuffer)
     .extract({ left: squareArea.left, top: squareArea.top, width: squareArea.w, height: squareArea.h })
+    .toBuffer();
+
+  // Pass 3: Refine — ask Claude for the exact profile photo bounds within the square crop
+  const refined = await refineProfilePhotoCrop(squareBuf, squareArea.w, squareArea.h);
+
+  const finalBuf = await sharp(refined)
     .resize(400, 400, { fit: "cover" })
     .jpeg({ quality: 85 })
     .toBuffer();
 
-  return `data:image/jpeg;base64,${cropped.toString("base64")}`;
+  return `data:image/jpeg;base64,${finalBuf.toString("base64")}`;
 }
 
 // Full pipeline: PDF → extract images → grid-based face detection → crop
