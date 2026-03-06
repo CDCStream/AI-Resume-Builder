@@ -287,7 +287,7 @@ async function askClaudeWhichTileHasFace(
   }
 }
 
-// Single-pass grid face detection: split image into 4x4 tiles, ask Claude which has a face
+// Two-pass grid face detection with overlapping Pass 2 to avoid boundary cuts
 async function findFaceByGrid(
   imageBuffer: Buffer,
   imgWidth: number,
@@ -295,16 +295,16 @@ async function findFaceByGrid(
 ): Promise<string | null> {
   const sharp = (await import("sharp")).default;
 
-  const cols = 4;
-  const rows = 4;
-  const tileW = Math.floor(imgWidth / cols);
-  const tileH = Math.floor(imgHeight / rows);
+  // Pass 1: 4x4 non-overlapping grid (16 tiles) → coarse location
+  const cols1 = 4, rows1 = 4;
+  const tileW = Math.floor(imgWidth / cols1);
+  const tileH = Math.floor(imgHeight / rows1);
 
-  const tiles: Buffer[] = [];
-  const coords: { left: number; top: number; w: number; h: number }[] = [];
+  const tiles1: Buffer[] = [];
+  const coords1: { left: number; top: number; w: number; h: number }[] = [];
 
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
+  for (let row = 0; row < rows1; row++) {
+    for (let col = 0; col < cols1; col++) {
       const left = col * tileW;
       const top = row * tileH;
       const tile = await sharp(imageBuffer)
@@ -312,23 +312,57 @@ async function findFaceByGrid(
         .resize(200, 200, { fit: "inside" })
         .jpeg({ quality: 70 })
         .toBuffer();
-      tiles.push(tile);
-      coords.push({ left, top, w: tileW, h: tileH });
+      tiles1.push(tile);
+      coords1.push({ left, top, w: tileW, h: tileH });
     }
   }
 
-  console.log(`Grid: ${cols}x${rows} = ${tiles.length} tiles, each ~${tileW}x${tileH}`);
-  const winner = await askClaudeWhichTileHasFace(tiles);
-  if (winner === -1) {
-    console.log("No face found in any tile");
+  console.log(`Pass 1: ${cols1}x${rows1} grid, tile ~${tileW}x${tileH}`);
+  const winner1 = await askClaudeWhichTileHasFace(tiles1);
+  if (winner1 === -1) {
+    console.log("Pass 1: No face found");
     return null;
   }
 
-  const area = coords[winner];
-  console.log(`Face in tile ${winner + 1}: left=${area.left} top=${area.top} w=${area.w} h=${area.h}`);
+  const w1 = coords1[winner1];
+  console.log(`Pass 1 winner: tile ${winner1 + 1} at (${w1.left}, ${w1.top})`);
+
+  // Pass 2: 3x3 overlapping grid on the winning tile
+  // Sub-tile = 50% of winner size, step = 25% → 50% overlap between neighbors
+  const subW = Math.floor(w1.w / 2);
+  const subH = Math.floor(w1.h / 2);
+  const stepX = Math.floor(w1.w / 4);
+  const stepY = Math.floor(w1.h / 4);
+
+  const tiles2: Buffer[] = [];
+  const coords2: { left: number; top: number; w: number; h: number }[] = [];
+
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      const left = w1.left + c * stepX;
+      const top = w1.top + r * stepY;
+      const actualW = Math.min(subW, imgWidth - left);
+      const actualH = Math.min(subH, imgHeight - top);
+      if (actualW < 10 || actualH < 10) continue;
+
+      const tile = await sharp(imageBuffer)
+        .extract({ left, top, width: actualW, height: actualH })
+        .resize(200, 200, { fit: "inside" })
+        .jpeg({ quality: 70 })
+        .toBuffer();
+      tiles2.push(tile);
+      coords2.push({ left, top, w: actualW, h: actualH });
+    }
+  }
+
+  console.log(`Pass 2: 3x3 overlapping grid, sub-tile ~${subW}x${subH}, step ${stepX}x${stepY}`);
+  const winner2 = await askClaudeWhichTileHasFace(tiles2);
+
+  const finalArea = winner2 >= 0 ? coords2[winner2] : w1;
+  console.log(`Final crop: left=${finalArea.left} top=${finalArea.top} w=${finalArea.w} h=${finalArea.h}`);
 
   const cropped = await sharp(imageBuffer)
-    .extract({ left: area.left, top: area.top, width: area.w, height: area.h })
+    .extract({ left: finalArea.left, top: finalArea.top, width: finalArea.w, height: finalArea.h })
     .resize(400, 400, { fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 85 })
     .toBuffer();
