@@ -218,6 +218,35 @@ CREATE POLICY "Users can insert own feedback" ON public.feedback
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- =====================================================
+-- 7. Blog Posts Table
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.blog_posts (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  author TEXT DEFAULT 'Sarah Chen',
+  image TEXT DEFAULT '',
+  tags TEXT[] DEFAULT '{}',
+  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+  published_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON public.blog_posts(slug);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON public.blog_posts(status);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_published_at ON public.blog_posts(published_at DESC);
+
+-- No RLS — blog posts are public reads, admin writes via service role key
+
+DROP TRIGGER IF EXISTS set_blog_posts_updated_at ON public.blog_posts;
+CREATE TRIGGER set_blog_posts_updated_at
+  BEFORE UPDATE ON public.blog_posts
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =====================================================
 -- Verification: Check tables created
 -- =====================================================
 -- Run this to verify:
