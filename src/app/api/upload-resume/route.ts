@@ -70,20 +70,7 @@ const PRIMARY_MODEL = "claude-sonnet-4-6";
 const FALLBACK_MODEL = "claude-sonnet-4-20250514";
 const FINAL_FALLBACK_MODEL = "claude-sonnet-4-5-20250514";
 
-// Parse resume using Claude AI
-async function parseResumeWithAI(text: string, model: string = PRIMARY_MODEL): Promise<Resume> {
-  console.log(`=== Starting AI Parse (model: ${model}) ===`);
-  console.log("Text length:", text.length);
-  console.log("First 500 chars:", text.substring(0, 500));
-
-  try {
-    const message = await withRetry(() => anthropic.messages.create({
-      model,
-      max_tokens: 8192,
-      messages: [
-        {
-          role: "user",
-          content: `You are an expert CV/Resume parser. Extract ALL information from this resume into structured JSON.
+const RESUME_PARSE_PROMPT = `You are an expert CV/Resume parser. Extract ALL information from this resume into structured JSON.
 
 EXTRACTION RULES:
 1. Extract EVERYTHING - do not skip any section
@@ -174,14 +161,76 @@ JSON SCHEMA:
   "hobbies": [
     { "name": "hobby name", "description": "" }
   ]
+}`;
+
+function cleanAIResponse(responseText: string): Resume {
+  let cleaned = responseText.trim();
+  if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
+  else if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
+  if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+  cleaned = cleaned.trim();
+  return JSON.parse(cleaned) as Resume;
 }
 
-RESUME TEXT:
-"""
-${text}
-"""
+async function parseResumeFromPDFDocument(
+  pdfBuffer: Buffer,
+  model: string = PRIMARY_MODEL
+): Promise<Resume> {
+  console.log(`=== Starting PDF Document Parse (model: ${model}) ===`);
+  const base64PDF = pdfBuffer.toString("base64");
 
-Parse the above resume and return the complete JSON object:`
+  const message = await withRetry(() =>
+    anthropic.messages.create({
+      model,
+      max_tokens: 8192,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "document",
+              source: {
+                type: "base64",
+                media_type: "application/pdf",
+                data: base64PDF,
+              },
+            },
+            {
+              type: "text",
+              text: `${RESUME_PARSE_PROMPT}\n\nParse the resume from the PDF above and return the complete JSON object:`,
+            },
+          ],
+        },
+      ],
+    })
+  );
+
+  const responseText = message.content
+    .filter((block): block is Anthropic.TextBlock => block.type === "text")
+    .map((block) => block.text)
+    .join("");
+
+  console.log("PDF Document parse response length:", responseText.length);
+  const parsedResume = cleanAIResponse(responseText);
+  console.log("=== PDF Document Parse Success ===");
+  console.log("Parsed name:", parsedResume.basics?.name);
+  return parsedResume;
+}
+
+// Parse resume using Claude AI (text-based)
+async function parseResumeWithAI(text: string, model: string = PRIMARY_MODEL): Promise<Resume> {
+  console.log(`=== Starting AI Parse (model: ${model}) ===`);
+  console.log("Text length:", text.length);
+  console.log("First 500 chars:", text.substring(0, 500));
+
+  try {
+    const message = await withRetry(() => anthropic.messages.create({
+      model,
+      max_tokens: 8192,
+      messages: [
+        {
+          role: "user",
+          content: `${RESUME_PARSE_PROMPT}\n\nRESUME TEXT:\n"""\n${text}\n"""\n\nParse the above resume and return the complete JSON object:`
         }
       ]
     }));
@@ -189,7 +238,6 @@ Parse the above resume and return the complete JSON object:`
     console.log("Claude API response received");
     console.log("Stop reason:", message.stop_reason);
 
-    // Extract text content from response
     const responseText = message.content
       .filter((block): block is Anthropic.TextBlock => block.type === "text")
       .map(block => block.text)
@@ -198,20 +246,7 @@ Parse the above resume and return the complete JSON object:`
     console.log("Response length:", responseText.length);
     console.log("Response preview:", responseText.substring(0, 500));
 
-    // Clean up the response - remove markdown code blocks if present
-    let cleanedResponse = responseText.trim();
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.slice(7);
-    } else if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(3);
-    }
-    if (cleanedResponse.endsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(0, -3);
-    }
-    cleanedResponse = cleanedResponse.trim();
-
-    // Parse the JSON
-    const parsedResume = JSON.parse(cleanedResponse) as Resume;
+    const parsedResume = cleanAIResponse(responseText);
     
     console.log("=== AI Parse Success ===");
     console.log("Parsed name:", parsedResume.basics?.name);
@@ -443,7 +478,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!text || text.trim().length < 50) {
+    const isPDF = fileName.endsWith(".pdf");
+    const textExtractionFailed = !text || text.trim().length < 50;
+
+    if (textExtractionFailed && !isPDF) {
       return NextResponse.json(
         { error: "Could not extract text from the file. The file may be empty or image-based." },
         { status: 400 }
@@ -453,9 +491,13 @@ export async function POST(request: NextRequest) {
     console.log("=== Resume Upload ===");
     console.log("File:", file.name);
     console.log("Extracted text length:", text.length);
-    console.log("=== Extracted Text Preview ===");
-    console.log(text.substring(0, 1500));
-    console.log("=== End Preview ===");
+    if (!textExtractionFailed) {
+      console.log("=== Extracted Text Preview ===");
+      console.log(text.substring(0, 1500));
+      console.log("=== End Preview ===");
+    } else {
+      console.log("Text extraction failed/insufficient, will use PDF document parsing");
+    }
 
     // Try AI parsing with validation and retry
     let resume: Resume;
@@ -463,9 +505,35 @@ export async function POST(request: NextRequest) {
     let validationResult = { isValid: false, score: 0, issues: [] as string[] };
 
     if (!process.env.ANTHROPIC_API_KEY) {
+      if (textExtractionFailed) {
+        return NextResponse.json(
+          { error: "Could not extract text from the file. The file may be empty or image-based." },
+          { status: 400 }
+        );
+      }
       console.log("No ANTHROPIC_API_KEY found, using fallback parser");
       resume = parseResumeTextFallback(text);
       parseMethod = "fallback-no-api-key";
+    } else if (textExtractionFailed && isPDF) {
+      console.log("Using PDF document parsing (text extraction failed)...");
+      try {
+        resume = await parseResumeFromPDFDocument(buffer, PRIMARY_MODEL);
+        parseMethod = "ai-pdf-document-direct";
+        validationResult = validateParsedResume(resume, "");
+      } catch (pdfDocError) {
+        console.error("PDF document parsing with primary model failed:", pdfDocError);
+        try {
+          resume = await parseResumeFromPDFDocument(buffer, FALLBACK_MODEL);
+          parseMethod = "ai-pdf-document-fallback";
+          validationResult = validateParsedResume(resume, "");
+        } catch (fallbackErr) {
+          console.error("PDF document parsing with fallback model also failed:", fallbackErr);
+          return NextResponse.json(
+            { error: "Could not parse the PDF. The file may be corrupted or empty." },
+            { status: 400 }
+          );
+        }
+      }
     } else {
       // First attempt with primary model
       try {
