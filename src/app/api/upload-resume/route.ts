@@ -115,84 +115,132 @@ function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
   return images;
 }
 
-// Use Claude Vision to identify which image contains a human face
-async function identifyProfilePhotoWithAI(
+interface FaceBBox {
+  imageIndex: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+// Ask Claude Vision to find a human face and return its bounding box
+async function detectFaceWithAI(
   images: ExtractedImage[]
-): Promise<string | null> {
+): Promise<FaceBBox | null> {
   if (images.length === 0) return null;
 
-  // Limit to 5 candidates to keep costs low
   const candidates = images.slice(0, 5);
+  for (const c of candidates) {
+    console.log(`Candidate image: ${c.width}x${c.height}`);
+  }
 
   try {
     const content: Anthropic.MessageCreateParams["messages"][0]["content"] = [];
 
-    if (candidates.length === 1) {
+    for (let i = 0; i < candidates.length; i++) {
       content.push(
+        { type: "text", text: `Image ${i + 1} (${candidates[i].width}x${candidates[i].height}px):` },
         {
           type: "image",
           source: {
             type: "base64",
-            media_type: candidates[0].mediaType,
-            data: candidates[0].rawBase64,
+            media_type: candidates[i].mediaType,
+            data: candidates[i].rawBase64,
           },
-        },
-        {
-          type: "text",
-          text: "Does this image contain a human face or portrait/headshot photo? Reply with ONLY 'yes' or 'no'.",
         }
       );
-    } else {
-      for (let i = 0; i < candidates.length; i++) {
-        content.push(
-          { type: "text", text: `Image ${i + 1}:` },
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: candidates[i].mediaType,
-              data: candidates[i].rawBase64,
-            },
-          }
-        );
-      }
-      content.push({
-        type: "text",
-        text: "Which image number contains a human face/portrait/headshot photo? Reply with ONLY the number (e.g. '1' or '2'). If none contains a human face, reply 'none'.",
-      });
     }
+
+    content.push({
+      type: "text",
+      text: `Look at the image(s) above. Find the human portrait/headshot photo area.
+It may be a standalone photo OR embedded inside a larger document/resume page.
+Return the bounding box of the PROFILE PHOTO area (the full portrait, not just the face — include head, shoulders, and any background of the photo).
+
+Reply with ONLY valid JSON, no other text:
+{"image": <image_number>, "x": <left_percent>, "y": <top_percent>, "w": <width_percent>, "h": <height_percent>}
+
+All values are percentages (0-100) relative to that image's dimensions.
+If there is no human face in any image, reply: {"image": 0}`,
+    });
 
     const message = await anthropic.messages.create({
       model: PRIMARY_MODEL,
-      max_tokens: 50,
+      max_tokens: 100,
       messages: [{ role: "user", content }],
     });
 
     const response =
       message.content[0].type === "text"
-        ? message.content[0].text.trim().toLowerCase()
+        ? message.content[0].text.trim()
         : "";
 
     console.log("Claude Vision face detection response:", response);
 
-    if (candidates.length === 1) {
-      return response.includes("yes") ? candidates[0].dataUri : null;
-    }
+    const jsonMatch = response.match(/\{[^}]+\}/);
+    if (!jsonMatch) return null;
 
-    if (response === "none") return null;
-    const index = parseInt(response) - 1;
-    if (index >= 0 && index < candidates.length) {
-      return candidates[index].dataUri;
-    }
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed.image || parsed.image === 0) return null;
 
-    return null;
+    const idx = parsed.image - 1;
+    if (idx < 0 || idx >= candidates.length) return null;
+
+    return {
+      imageIndex: idx,
+      x: Math.max(0, parsed.x ?? 0),
+      y: Math.max(0, parsed.y ?? 0),
+      w: Math.min(100, parsed.w ?? 100),
+      h: Math.min(100, parsed.h ?? 100),
+    };
   } catch (error) {
     console.error("AI face detection error:", error);
     return null;
   }
 }
 
-// Full pipeline: extract images → identify human face with AI
+// Crop the detected face region from the image using sharp
+async function cropProfilePhoto(
+  image: ExtractedImage,
+  bbox: FaceBBox
+): Promise<string> {
+  const sharp = (await import("sharp")).default;
+  const buffer = Buffer.from(image.rawBase64, "base64");
+
+  const isFullImage =
+    bbox.x <= 1 && bbox.y <= 1 && bbox.w >= 99 && bbox.h >= 99;
+
+  if (isFullImage) {
+    const resized = await sharp(buffer)
+      .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+    return `data:image/jpeg;base64,${resized.toString("base64")}`;
+  }
+
+  const left = Math.round((image.width * bbox.x) / 100);
+  const top = Math.round((image.height * bbox.y) / 100);
+  let width = Math.round((image.width * bbox.w) / 100);
+  let height = Math.round((image.height * bbox.h) / 100);
+
+  // Clamp to image bounds
+  width = Math.min(width, image.width - left);
+  height = Math.min(height, image.height - top);
+
+  if (width < 20 || height < 20) {
+    return image.dataUri;
+  }
+
+  const cropped = await sharp(buffer)
+    .extract({ left, top, width, height })
+    .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+
+  return `data:image/jpeg;base64,${cropped.toString("base64")}`;
+}
+
+// Full pipeline: PDF → extract images → Claude Vision (find face bbox) → sharp (crop)
 async function extractProfilePhotoFromPDF(
   pdfBuffer: Buffer
 ): Promise<string | null> {
@@ -207,7 +255,6 @@ async function extractProfilePhotoFromPDF(
     }
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      // Without AI, fall back to picking the image with the most portrait-like aspect ratio
       const portrait = images
         .filter((img) => {
           const ratio = img.width / img.height;
@@ -217,13 +264,23 @@ async function extractProfilePhotoFromPDF(
       return portrait.length > 0 ? portrait[0].dataUri : null;
     }
 
-    const profilePhoto = await identifyProfilePhotoWithAI(images);
-    if (profilePhoto) {
-      console.log("Profile photo identified by AI");
-    } else {
-      console.log("AI did not identify any profile photo");
+    const detection = await detectFaceWithAI(images);
+    if (!detection) {
+      console.log("No face detected in any image");
+      return null;
     }
-    return profilePhoto;
+
+    console.log(
+      `Face detected in image ${detection.imageIndex + 1}: ` +
+        `x=${detection.x}% y=${detection.y}% w=${detection.w}% h=${detection.h}%`
+    );
+
+    const photo = await cropProfilePhoto(
+      images[detection.imageIndex],
+      detection
+    );
+    console.log("Profile photo cropped successfully");
+    return photo;
   } catch (error) {
     console.error("Profile photo extraction error:", error);
     return null;
