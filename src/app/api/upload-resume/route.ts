@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resume } from "@/lib/types/resume";
 import Anthropic from "@anthropic-ai/sdk";
 import { PDFDocument, PDFName, PDFRawStream, PDFDict, PDFArray, PDFNumber } from "pdf-lib";
+import { inflateSync } from "zlib";
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -40,11 +41,19 @@ interface ExtractedImage {
   height: number;
 }
 
-// Recursively extract images from an XObject dictionary (handles Form XObjects)
-function extractImagesFromXObjectDict(
+interface RawPDFImage {
+  contents: Uint8Array;
+  filter: string;
+  width: number;
+  height: number;
+  channels: number;
+}
+
+// Recursively collect raw image data from XObject dictionaries
+function collectRawImages(
   pdfDoc: PDFDocument,
   xObjectDict: PDFDict,
-  images: ExtractedImage[],
+  rawImages: RawPDFImage[],
   visited: Set<string>,
   depth: number = 0
 ): void {
@@ -64,7 +73,6 @@ function extractImagesFromXObjectDict(
       const subtype = dict.get(PDFName.of("Subtype"));
       if (!subtype) continue;
 
-      // Recurse into Form XObjects to find nested images
       if (subtype === PDFName.of("Form")) {
         const formResources = dict.get(PDFName.of("Resources"));
         if (formResources) {
@@ -74,7 +82,7 @@ function extractImagesFromXObjectDict(
             if (nestedXObjRef) {
               const nestedXObjDict = pdfDoc.context.lookup(nestedXObjRef) as PDFDict;
               if (nestedXObjDict && typeof nestedXObjDict.entries === "function") {
-                extractImagesFromXObjectDict(pdfDoc, nestedXObjDict, images, visited, depth + 1);
+                collectRawImages(pdfDoc, nestedXObjDict, rawImages, visited, depth + 1);
               }
             }
           }
@@ -88,8 +96,11 @@ function extractImagesFromXObjectDict(
       const heightObj = dict.get(PDFName.of("Height"));
       const width = widthObj instanceof PDFNumber ? widthObj.asNumber() : 0;
       const height = heightObj instanceof PDFNumber ? heightObj.asNumber() : 0;
-
       if (width < 50 || height < 50) continue;
+
+      const bitsObj = dict.get(PDFName.of("BitsPerComponent"));
+      const bits = bitsObj instanceof PDFNumber ? bitsObj.asNumber() : 8;
+      if (bits !== 8) continue;
 
       const filter = dict.get(PDFName.of("Filter"));
       let filterName = "";
@@ -100,16 +111,27 @@ function extractImagesFromXObjectDict(
         if (last instanceof PDFName) filterName = last.decodeText();
       }
 
-      if (filterName === "DCTDecode" || filterName === "JPXDecode") {
-        const rawBase64 = Buffer.from(stream.contents).toString("base64");
-        images.push({
-          dataUri: `data:image/jpeg;base64,${rawBase64}`,
-          rawBase64,
-          mediaType: "image/jpeg",
+      let channels = 3;
+      const colorSpace = dict.get(PDFName.of("ColorSpace"));
+      if (colorSpace instanceof PDFName) {
+        const cs = colorSpace.decodeText();
+        if (cs === "DeviceGray") channels = 1;
+        else if (cs === "DeviceCMYK") channels = 4;
+      }
+
+      if (
+        filterName === "DCTDecode" ||
+        filterName === "JPXDecode" ||
+        filterName === "FlateDecode"
+      ) {
+        rawImages.push({
+          contents: stream.contents,
+          filter: filterName,
           width,
           height,
+          channels,
         });
-        console.log(`Found ${filterName === "DCTDecode" ? "JPEG" : "JPEG2000"} image: ${width}x${height} (depth ${depth})`);
+        console.log(`Found ${filterName} image: ${width}x${height} ch=${channels} (depth ${depth})`);
       }
     } catch {
       continue;
@@ -117,8 +139,10 @@ function extractImagesFromXObjectDict(
   }
 }
 
-// Extract all images from PDF first page (including nested Form XObjects)
-function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
+// Convert raw PDF image data to ExtractedImage using sharp for FlateDecode
+async function extractAllImagesFromPDF(
+  pdfDoc: PDFDocument
+): Promise<ExtractedImage[]> {
   const pages = pdfDoc.getPages();
   if (pages.length === 0) return [];
 
@@ -133,11 +157,85 @@ function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
   const xObjectDict = pdfDoc.context.lookup(xObjectRef) as PDFDict;
   if (!xObjectDict || typeof xObjectDict.entries !== "function") return [];
 
-  const images: ExtractedImage[] = [];
+  const rawImages: RawPDFImage[] = [];
   const visited = new Set<string>();
-  extractImagesFromXObjectDict(pdfDoc, xObjectDict, images, visited);
+  collectRawImages(pdfDoc, xObjectDict, rawImages, visited);
 
-  console.log(`Total extractable images found: ${images.length}`);
+  console.log(`Raw images collected: ${rawImages.length}`);
+
+  const sharp = (await import("sharp")).default;
+  const images: ExtractedImage[] = [];
+
+  for (const raw of rawImages) {
+    try {
+      if (raw.filter === "DCTDecode" || raw.filter === "JPXDecode") {
+        const rawBase64 = Buffer.from(raw.contents).toString("base64");
+        images.push({
+          dataUri: `data:image/jpeg;base64,${rawBase64}`,
+          rawBase64,
+          mediaType: "image/jpeg",
+          width: raw.width,
+          height: raw.height,
+        });
+      } else if (raw.filter === "FlateDecode") {
+        const decompressed = inflateSync(Buffer.from(raw.contents));
+        const expectedSize = raw.width * raw.height * raw.channels;
+
+        if (decompressed.length < expectedSize) {
+          console.log(
+            `FlateDecode size mismatch: got ${decompressed.length}, expected ${expectedSize} — trying with PNG predictor`
+          );
+          // PNG predictor adds 1 byte per row
+          const withPredictor = raw.width * raw.channels + 1;
+          const predictedSize = withPredictor * raw.height;
+          if (decompressed.length >= predictedSize) {
+            // Remove PNG predictor bytes (first byte of each row)
+            const cleaned = Buffer.alloc(expectedSize);
+            for (let row = 0; row < raw.height; row++) {
+              const srcOffset = row * withPredictor + 1;
+              const dstOffset = row * raw.width * raw.channels;
+              decompressed.copy(cleaned, dstOffset, srcOffset, srcOffset + raw.width * raw.channels);
+            }
+            const jpegBuf = await sharp(cleaned, {
+              raw: { width: raw.width, height: raw.height, channels: raw.channels as 1 | 3 | 4 },
+            })
+              .jpeg({ quality: 85 })
+              .toBuffer();
+            const rawBase64 = jpegBuf.toString("base64");
+            images.push({
+              dataUri: `data:image/jpeg;base64,${rawBase64}`,
+              rawBase64,
+              mediaType: "image/jpeg",
+              width: raw.width,
+              height: raw.height,
+            });
+            console.log(`Decoded FlateDecode+predictor image: ${raw.width}x${raw.height}`);
+          }
+          continue;
+        }
+
+        const jpegBuf = await sharp(decompressed.subarray(0, expectedSize), {
+          raw: { width: raw.width, height: raw.height, channels: raw.channels as 1 | 3 | 4 },
+        })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+        const rawBase64 = jpegBuf.toString("base64");
+        images.push({
+          dataUri: `data:image/jpeg;base64,${rawBase64}`,
+          rawBase64,
+          mediaType: "image/jpeg",
+          width: raw.width,
+          height: raw.height,
+        });
+        console.log(`Decoded FlateDecode image: ${raw.width}x${raw.height}`);
+      }
+    } catch (e) {
+      console.log(`Failed to process image (${raw.filter} ${raw.width}x${raw.height}): ${e}`);
+      continue;
+    }
+  }
+
+  console.log(`Total usable images: ${images.length}`);
   return images;
 }
 
@@ -280,7 +378,7 @@ async function extractProfilePhotoFromPDF(
     const pdfDoc = await PDFDocument.load(pdfBuffer, {
       ignoreEncryption: true,
     });
-    const images = extractAllImagesFromPDF(pdfDoc);
+    const images = await extractAllImagesFromPDF(pdfDoc);
     if (images.length === 0) {
       console.log("No suitable images found in PDF");
       return null;
