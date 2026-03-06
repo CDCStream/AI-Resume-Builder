@@ -40,34 +40,49 @@ interface ExtractedImage {
   height: number;
 }
 
-// Extract all images from PDF first page using pdf-lib
-function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
-  const pages = pdfDoc.getPages();
-  if (pages.length === 0) return [];
-
-  const page = pages[0];
-  const resources = page.node.get(PDFName.of("Resources"));
-  if (!resources) return [];
-
-  const resourcesDict = pdfDoc.context.lookup(resources) as PDFDict;
-  const xObjectRef = resourcesDict.get(PDFName.of("XObject"));
-  if (!xObjectRef) return [];
-
-  const xObjectDict = pdfDoc.context.lookup(xObjectRef) as PDFDict;
-  if (!xObjectDict || typeof xObjectDict.entries !== "function") return [];
-
-  const images: ExtractedImage[] = [];
+// Recursively extract images from an XObject dictionary (handles Form XObjects)
+function extractImagesFromXObjectDict(
+  pdfDoc: PDFDocument,
+  xObjectDict: PDFDict,
+  images: ExtractedImage[],
+  visited: Set<string>,
+  depth: number = 0
+): void {
+  if (depth > 5) return;
 
   for (const [, ref] of xObjectDict.entries()) {
     try {
+      const refStr = ref.toString();
+      if (visited.has(refStr)) continue;
+      visited.add(refStr);
+
       const xObj = pdfDoc.context.lookup(ref);
       if (!xObj || !("dict" in xObj)) continue;
 
       const stream = xObj as PDFRawStream;
       const dict = stream.dict;
-
       const subtype = dict.get(PDFName.of("Subtype"));
-      if (!subtype || subtype !== PDFName.of("Image")) continue;
+      if (!subtype) continue;
+
+      // Recurse into Form XObjects to find nested images
+      if (subtype === PDFName.of("Form")) {
+        const formResources = dict.get(PDFName.of("Resources"));
+        if (formResources) {
+          const formResDict = pdfDoc.context.lookup(formResources) as PDFDict;
+          if (formResDict) {
+            const nestedXObjRef = formResDict.get(PDFName.of("XObject"));
+            if (nestedXObjRef) {
+              const nestedXObjDict = pdfDoc.context.lookup(nestedXObjRef) as PDFDict;
+              if (nestedXObjDict && typeof nestedXObjDict.entries === "function") {
+                extractImagesFromXObjectDict(pdfDoc, nestedXObjDict, images, visited, depth + 1);
+              }
+            }
+          }
+        }
+        continue;
+      }
+
+      if (subtype !== PDFName.of("Image")) continue;
 
       const widthObj = dict.get(PDFName.of("Width"));
       const heightObj = dict.get(PDFName.of("Height"));
@@ -85,7 +100,7 @@ function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
         if (last instanceof PDFName) filterName = last.decodeText();
       }
 
-      if (filterName === "DCTDecode") {
+      if (filterName === "DCTDecode" || filterName === "JPXDecode") {
         const rawBase64 = Buffer.from(stream.contents).toString("base64");
         images.push({
           dataUri: `data:image/jpeg;base64,${rawBase64}`,
@@ -94,22 +109,33 @@ function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
           width,
           height,
         });
-        console.log(`Found JPEG image: ${width}x${height}`);
-      } else if (filterName === "JPXDecode") {
-        const rawBase64 = Buffer.from(stream.contents).toString("base64");
-        images.push({
-          dataUri: `data:image/jpeg;base64,${rawBase64}`,
-          rawBase64,
-          mediaType: "image/jpeg",
-          width,
-          height,
-        });
-        console.log(`Found JPEG2000 image: ${width}x${height}`);
+        console.log(`Found ${filterName === "DCTDecode" ? "JPEG" : "JPEG2000"} image: ${width}x${height} (depth ${depth})`);
       }
     } catch {
       continue;
     }
   }
+}
+
+// Extract all images from PDF first page (including nested Form XObjects)
+function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
+  const pages = pdfDoc.getPages();
+  if (pages.length === 0) return [];
+
+  const page = pages[0];
+  const resources = page.node.get(PDFName.of("Resources"));
+  if (!resources) return [];
+
+  const resourcesDict = pdfDoc.context.lookup(resources) as PDFDict;
+  const xObjectRef = resourcesDict.get(PDFName.of("XObject"));
+  if (!xObjectRef) return [];
+
+  const xObjectDict = pdfDoc.context.lookup(xObjectRef) as PDFDict;
+  if (!xObjectDict || typeof xObjectDict.entries !== "function") return [];
+
+  const images: ExtractedImage[] = [];
+  const visited = new Set<string>();
+  extractImagesFromXObjectDict(pdfDoc, xObjectDict, images, visited);
 
   console.log(`Total extractable images found: ${images.length}`);
   return images;
@@ -153,15 +179,21 @@ async function detectFaceWithAI(
 
     content.push({
       type: "text",
-      text: `Look at the image(s) above. Find the human portrait/headshot photo area.
-It may be a standalone photo OR embedded inside a larger document/resume page.
-Return the bounding box of the PROFILE PHOTO area (the full portrait, not just the face — include head, shoulders, and any background of the photo).
+      text: `I extracted these image(s) from a PDF resume. I need to find the profile/headshot photograph of a person.
 
-Reply with ONLY valid JSON, no other text:
-{"image": <image_number>, "x": <left_percent>, "y": <top_percent>, "w": <width_percent>, "h": <height_percent>}
+RULES:
+- Look for a PHOTOGRAPH of a real human person (face clearly visible)
+- If an image IS a standalone portrait photo (just a person's photo), return its bounding box as the full image: x=0, y=0, w=100, h=100
+- If an image is a full resume PAGE that contains a small profile photo somewhere, return the bounding box of JUST the photo area within that page
+- Do NOT select images that are icons, logos, backgrounds, or decorative graphics
+- Do NOT select text areas, charts, or diagrams
+- Only select if you can clearly see a human face
 
-All values are percentages (0-100) relative to that image's dimensions.
-If there is no human face in any image, reply: {"image": 0}`,
+Reply with ONLY valid JSON:
+{"image": <number>, "x": <left_percent>, "y": <top_percent>, "w": <width_percent>, "h": <height_percent>}
+
+Percentages are 0-100 relative to that image's dimensions.
+If NO image contains a human face photograph, reply: {"image": 0}`,
     });
 
     const message = await anthropic.messages.create({
