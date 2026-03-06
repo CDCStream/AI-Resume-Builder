@@ -34,7 +34,7 @@ const ALL_SLUGS = [
   "scrum-master", "solutions-architect", "systems-administrator", "executive-assistant",
 ];
 
-export const revalidate = 86400; // 24 hours
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   return ALL_SLUGS.map((slug) => ({ slug }));
