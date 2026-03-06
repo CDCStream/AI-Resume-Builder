@@ -239,56 +239,22 @@ async function extractAllImagesFromPDF(
   return images;
 }
 
-interface FaceBBox {
-  imageIndex: number;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-// Deduplicate images by size — full-page PDFs often have identical-sized page layers
-function deduplicateByPage(images: ExtractedImage[]): ExtractedImage[] {
-  const seen = new Map<string, ExtractedImage>();
-  for (const img of images) {
-    const key = `${img.width}x${img.height}`;
-    if (!seen.has(key)) {
-      seen.set(key, img);
-    }
-  }
-  // If all images are the same size (full-page renders), only send the first one
-  if (seen.size === 1 && images.length > 1) {
-    console.log(`All ${images.length} images are same size — using only the first (page 1)`);
-    return [images[0]];
-  }
-  return images;
-}
-
-// Ask Claude Vision to find a human face and return its bounding box
-async function detectFaceWithAI(
-  images: ExtractedImage[]
-): Promise<FaceBBox | null> {
-  if (images.length === 0) return null;
-
-  const unique = deduplicateByPage(images);
-  const candidates = unique.slice(0, 3);
-
-  for (const c of candidates) {
-    console.log(`Sending to Claude Vision: ${c.width}x${c.height}`);
-  }
-
+// Ask Claude which tile contains a human face — returns tile index or -1
+async function askClaudeWhichTileHasFace(
+  tiles: Buffer[]
+): Promise<number> {
   try {
     const content: Anthropic.MessageCreateParams["messages"][0]["content"] = [];
 
-    for (let i = 0; i < candidates.length; i++) {
+    for (let i = 0; i < tiles.length; i++) {
       content.push(
-        { type: "text", text: `Image ${i + 1} (${candidates[i].width}x${candidates[i].height}px):` },
+        { type: "text", text: `Tile ${i + 1}:` },
         {
           type: "image",
           source: {
             type: "base64",
-            media_type: candidates[i].mediaType,
-            data: candidates[i].rawBase64,
+            media_type: "image/jpeg",
+            data: tiles[i].toString("base64"),
           },
         }
       );
@@ -296,104 +262,110 @@ async function detectFaceWithAI(
 
     content.push({
       type: "text",
-      text: `These images are extracted from a PDF resume. Find the profile/headshot PHOTOGRAPH of a person.
-
-The photo is often circular or rectangular, typically in a corner of the resume page.
-It shows a person's face and possibly shoulders.
-
-Return the TIGHT bounding box around the photo area.
-
-Example: if the photo is in the top-left corner of a full resume page, it might be approximately:
-{"image": 1, "x": 1, "y": 1, "w": 15, "h": 13}
-
-Reply with ONLY valid JSON:
-{"image": <number>, "x": <left_percent>, "y": <top_percent>, "w": <width_percent>, "h": <height_percent>}
-
-All values are percentages (0-100) of the image dimensions.
-If NO human face photo exists, reply: {"image": 0}`,
+      text: "Which tile contains a human face/portrait PHOTOGRAPH? Reply with ONLY the tile number (e.g. '1'). If none has a human face, reply 'none'.",
     });
 
     const message = await anthropic.messages.create({
       model: PRIMARY_MODEL,
-      max_tokens: 100,
+      max_tokens: 10,
       messages: [{ role: "user", content }],
     });
 
     const response =
       message.content[0].type === "text"
-        ? message.content[0].text.trim()
+        ? message.content[0].text.trim().toLowerCase()
         : "";
 
-    console.log("Claude Vision face detection response:", response);
+    console.log("Claude tile detection response:", response);
 
-    const jsonMatch = response.match(/\{[^}]+\}/);
-    if (!jsonMatch) return null;
-
-    const parsed = JSON.parse(jsonMatch[0]);
-    if (!parsed.image || parsed.image === 0) return null;
-
-    const idx = parsed.image - 1;
-    if (idx < 0 || idx >= candidates.length) return null;
-
-    // Map back to original image index
-    const originalIdx = images.indexOf(candidates[idx]);
-
-    return {
-      imageIndex: originalIdx >= 0 ? originalIdx : idx,
-      x: Math.max(0, parsed.x ?? 0),
-      y: Math.max(0, parsed.y ?? 0),
-      w: Math.min(100, parsed.w ?? 100),
-      h: Math.min(100, parsed.h ?? 100),
-    };
+    if (response === "none") return -1;
+    const num = parseInt(response);
+    return num >= 1 && num <= tiles.length ? num - 1 : -1;
   } catch (error) {
-    console.error("AI face detection error:", error);
-    return null;
+    console.error("AI tile detection error:", error);
+    return -1;
   }
 }
 
-// Crop the detected face region from the image using sharp
-async function cropProfilePhoto(
-  image: ExtractedImage,
-  bbox: FaceBBox
-): Promise<string> {
+// Grid-based face detection: split image into tiles, ask Claude which has a face
+// Two passes: 3x3 grid → then 2x2 sub-grid on the winner → precise crop
+async function findFaceByGrid(
+  imageBuffer: Buffer,
+  imgWidth: number,
+  imgHeight: number
+): Promise<string | null> {
   const sharp = (await import("sharp")).default;
-  const buffer = Buffer.from(image.rawBase64, "base64");
 
-  const isFullImage =
-    bbox.x <= 1 && bbox.y <= 1 && bbox.w >= 99 && bbox.h >= 99;
+  // Pass 1: Split into 3x3 grid (9 tiles)
+  const cols1 = 3;
+  const rows1 = 3;
+  const tileW1 = Math.floor(imgWidth / cols1);
+  const tileH1 = Math.floor(imgHeight / rows1);
 
-  if (isFullImage) {
-    const resized = await sharp(buffer)
-      .resize(400, 400, { fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-    return `data:image/jpeg;base64,${resized.toString("base64")}`;
+  const tiles1: Buffer[] = [];
+  const coords1: { left: number; top: number; w: number; h: number }[] = [];
+
+  for (let row = 0; row < rows1; row++) {
+    for (let col = 0; col < cols1; col++) {
+      const left = col * tileW1;
+      const top = row * tileH1;
+      const tile = await sharp(imageBuffer)
+        .extract({ left, top, width: tileW1, height: tileH1 })
+        .resize(400, 400, { fit: "inside" })
+        .jpeg({ quality: 75 })
+        .toBuffer();
+      tiles1.push(tile);
+      coords1.push({ left, top, w: tileW1, h: tileH1 });
+    }
   }
 
-  const padX = 0;
-  const padY = 0;
-
-  const x = Math.max(0, bbox.x - padX);
-  const y = Math.max(0, bbox.y - padY);
-  const w = Math.min(100 - x, bbox.w + padX * 2);
-  const h = Math.min(100 - y, bbox.h + padY * 2);
-
-  const left = Math.round((image.width * x) / 100);
-  const top = Math.round((image.height * y) / 100);
-  let width = Math.round((image.width * w) / 100);
-  let height = Math.round((image.height * h) / 100);
-
-  width = Math.min(width, image.width - left);
-  height = Math.min(height, image.height - top);
-
-  console.log(`Cropping: left=${left} top=${top} w=${width} h=${height} (with padding)`);
-
-  if (width < 20 || height < 20) {
-    return image.dataUri;
+  console.log(`Pass 1: ${cols1}x${rows1} grid, tile size ${tileW1}x${tileH1}`);
+  const winner1 = await askClaudeWhichTileHasFace(tiles1);
+  if (winner1 === -1) {
+    console.log("Pass 1: No face found in any tile");
+    return null;
   }
 
-  const cropped = await sharp(buffer)
-    .extract({ left, top, width, height })
+  const area1 = coords1[winner1];
+  console.log(`Pass 1: Face found in tile ${winner1 + 1} (left=${area1.left}, top=${area1.top})`);
+
+  // Pass 2: Split the winning tile into 2x2 sub-grid (4 sub-tiles)
+  const cols2 = 2;
+  const rows2 = 2;
+  const tileW2 = Math.floor(area1.w / cols2);
+  const tileH2 = Math.floor(area1.h / cols2);
+
+  const tiles2: Buffer[] = [];
+  const coords2: { left: number; top: number; w: number; h: number }[] = [];
+
+  for (let row = 0; row < rows2; row++) {
+    for (let col = 0; col < cols2; col++) {
+      const left = area1.left + col * tileW2;
+      const top = area1.top + row * tileH2;
+      const tile = await sharp(imageBuffer)
+        .extract({ left, top, width: tileW2, height: tileH2 })
+        .resize(400, 400, { fit: "inside" })
+        .jpeg({ quality: 75 })
+        .toBuffer();
+      tiles2.push(tile);
+      coords2.push({ left, top, w: tileW2, h: tileH2 });
+    }
+  }
+
+  console.log(`Pass 2: ${cols2}x${rows2} sub-grid, tile size ${tileW2}x${tileH2}`);
+  const winner2 = await askClaudeWhichTileHasFace(tiles2);
+
+  // Use the pass-2 winner if found, otherwise fall back to pass-1 area
+  const finalArea = winner2 >= 0 ? coords2[winner2] : area1;
+  console.log(`Final crop: left=${finalArea.left} top=${finalArea.top} w=${finalArea.w} h=${finalArea.h}`);
+
+  const cropped = await sharp(imageBuffer)
+    .extract({
+      left: finalArea.left,
+      top: finalArea.top,
+      width: finalArea.w,
+      height: finalArea.h,
+    })
     .resize(400, 400, { fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 85 })
     .toBuffer();
@@ -401,7 +373,7 @@ async function cropProfilePhoto(
   return `data:image/jpeg;base64,${cropped.toString("base64")}`;
 }
 
-// Full pipeline: PDF → extract images → Claude Vision (find face bbox) → sharp (crop)
+// Full pipeline: PDF → extract images → grid-based face detection → crop
 async function extractProfilePhotoFromPDF(
   pdfBuffer: Buffer
 ): Promise<string | null> {
@@ -425,22 +397,52 @@ async function extractProfilePhotoFromPDF(
       return portrait.length > 0 ? portrait[0].dataUri : null;
     }
 
-    const detection = await detectFaceWithAI(images);
-    if (!detection) {
-      console.log("No face detected in any image");
-      return null;
+    // Check if any image is already a standalone portrait (small, portrait ratio)
+    const standalone = images.find((img) => {
+      const ratio = img.width / img.height;
+      const area = img.width * img.height;
+      return ratio >= 0.5 && ratio <= 1.3 && area < 500_000;
+    });
+
+    if (standalone) {
+      console.log(`Found standalone portrait: ${standalone.width}x${standalone.height}`);
+      // Verify it has a face
+      const sharp = (await import("sharp")).default;
+      const buf = Buffer.from(standalone.rawBase64, "base64");
+      const result = await askClaudeWhichTileHasFace([
+        await sharp(buf)
+          .resize(400, 400, { fit: "inside" })
+          .jpeg({ quality: 80 })
+          .toBuffer(),
+      ]);
+      if (result === 0) {
+        const resized = await sharp(buf)
+          .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+        return `data:image/jpeg;base64,${resized.toString("base64")}`;
+      }
     }
 
-    console.log(
-      `Face detected in image ${detection.imageIndex + 1}: ` +
-        `x=${detection.x}% y=${detection.y}% w=${detection.w}% h=${detection.h}%`
+    // Use grid-based detection on the first (largest) image
+    // Deduplicate: if all same size, use only the first
+    const uniqueSizes = new Set(images.map((i) => `${i.width}x${i.height}`));
+    const target =
+      uniqueSizes.size === 1 && images.length > 1 ? images[0] : images[0];
+
+    console.log(`Grid detection on image: ${target.width}x${target.height}`);
+    const imageBuffer = Buffer.from(target.rawBase64, "base64");
+    const photo = await findFaceByGrid(
+      imageBuffer,
+      target.width,
+      target.height
     );
 
-    const photo = await cropProfilePhoto(
-      images[detection.imageIndex],
-      detection
-    );
-    console.log("Profile photo cropped successfully");
+    if (photo) {
+      console.log("Profile photo extracted via grid detection");
+    } else {
+      console.log("Grid detection found no face");
+    }
     return photo;
   } catch (error) {
     console.error("Profile photo extraction error:", error);
