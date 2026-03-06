@@ -262,7 +262,7 @@ async function askClaudeWhichTileHasFace(
 
     content.push({
       type: "text",
-      text: "Which tile contains a human face/portrait PHOTOGRAPH? Reply with ONLY the tile number (e.g. '1'). If none has a human face, reply 'none'.",
+      text: "Which tile shows the MOST COMPLETE human face/portrait photo? The best tile shows the FULL head (hair, forehead, eyes, nose, mouth, chin) as the main subject. Do NOT pick a tile where the face is cut off (e.g. only chin/mouth area visible, or only forehead visible). Reply with ONLY the tile number (e.g. '1'). If none shows a complete face, reply 'none'.",
     });
 
     const message = await anthropic.messages.create({
@@ -328,11 +328,11 @@ async function findFaceByGrid(
   console.log(`Pass 1 winner: tile ${winner1 + 1} at (${w1.left}, ${w1.top})`);
 
   // Pass 2: 3x3 overlapping grid on the winning tile
-  // Sub-tile = 50% of winner size, step = 25% → 50% overlap between neighbors
-  const subW = Math.floor(w1.w / 2);
-  const subH = Math.floor(w1.h / 2);
-  const stepX = Math.floor(w1.w / 4);
-  const stepY = Math.floor(w1.h / 4);
+  // Sub-tile = 65% of winner size, step = 17.5% → large overlap ensures face is complete in multiple tiles
+  const subW = Math.floor(w1.w * 0.65);
+  const subH = Math.floor(w1.h * 0.65);
+  const stepX = Math.floor((w1.w - subW) / 2);
+  const stepY = Math.floor((w1.h - subH) / 2);
 
   const tiles2: Buffer[] = [];
   const coords2: { left: number; top: number; w: number; h: number }[] = [];
@@ -359,11 +359,20 @@ async function findFaceByGrid(
   const winner2 = await askClaudeWhichTileHasFace(tiles2);
 
   const finalArea = winner2 >= 0 ? coords2[winner2] : w1;
-  console.log(`Final crop: left=${finalArea.left} top=${finalArea.top} w=${finalArea.w} h=${finalArea.h}`);
+
+  // Crop to square from the top to remove text below the face
+  const side = Math.min(finalArea.w, finalArea.h);
+  const squareArea = {
+    left: finalArea.left + Math.floor((finalArea.w - side) / 2),
+    top: finalArea.top,
+    w: side,
+    h: side,
+  };
+  console.log(`Final crop: left=${squareArea.left} top=${squareArea.top} ${squareArea.w}x${squareArea.h}`);
 
   const cropped = await sharp(imageBuffer)
-    .extract({ left: finalArea.left, top: finalArea.top, width: finalArea.w, height: finalArea.h })
-    .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+    .extract({ left: squareArea.left, top: squareArea.top, width: squareArea.w, height: squareArea.h })
+    .resize(400, 400, { fit: "cover" })
     .jpeg({ quality: 85 })
     .toBuffer();
 
