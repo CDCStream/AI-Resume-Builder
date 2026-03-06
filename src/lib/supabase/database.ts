@@ -45,6 +45,28 @@ export interface DbProfile {
 
 const supabase = createClient();
 
+async function getUniqueName(
+  table: "resumes" | "cover_letters",
+  baseName: string,
+  userId: string
+): Promise<string> {
+  const { data } = await supabase
+    .from(table)
+    .select("name")
+    .eq("user_id", userId);
+
+  if (!data || data.length === 0) return baseName;
+
+  const existingNames = new Set(data.map((d) => d.name));
+  if (!existingNames.has(baseName)) return baseName;
+
+  let counter = 2;
+  while (existingNames.has(`${baseName} ${counter}`)) {
+    counter++;
+  }
+  return `${baseName} ${counter}`;
+}
+
 export async function getResumes(): Promise<DbResume[]> {
   const { data, error } = await supabase
     .from("resumes")
@@ -86,11 +108,13 @@ export async function createResume(
     return null;
   }
 
+  const uniqueName = await getUniqueName("resumes", name, user.id);
+
   const { data, error } = await supabase
     .from("resumes")
     .insert({
       user_id: user.id,
-      name,
+      name: uniqueName,
       resume_data: resumeData,
       template_id: templateId,
     })
@@ -192,11 +216,13 @@ export async function createCoverLetter(
     return null;
   }
 
+  const uniqueName = await getUniqueName("cover_letters", name, user.id);
+
   const { data, error } = await supabase
     .from("cover_letters")
     .insert({
       user_id: user.id,
-      name,
+      name: uniqueName,
       cover_letter_data: coverLetterData,
       template_id: templateId,
     })
