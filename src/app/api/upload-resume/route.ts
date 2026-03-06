@@ -32,87 +32,198 @@ async function extractTextFromWord(buffer: Buffer): Promise<string> {
   }
 }
 
-// Extract profile photo from PDF using pdf-lib
-async function extractProfilePhotoFromPDF(pdfBuffer: Buffer): Promise<string | null> {
-  try {
-    const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
-    const pages = pdfDoc.getPages();
-    if (pages.length === 0) return null;
+interface ExtractedImage {
+  dataUri: string;
+  rawBase64: string;
+  mediaType: "image/jpeg" | "image/png" | "image/webp";
+  width: number;
+  height: number;
+}
 
-    const page = pages[0];
-    const resources = page.node.get(PDFName.of("Resources"));
-    if (!resources) return null;
+// Extract all images from PDF first page using pdf-lib
+function extractAllImagesFromPDF(pdfDoc: PDFDocument): ExtractedImage[] {
+  const pages = pdfDoc.getPages();
+  if (pages.length === 0) return [];
 
-    const resourcesDict = pdfDoc.context.lookup(resources) as PDFDict;
-    const xObjectRef = resourcesDict.get(PDFName.of("XObject"));
-    if (!xObjectRef) return null;
+  const page = pages[0];
+  const resources = page.node.get(PDFName.of("Resources"));
+  if (!resources) return [];
 
-    const xObjectDict = pdfDoc.context.lookup(xObjectRef) as PDFDict;
-    if (!xObjectDict || typeof xObjectDict.entries !== "function") return null;
+  const resourcesDict = pdfDoc.context.lookup(resources) as PDFDict;
+  const xObjectRef = resourcesDict.get(PDFName.of("XObject"));
+  if (!xObjectRef) return [];
 
-    let bestPhoto: { base64: string; area: number } | null = null;
+  const xObjectDict = pdfDoc.context.lookup(xObjectRef) as PDFDict;
+  if (!xObjectDict || typeof xObjectDict.entries !== "function") return [];
 
-    for (const [, ref] of xObjectDict.entries()) {
-      try {
-        const xObj = pdfDoc.context.lookup(ref);
-        if (!xObj || !("dict" in xObj)) continue;
+  const images: ExtractedImage[] = [];
 
-        const stream = xObj as PDFRawStream;
-        const dict = stream.dict;
+  for (const [, ref] of xObjectDict.entries()) {
+    try {
+      const xObj = pdfDoc.context.lookup(ref);
+      if (!xObj || !("dict" in xObj)) continue;
 
-        const subtype = dict.get(PDFName.of("Subtype"));
-        if (!subtype || subtype !== PDFName.of("Image")) continue;
+      const stream = xObj as PDFRawStream;
+      const dict = stream.dict;
 
-        const widthObj = dict.get(PDFName.of("Width"));
-        const heightObj = dict.get(PDFName.of("Height"));
-        const width = widthObj instanceof PDFNumber ? widthObj.asNumber() : 0;
-        const height = heightObj instanceof PDFNumber ? heightObj.asNumber() : 0;
+      const subtype = dict.get(PDFName.of("Subtype"));
+      if (!subtype || subtype !== PDFName.of("Image")) continue;
 
-        if (width < 50 || height < 50) continue;
-        const ratio = width / height;
-        if (ratio < 0.3 || ratio > 3.0) continue;
+      const widthObj = dict.get(PDFName.of("Width"));
+      const heightObj = dict.get(PDFName.of("Height"));
+      const width = widthObj instanceof PDFNumber ? widthObj.asNumber() : 0;
+      const height = heightObj instanceof PDFNumber ? heightObj.asNumber() : 0;
 
-        const area = width * height;
-        if (bestPhoto && area <= bestPhoto.area) continue;
+      if (width < 50 || height < 50) continue;
 
-        const filter = dict.get(PDFName.of("Filter"));
-        let filterName = "";
-        if (filter instanceof PDFName) {
-          filterName = filter.decodeText();
-        } else if (filter instanceof PDFArray) {
-          const last = filter.get(filter.size() - 1);
-          if (last instanceof PDFName) filterName = last.decodeText();
-        }
-
-        if (filterName === "DCTDecode") {
-          const contents = stream.contents;
-          const base64 = Buffer.from(contents).toString("base64");
-          bestPhoto = {
-            base64: `data:image/jpeg;base64,${base64}`,
-            area,
-          };
-          console.log(`Found JPEG image: ${width}x${height}`);
-        } else if (filterName === "JPXDecode") {
-          const contents = stream.contents;
-          const base64 = Buffer.from(contents).toString("base64");
-          bestPhoto = {
-            base64: `data:image/jp2;base64,${base64}`,
-            area,
-          };
-          console.log(`Found JPEG2000 image: ${width}x${height}`);
-        }
-      } catch {
-        continue;
+      const filter = dict.get(PDFName.of("Filter"));
+      let filterName = "";
+      if (filter instanceof PDFName) {
+        filterName = filter.decodeText();
+      } else if (filter instanceof PDFArray) {
+        const last = filter.get(filter.size() - 1);
+        if (last instanceof PDFName) filterName = last.decodeText();
       }
-    }
 
-    if (bestPhoto) {
-      console.log("Profile photo extracted successfully");
+      if (filterName === "DCTDecode") {
+        const rawBase64 = Buffer.from(stream.contents).toString("base64");
+        images.push({
+          dataUri: `data:image/jpeg;base64,${rawBase64}`,
+          rawBase64,
+          mediaType: "image/jpeg",
+          width,
+          height,
+        });
+        console.log(`Found JPEG image: ${width}x${height}`);
+      } else if (filterName === "JPXDecode") {
+        const rawBase64 = Buffer.from(stream.contents).toString("base64");
+        images.push({
+          dataUri: `data:image/jpeg;base64,${rawBase64}`,
+          rawBase64,
+          mediaType: "image/jpeg",
+          width,
+          height,
+        });
+        console.log(`Found JPEG2000 image: ${width}x${height}`);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  console.log(`Total extractable images found: ${images.length}`);
+  return images;
+}
+
+// Use Claude Vision to identify which image contains a human face
+async function identifyProfilePhotoWithAI(
+  images: ExtractedImage[]
+): Promise<string | null> {
+  if (images.length === 0) return null;
+
+  // Limit to 5 candidates to keep costs low
+  const candidates = images.slice(0, 5);
+
+  try {
+    const content: Anthropic.MessageCreateParams["messages"][0]["content"] = [];
+
+    if (candidates.length === 1) {
+      content.push(
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: candidates[0].mediaType,
+            data: candidates[0].rawBase64,
+          },
+        },
+        {
+          type: "text",
+          text: "Does this image contain a human face or portrait/headshot photo? Reply with ONLY 'yes' or 'no'.",
+        }
+      );
     } else {
-      console.log("No suitable profile photo found in PDF");
+      for (let i = 0; i < candidates.length; i++) {
+        content.push(
+          { type: "text", text: `Image ${i + 1}:` },
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: candidates[i].mediaType,
+              data: candidates[i].rawBase64,
+            },
+          }
+        );
+      }
+      content.push({
+        type: "text",
+        text: "Which image number contains a human face/portrait/headshot photo? Reply with ONLY the number (e.g. '1' or '2'). If none contains a human face, reply 'none'.",
+      });
     }
 
-    return bestPhoto?.base64 ?? null;
+    const message = await anthropic.messages.create({
+      model: PRIMARY_MODEL,
+      max_tokens: 50,
+      messages: [{ role: "user", content }],
+    });
+
+    const response =
+      message.content[0].type === "text"
+        ? message.content[0].text.trim().toLowerCase()
+        : "";
+
+    console.log("Claude Vision face detection response:", response);
+
+    if (candidates.length === 1) {
+      return response.includes("yes") ? candidates[0].dataUri : null;
+    }
+
+    if (response === "none") return null;
+    const index = parseInt(response) - 1;
+    if (index >= 0 && index < candidates.length) {
+      return candidates[index].dataUri;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("AI face detection error:", error);
+    return null;
+  }
+}
+
+// Full pipeline: extract images → identify human face with AI
+async function extractProfilePhotoFromPDF(
+  pdfBuffer: Buffer
+): Promise<string | null> {
+  try {
+    const pdfDoc = await PDFDocument.load(pdfBuffer, {
+      ignoreEncryption: true,
+    });
+    const images = extractAllImagesFromPDF(pdfDoc);
+    if (images.length === 0) {
+      console.log("No suitable images found in PDF");
+      return null;
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      // Without AI, fall back to picking the image with the most portrait-like aspect ratio
+      const portrait = images
+        .filter((img) => {
+          const ratio = img.width / img.height;
+          return ratio >= 0.5 && ratio <= 1.3;
+        })
+        .sort((a, b) => b.width * b.height - (a.width * a.height));
+      return portrait.length > 0 ? portrait[0].dataUri : null;
+    }
+
+    const profilePhoto = await identifyProfilePhotoWithAI(images);
+    if (profilePhoto) {
+      console.log("Profile photo identified by AI");
+    } else {
+      console.log("AI did not identify any profile photo");
+    }
+    return profilePhoto;
   } catch (error) {
     console.error("Profile photo extraction error:", error);
     return null;
