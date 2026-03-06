@@ -287,8 +287,7 @@ async function askClaudeWhichTileHasFace(
   }
 }
 
-// Grid-based face detection: split image into tiles, ask Claude which has a face
-// Two passes: 3x3 grid → then 2x2 sub-grid on the winner → precise crop
+// Single-pass grid face detection: split image into 4x4 tiles, ask Claude which has a face
 async function findFaceByGrid(
   imageBuffer: Buffer,
   imgWidth: number,
@@ -296,76 +295,40 @@ async function findFaceByGrid(
 ): Promise<string | null> {
   const sharp = (await import("sharp")).default;
 
-  // Pass 1: Split into 3x3 grid (9 tiles)
-  const cols1 = 3;
-  const rows1 = 3;
-  const tileW1 = Math.floor(imgWidth / cols1);
-  const tileH1 = Math.floor(imgHeight / rows1);
+  const cols = 4;
+  const rows = 4;
+  const tileW = Math.floor(imgWidth / cols);
+  const tileH = Math.floor(imgHeight / rows);
 
-  const tiles1: Buffer[] = [];
-  const coords1: { left: number; top: number; w: number; h: number }[] = [];
+  const tiles: Buffer[] = [];
+  const coords: { left: number; top: number; w: number; h: number }[] = [];
 
-  for (let row = 0; row < rows1; row++) {
-    for (let col = 0; col < cols1; col++) {
-      const left = col * tileW1;
-      const top = row * tileH1;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const left = col * tileW;
+      const top = row * tileH;
       const tile = await sharp(imageBuffer)
-        .extract({ left, top, width: tileW1, height: tileH1 })
-        .resize(400, 400, { fit: "inside" })
-        .jpeg({ quality: 75 })
+        .extract({ left, top, width: tileW, height: tileH })
+        .resize(200, 200, { fit: "inside" })
+        .jpeg({ quality: 70 })
         .toBuffer();
-      tiles1.push(tile);
-      coords1.push({ left, top, w: tileW1, h: tileH1 });
+      tiles.push(tile);
+      coords.push({ left, top, w: tileW, h: tileH });
     }
   }
 
-  console.log(`Pass 1: ${cols1}x${rows1} grid, tile size ${tileW1}x${tileH1}`);
-  const winner1 = await askClaudeWhichTileHasFace(tiles1);
-  if (winner1 === -1) {
-    console.log("Pass 1: No face found in any tile");
+  console.log(`Grid: ${cols}x${rows} = ${tiles.length} tiles, each ~${tileW}x${tileH}`);
+  const winner = await askClaudeWhichTileHasFace(tiles);
+  if (winner === -1) {
+    console.log("No face found in any tile");
     return null;
   }
 
-  const area1 = coords1[winner1];
-  console.log(`Pass 1: Face found in tile ${winner1 + 1} (left=${area1.left}, top=${area1.top})`);
-
-  // Pass 2: Split the winning tile into 2x2 sub-grid (4 sub-tiles)
-  const cols2 = 2;
-  const rows2 = 2;
-  const tileW2 = Math.floor(area1.w / cols2);
-  const tileH2 = Math.floor(area1.h / cols2);
-
-  const tiles2: Buffer[] = [];
-  const coords2: { left: number; top: number; w: number; h: number }[] = [];
-
-  for (let row = 0; row < rows2; row++) {
-    for (let col = 0; col < cols2; col++) {
-      const left = area1.left + col * tileW2;
-      const top = area1.top + row * tileH2;
-      const tile = await sharp(imageBuffer)
-        .extract({ left, top, width: tileW2, height: tileH2 })
-        .resize(400, 400, { fit: "inside" })
-        .jpeg({ quality: 75 })
-        .toBuffer();
-      tiles2.push(tile);
-      coords2.push({ left, top, w: tileW2, h: tileH2 });
-    }
-  }
-
-  console.log(`Pass 2: ${cols2}x${rows2} sub-grid, tile size ${tileW2}x${tileH2}`);
-  const winner2 = await askClaudeWhichTileHasFace(tiles2);
-
-  // Use the pass-2 winner if found, otherwise fall back to pass-1 area
-  const finalArea = winner2 >= 0 ? coords2[winner2] : area1;
-  console.log(`Final crop: left=${finalArea.left} top=${finalArea.top} w=${finalArea.w} h=${finalArea.h}`);
+  const area = coords[winner];
+  console.log(`Face in tile ${winner + 1}: left=${area.left} top=${area.top} w=${area.w} h=${area.h}`);
 
   const cropped = await sharp(imageBuffer)
-    .extract({
-      left: finalArea.left,
-      top: finalArea.top,
-      width: finalArea.w,
-      height: finalArea.h,
-    })
+    .extract({ left: area.left, top: area.top, width: area.w, height: area.h })
     .resize(400, 400, { fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 85 })
     .toBuffer();
