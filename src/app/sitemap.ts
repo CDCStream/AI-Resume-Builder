@@ -29,6 +29,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error fetching blog posts for sitemap:', e);
   }
 
+  // Get all salary pages from Supabase
+  let salaryPages: MetadataRoute.Sitemap = [];
+  try {
+    const { data: pages } = await supabase
+      .from('salary_pages')
+      .select('slug, updated_at');
+
+    if (pages) {
+      salaryPages = pages.map((page) => ({
+        url: `${baseUrl}/salary/${page.slug}`,
+        lastModified: new Date(page.updated_at),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      }));
+    }
+  } catch (e) {
+    console.error('Error fetching salary pages for sitemap:', e);
+  }
+
   return [
     // Main pages - highest priority
     {
@@ -78,5 +97,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     
     // Blog posts
     ...blogPosts,
+
+    // Salary guide pages
+    ...salaryPages,
   ];
 }

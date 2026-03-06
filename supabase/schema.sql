@@ -247,6 +247,37 @@ CREATE TRIGGER set_blog_posts_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- =====================================================
+-- 8. Salary Pages Table (pSEO)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.salary_pages (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  job_title TEXT NOT NULL,
+  keyword TEXT NOT NULL,
+  avg_salary INTEGER,
+  median_salary INTEGER,
+  min_salary INTEGER,
+  max_salary INTEGER,
+  total_listings INTEGER DEFAULT 0,
+  salary_by_location JSONB DEFAULT '[]',
+  salary_by_type JSONB DEFAULT '[]',
+  salary_by_experience JSONB DEFAULT '[]',
+  top_companies JSONB DEFAULT '[]',
+  remote_stats JSONB DEFAULT '{}',
+  sample_listings JSONB DEFAULT '[]',
+  last_synced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_salary_pages_slug ON public.salary_pages(slug);
+
+DROP TRIGGER IF EXISTS set_salary_pages_updated_at ON public.salary_pages;
+CREATE TRIGGER set_salary_pages_updated_at
+  BEFORE UPDATE ON public.salary_pages
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =====================================================
 -- Verification: Check tables created
 -- =====================================================
 -- Run this to verify:
