@@ -370,9 +370,8 @@ async function cropProfilePhoto(
     return `data:image/jpeg;base64,${resized.toString("base64")}`;
   }
 
-  // Add 20% padding around the detected area for safety
-  const padX = bbox.w * 0.2;
-  const padY = bbox.h * 0.2;
+  const padX = bbox.w * 0.05;
+  const padY = bbox.h * 0.05;
 
   const x = Math.max(0, bbox.x - padX);
   const y = Math.max(0, bbox.y - padY);
