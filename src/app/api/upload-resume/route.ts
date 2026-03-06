@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resume } from "@/lib/types/resume";
 import Anthropic from "@anthropic-ai/sdk";
+import { PDFDocument, PDFName, PDFRawStream, PDFDict, PDFArray, PDFNumber } from "pdf-lib";
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -28,6 +29,93 @@ async function extractTextFromWord(buffer: Buffer): Promise<string> {
   } catch (error) {
     console.error("Word parsing error:", error);
     throw new Error("Failed to parse Word document");
+  }
+}
+
+// Extract profile photo from PDF using pdf-lib
+async function extractProfilePhotoFromPDF(pdfBuffer: Buffer): Promise<string | null> {
+  try {
+    const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
+    const pages = pdfDoc.getPages();
+    if (pages.length === 0) return null;
+
+    const page = pages[0];
+    const resources = page.node.get(PDFName.of("Resources"));
+    if (!resources) return null;
+
+    const resourcesDict = pdfDoc.context.lookup(resources) as PDFDict;
+    const xObjectRef = resourcesDict.get(PDFName.of("XObject"));
+    if (!xObjectRef) return null;
+
+    const xObjectDict = pdfDoc.context.lookup(xObjectRef) as PDFDict;
+    if (!xObjectDict || typeof xObjectDict.entries !== "function") return null;
+
+    let bestPhoto: { base64: string; area: number } | null = null;
+
+    for (const [, ref] of xObjectDict.entries()) {
+      try {
+        const xObj = pdfDoc.context.lookup(ref);
+        if (!xObj || !("dict" in xObj)) continue;
+
+        const stream = xObj as PDFRawStream;
+        const dict = stream.dict;
+
+        const subtype = dict.get(PDFName.of("Subtype"));
+        if (!subtype || subtype !== PDFName.of("Image")) continue;
+
+        const widthObj = dict.get(PDFName.of("Width"));
+        const heightObj = dict.get(PDFName.of("Height"));
+        const width = widthObj instanceof PDFNumber ? widthObj.asNumber() : 0;
+        const height = heightObj instanceof PDFNumber ? heightObj.asNumber() : 0;
+
+        if (width < 50 || height < 50) continue;
+        const ratio = width / height;
+        if (ratio < 0.3 || ratio > 3.0) continue;
+
+        const area = width * height;
+        if (bestPhoto && area <= bestPhoto.area) continue;
+
+        const filter = dict.get(PDFName.of("Filter"));
+        let filterName = "";
+        if (filter instanceof PDFName) {
+          filterName = filter.decodeText();
+        } else if (filter instanceof PDFArray) {
+          const last = filter.get(filter.size() - 1);
+          if (last instanceof PDFName) filterName = last.decodeText();
+        }
+
+        if (filterName === "DCTDecode") {
+          const contents = stream.contents;
+          const base64 = Buffer.from(contents).toString("base64");
+          bestPhoto = {
+            base64: `data:image/jpeg;base64,${base64}`,
+            area,
+          };
+          console.log(`Found JPEG image: ${width}x${height}`);
+        } else if (filterName === "JPXDecode") {
+          const contents = stream.contents;
+          const base64 = Buffer.from(contents).toString("base64");
+          bestPhoto = {
+            base64: `data:image/jp2;base64,${base64}`,
+            area,
+          };
+          console.log(`Found JPEG2000 image: ${width}x${height}`);
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    if (bestPhoto) {
+      console.log("Profile photo extracted successfully");
+    } else {
+      console.log("No suitable profile photo found in PDF");
+    }
+
+    return bestPhoto?.base64 ?? null;
+  } catch (error) {
+    console.error("Profile photo extraction error:", error);
+    return null;
   }
 }
 
@@ -463,12 +551,18 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Determine file type and extract text
+    // Determine file type and extract text + photo
     let text = "";
+    let profilePhoto: string | null = null;
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith(".pdf")) {
-      text = await extractTextFromPDF(buffer);
+      const [extractedText, extractedPhoto] = await Promise.all([
+        extractTextFromPDF(buffer),
+        extractProfilePhotoFromPDF(buffer),
+      ]);
+      text = extractedText;
+      profilePhoto = extractedPhoto;
     } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
       text = await extractTextFromWord(buffer);
     } else {
@@ -628,6 +722,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Attach extracted profile photo if available
+    if (profilePhoto && !resume.basics?.image) {
+      resume.basics = { ...resume.basics, image: profilePhoto };
+      console.log("Profile photo attached to resume");
+    }
+
     console.log("=== Final Result ===");
     console.log("Parse method:", parseMethod);
     console.log("Validation score:", validationResult.score);
@@ -637,6 +737,7 @@ export async function POST(request: NextRequest) {
     console.log("Skills:", resume.skills?.length);
     console.log("Languages:", resume.languages?.length);
     console.log("References:", resume.references?.length);
+    console.log("Has profile photo:", !!resume.basics?.image);
 
     // Return with metadata about parsing quality
     return NextResponse.json({ 
@@ -645,7 +746,8 @@ export async function POST(request: NextRequest) {
         parseMethod,
         validationScore: validationResult.score,
         issues: validationResult.issues,
-        textLength: text.length
+        textLength: text.length,
+        hasProfilePhoto: !!resume.basics?.image,
       }
     });
   } catch (error) {
