@@ -195,6 +195,29 @@ CREATE TRIGGER set_job_applications_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- =====================================================
+-- 6. Feedback Table
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.feedback (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  source TEXT NOT NULL CHECK (source IN ('resume_pdf', 'cover_letter_pdf')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON public.feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_source ON public.feedback(source);
+
+ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own feedback" ON public.feedback
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own feedback" ON public.feedback
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- =====================================================
 -- Verification: Check tables created
 -- =====================================================
 -- Run this to verify:

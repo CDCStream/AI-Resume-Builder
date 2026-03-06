@@ -28,6 +28,8 @@ import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
 import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Crown, Check } from "lucide-react";
 import { ProfessionalCoverLetter } from "@/components/templates/cover-letter";
 import { useSubscription } from "@/hooks/useSubscription";
+import { hasUserGivenFeedback } from "@/lib/supabase/database";
+import FeedbackModal from "@/components/ui/FeedbackModal";
 
 interface CoverLetterData {
   recipientName: string;
@@ -87,6 +89,7 @@ function CoverLetterPageContent() {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedState, setLastSavedState] = useState<string>("");
@@ -431,6 +434,11 @@ function CoverLetterPageContent() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      const alreadyGiven = await hasUserGivenFeedback("cover_letter_pdf");
+      if (!alreadyGiven) {
+        setShowFeedbackModal(true);
+      }
     } catch (err) {
       console.error("Failed to export PDF:", err);
       setError("Failed to export PDF");
@@ -853,6 +861,12 @@ function CoverLetterPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        source="cover_letter_pdf"
+      />
     </div>
   );
 }

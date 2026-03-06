@@ -297,3 +297,47 @@ export async function updateProfile(
 
   return data;
 }
+
+// Feedback
+export async function hasUserGivenFeedback(source: "resume_pdf" | "cover_letter_pdf"): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return true; // Don't show modal if not authenticated
+
+  const { count, error } = await supabase
+    .from("feedback")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("source", source);
+
+  if (error) {
+    console.error("Error checking feedback:", error);
+    return true;
+  }
+
+  return (count ?? 0) > 0;
+}
+
+export async function insertFeedback(
+  rating: number,
+  source: "resume_pdf" | "cover_letter_pdf",
+  comment?: string
+): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from("feedback")
+    .insert({
+      user_id: user.id,
+      rating,
+      source,
+      comment: comment || null,
+    });
+
+  if (error) {
+    console.error("Error inserting feedback:", error);
+    return false;
+  }
+
+  return true;
+}

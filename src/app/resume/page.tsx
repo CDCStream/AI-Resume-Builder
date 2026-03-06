@@ -13,6 +13,8 @@ import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X, Loader2, PanelL
 import { exportResumeToPDF } from "@/lib/utils/pdfExport";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useSubscription } from "@/hooks/useSubscription";
+import { hasUserGivenFeedback } from "@/lib/supabase/database";
+import FeedbackModal from "@/components/ui/FeedbackModal";
 
 type ViewMode = "edit" | "page";
 
@@ -59,6 +61,7 @@ function ResumeEditorContent() {
   const [lastSavedState, setLastSavedState] = useState<string>("");
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [mobilePanel, setMobilePanel] = useState<"editor" | "preview">("editor");
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const documentLoadedRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,6 +83,11 @@ function ResumeEditorContent() {
         filename,
         showWatermark: !hasPaidPlan,
       });
+
+      const alreadyGiven = await hasUserGivenFeedback("resume_pdf");
+      if (!alreadyGiven) {
+        setShowFeedbackModal(true);
+      }
     } catch (error) {
       console.error("Failed to export PDF:", error);
     } finally {
@@ -560,6 +568,12 @@ function ResumeEditorContent() {
           </div>
         )}
       </div>
+
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        source="resume_pdf"
+      />
     </>
   );
 }
