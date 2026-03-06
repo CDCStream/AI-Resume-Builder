@@ -370,8 +370,8 @@ async function cropProfilePhoto(
     return `data:image/jpeg;base64,${resized.toString("base64")}`;
   }
 
-  const padX = bbox.w * 0.05;
-  const padY = bbox.h * 0.05;
+  const padX = 0;
+  const padY = 0;
 
   const x = Math.max(0, bbox.x - padX);
   const y = Math.max(0, bbox.y - padY);
