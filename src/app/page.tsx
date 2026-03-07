@@ -230,7 +230,7 @@ export default function LandingPage() {
             <div className="text-center lg:text-left">
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
-                This resume builder gets you{" "}
+                This resume & cover letter builder gets you{" "}
                 <span className="relative">
                   <span className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     hired faster
@@ -249,7 +249,7 @@ export default function LandingPage() {
 
               {/* Subheadline */}
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                Only 2% of resumes win. Create ATS-optimized, professionally designed resumes with AI assistance.
+                Only 2% of applications win. Create ATS-optimized resumes and tailored cover letters with AI assistance.
                 <span className="font-semibold text-gray-900"> Yours will be one of them.</span>
               </p>
 
@@ -260,16 +260,16 @@ export default function LandingPage() {
                   className="text-base px-8 py-6 h-14 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/25 transition-all hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5"
                   onClick={() => router.push("/register")}
                 >
-                  Create My Resume
+                  Create Resume
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="text-base px-8 py-6 h-14 border-gray-300 hover:bg-gray-50 transition-all hover:-translate-y-0.5"
-                  onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+                  className="text-base px-8 py-6 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-600/25 transition-all hover:shadow-xl hover:shadow-indigo-600/30 hover:-translate-y-0.5"
+                  onClick={() => router.push("/register")}
                 >
-                  How It Works
+                  Upload CV & Generate Cover Letter
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>
 
@@ -388,7 +388,7 @@ export default function LandingPage() {
 
                     {/* Text */}
                     <h3 className="text-sm font-bold text-gray-900 mb-1">LinkedIn to Resume</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed mb-2">Import your LinkedIn profile instantly and convert it into a professional resume</p>
+                    <p className="text-xs text-gray-500 leading-relaxed mb-2">Import your LinkedIn profile and convert it into a professional resume & cover letter</p>
                     <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
                       <CheckCircle2 className="w-3 h-3" />
                       <span>One-click import</span>
@@ -672,7 +672,7 @@ export default function LandingPage() {
               Powerful Features
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Way beyond a resume builder
+              Way beyond a resume & cover letter builder
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               AI-powered tools to create, optimize, and manage your job applications all in one place.
@@ -720,7 +720,7 @@ export default function LandingPage() {
               {
                 icon: Download,
                 title: "PDF Export",
-                description: "Download your resume as a perfectly formatted PDF, ready to submit to any employer.",
+                description: "Download your resume or cover letter as a perfectly formatted PDF, ready to submit to any employer.",
                 color: "pink"
               },
               {
@@ -753,7 +753,7 @@ export default function LandingPage() {
               Pick a template, get hired faster
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              14 professionally designed, ATS-tested templates to make your resume stand out.
+              14 professionally designed, ATS-tested resume & cover letter templates to help you stand out.
             </p>
           </div>
 
@@ -1319,7 +1319,7 @@ export default function LandingPage() {
               Frequently Asked Questions
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Everything you need to know about resume writing
+              Everything you need to know about resumes & cover letters
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Get expert answers to common questions about creating ATS-friendly resumes, writing cover letters, and landing your dream job.
@@ -1339,7 +1339,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-12 text-center">
-            <p className="text-gray-600 mb-4">Still have questions about our AI resume builder?</p>
+            <p className="text-gray-600 mb-4">Still have questions about our AI resume & cover letter builder?</p>
             <Button variant="outline" onClick={() => router.push("/contact")}>
               Contact Support
             </Button>
@@ -1357,7 +1357,7 @@ export default function LandingPage() {
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Your resume is an extension of yourself
+            Your resume & cover letter are extensions of yourself
           </h2>
           <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
             Make one that's truly you. Join millions who have landed their dream jobs with LinimpactAI.
@@ -1368,7 +1368,7 @@ export default function LandingPage() {
               className="text-base px-10 py-6 h-14 bg-white text-blue-600 hover:bg-gray-100 shadow-xl"
               onClick={() => router.push("/register")}
             >
-              Create My Resume
+              Build My Resume & Cover Letter
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
@@ -1397,7 +1397,7 @@ export default function LandingPage() {
               </span>
             </Link>
             <p className="text-sm leading-relaxed max-w-xs">
-              AI-powered resume builder helping millions land their dream jobs.
+              AI-powered resume & cover letter builder helping millions land their dream jobs.
             </p>
           </div>
 
@@ -1406,7 +1406,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Product</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="/register" className="hover:text-white transition-colors">Resume Builder</Link></li>
+                <li><Link href="/register" className="hover:text-white transition-colors">Resume & Cover Letter Builder</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Cover Letter</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Templates</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">ATS Checker</Link></li>

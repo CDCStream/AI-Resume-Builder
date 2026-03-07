@@ -5,8 +5,8 @@ import { Metadata } from "next";
 // cv builder, ats checker, interview prep, linkedin resume, professional resume
 
 export const homeMetadata: Metadata = {
-  title: "AI Resume Builder | ATS-Friendly Templates | LinImpact.ai",
-  description: "Create professional, ATS-optimized resumes in minutes with our AI resume builder. 14+ templates, AI cover letter generator, LinkedIn import & interview prep. Get started today!",
+  title: "AI Resume & Cover Letter Builder | ATS-Friendly Templates | LinImpact.ai",
+  description: "Create professional, ATS-optimized resumes and tailored cover letters in minutes with AI. 14+ templates, LinkedIn import & interview prep. Get started today!",
   keywords: [
     "resume builder",
     "ai resume builder", 
@@ -48,21 +48,21 @@ export const homeMetadata: Metadata = {
     locale: "en_US",
     url: "https://linimpact.ai",
     siteName: "LinImpact.ai",
-    title: "AI Resume Builder | Create ATS-Optimized Resumes | LinImpact.ai",
-    description: "Build professional, ATS-friendly resumes with AI. 14+ templates, cover letter generator, LinkedIn import & more. Land your dream job faster!",
+    title: "AI Resume & Cover Letter Builder | ATS-Optimized | LinImpact.ai",
+    description: "Build professional resumes and tailored cover letters with AI. 14+ templates, LinkedIn import & more. Land your dream job faster!",
     images: [
       {
         url: "https://linimpact.ai/og-image.png",
         width: 1200,
         height: 630,
-        alt: "LinImpact.ai - AI Resume Builder",
+        alt: "LinImpact.ai - AI Resume & Cover Letter Builder",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Resume Builder | ATS-Optimized Templates",
-    description: "Create professional resumes with AI. ATS-friendly templates, cover letter generator & more.",
+    title: "AI Resume & Cover Letter Builder | ATS-Optimized",
+    description: "Create professional resumes and cover letters with AI. ATS-friendly templates & more.",
     images: ["https://linimpact.ai/og-image.png"],
     creator: "@linimpactai",
   },
@@ -75,8 +75,8 @@ export const homeMetadata: Metadata = {
 };
 
 export const pricingMetadata: Metadata = {
-  title: "Pricing | AI Resume Builder Plans | LinImpact.ai",
-  description: "Choose the perfect plan for your job search. Free trial, Pro monthly, quarterly & semi-annual options. ATS-optimized resumes, AI cover letters & interview prep included.",
+  title: "Pricing | AI Resume & Cover Letter Builder Plans | LinImpact.ai",
+  description: "Choose the perfect plan for your job search. Free trial, Pro monthly, quarterly & semi-annual options. ATS-optimized resumes, tailored cover letters & interview prep included.",
   keywords: [
     "resume builder pricing",
     "ai resume builder cost",
@@ -88,8 +88,8 @@ export const pricingMetadata: Metadata = {
     "resume builder subscription"
   ],
   openGraph: {
-    title: "Resume Builder Pricing | LinImpact.ai",
-    description: "Affordable AI resume builder plans. Professional resumes, cover letters & more. Upgrade anytime.",
+    title: "Resume & Cover Letter Builder Pricing | LinImpact.ai",
+    description: "Affordable AI resume & cover letter builder plans. Professional resumes, tailored cover letters & more. Upgrade anytime.",
     url: "https://linimpact.ai/pricing",
   },
   alternates: {
@@ -154,7 +154,7 @@ export const faqSchema = {
       "name": "What is the best resume format?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The reverse-chronological format is the most widely accepted and ATS-friendly resume format for 2024. It lists your most recent experience first and is preferred by 75% of recruiters."
+        "text": "The reverse-chronological format is the most widely accepted and ATS-friendly resume format for 2026. It lists your most recent experience first and is preferred by 75% of recruiters."
       }
     },
     {
@@ -199,7 +199,7 @@ export const organizationSchema = {
   "name": "LinImpact.ai",
   "url": "https://linimpact.ai",
   "logo": "https://linimpact.ai/logo.png",
-  "description": "AI-powered resume builder helping job seekers create professional, ATS-optimized resumes and cover letters.",
+  "description": "AI-powered resume & cover letter builder helping job seekers create professional, ATS-optimized resumes and tailored cover letters.",
   "sameAs": [
     "https://twitter.com/linimpactai",
     "https://linkedin.com/company/linimpactai",
@@ -216,7 +216,7 @@ export const organizationSchema = {
 export const softwareSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "LinImpact.ai Resume Builder",
+  "name": "LinImpact.ai Resume & Cover Letter Builder",
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web Browser",
   "offers": {
@@ -230,5 +230,5 @@ export const softwareSchema = {
     "ratingValue": "4.9",
     "reviewCount": "10000"
   },
-  "description": "AI-powered resume builder with ATS optimization, cover letter generator, LinkedIn import, and interview preparation tools."
+  "description": "AI-powered resume & cover letter builder with ATS optimization, LinkedIn import, and interview preparation tools."
 };

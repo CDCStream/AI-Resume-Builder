@@ -31,10 +31,10 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://linimpact.ai"),
   title: {
-    default: "AI Resume Builder | ATS-Friendly Templates | LinImpact.ai",
+    default: "AI Resume & Cover Letter Builder | ATS-Friendly Templates | LinImpact.ai",
     template: "%s | LinImpact.ai"
   },
-  description: "Create professional, ATS-optimized resumes in minutes with our AI resume builder. 14+ templates, AI cover letter generator, LinkedIn import & interview prep. Get started today!",
+  description: "Create professional, ATS-optimized resumes and tailored cover letters in minutes with AI. 14+ templates, LinkedIn import & interview prep. Get started today!",
   keywords: [
     "resume builder", "ai resume builder", "best resume builder", "ats friendly resume",
     "ats resume template", "cover letter generator", "cv builder", "resume maker",
@@ -65,14 +65,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://linimpact.ai",
     siteName: "LinImpact.ai",
-    title: "AI Resume Builder | Create ATS-Optimized Resumes",
-    description: "Build professional, ATS-friendly resumes with AI. 14+ templates, cover letter generator, LinkedIn import & more.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "LinImpact.ai - AI Resume Builder" }],
+    title: "AI Resume & Cover Letter Builder | ATS-Optimized",
+    description: "Build professional, ATS-friendly resumes and cover letters with AI. 14+ templates, LinkedIn import & more.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "LinImpact.ai - AI Resume & Cover Letter Builder" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Resume Builder | ATS-Optimized Templates",
-    description: "Create professional resumes with AI. ATS-friendly templates, cover letter generator & more.",
+    title: "AI Resume & Cover Letter Builder | ATS-Optimized Templates",
+    description: "Create professional resumes & cover letters with AI. ATS-friendly templates & more.",
     images: ["/og-image.png"],
     creator: "@linimpactai",
   },
