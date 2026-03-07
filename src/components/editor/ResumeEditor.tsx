@@ -80,6 +80,15 @@ type CollapsibleSection =
   | "techProficiencies"
   | AdditionalSection;
 
+function combineWorkDescription(summary?: string, highlights?: string[]): string {
+  const parts: string[] = [];
+  if (summary) parts.push(summary);
+  if (highlights && highlights.length > 0) {
+    parts.push(highlights.map((h) => `• ${h}`).join("\n"));
+  }
+  return parts.join("\n\n");
+}
+
 export default function ResumeEditor({
   resume,
   onResumeChange,
@@ -2205,7 +2214,7 @@ export default function ResumeEditor({
                   <ATSOptimizeButtons
                     field="workExperience"
                     fieldLabel={`${job.position || "Work"} Experience`}
-                    currentValue={job.summary || ""}
+                    currentValue={combineWorkDescription(job.summary, job.highlights)}
                     context={{
                       name: resume.basics?.name,
                       currentTitle: job.position,
@@ -2213,7 +2222,7 @@ export default function ResumeEditor({
                     }}
                     onApply={(newValue, suggestedSkills, suggestedLanguages) => {
                       const newWork = [...(resume.work || [])];
-                      newWork[index] = { ...newWork[index], summary: newValue };
+                      newWork[index] = { ...newWork[index], summary: newValue, highlights: [] };
                       let updatedResume = { ...resume, work: newWork };
                       if (suggestedSkills && suggestedSkills.length > 0) {
                         const allExisting = new Set([
@@ -2243,10 +2252,10 @@ export default function ResumeEditor({
                   />
                 </div>
                 <Textarea
-                  value={job.summary || ""}
+                  value={combineWorkDescription(job.summary, job.highlights)}
                   onChange={(e) => {
                     const newWork = [...(resume.work || [])];
-                    newWork[index] = { ...newWork[index], summary: e.target.value };
+                    newWork[index] = { ...newWork[index], summary: e.target.value, highlights: [] };
                     onResumeChange({ ...resume, work: newWork });
                   }}
                   placeholder="Describe your responsibilities and achievements"
