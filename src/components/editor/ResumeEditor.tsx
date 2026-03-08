@@ -23,7 +23,7 @@ import ATSOptimizeButtons from "./ATSOptimizeButtons";
 import ATSScorePanel from "./ATSScorePanel";
 import ProfessionATSPanel from "./ProfessionATSPanel";
 import ResumeScanPreview from "./ResumeScanPreview";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutDashboard, Pencil, Check } from "lucide-react";
 
@@ -278,8 +278,12 @@ export default function ResumeEditor({
     });
   };
 
-  // Get current section order
-  const currentSectionOrder = resume.sectionOrder || defaultSectionOrder;
+  // Get current section order (auto-merge new sections that don't exist in saved order)
+  const currentSectionOrder = useMemo(() => {
+    const order = resume.sectionOrder || defaultSectionOrder;
+    const missing = defaultSectionOrder.filter((s) => !order.includes(s));
+    return missing.length > 0 ? [...order, ...missing] : order;
+  }, [resume.sectionOrder]);
 
   // Drag handlers for main section cards
   const handleCardDragStart = (section: SectionType) => {

@@ -35,7 +35,9 @@ export const defaultTheme: ThemeConfig = {
 
 export function useOrderedSections(resume: Resume) {
   return useMemo(() => {
-    return resume.sectionOrder || defaultSectionOrder;
+    const order = resume.sectionOrder || defaultSectionOrder;
+    const missing = defaultSectionOrder.filter((s) => !order.includes(s));
+    return missing.length > 0 ? [...order, ...missing] : order;
   }, [resume.sectionOrder]);
 }
 
