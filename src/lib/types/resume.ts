@@ -195,6 +195,15 @@ export interface IndustryExpertise {
   level?: string; // "Beginner" | "Intermediate" | "Advanced" | "Expert"
 }
 
+export interface GitHubRepoDetail {
+  name?: string;
+  description?: string;
+  language?: string;
+  stars?: number;
+  forks?: number;
+  url?: string;
+}
+
 export interface DigitalPortfolioItem {
   platform?: string;
   url?: string;
@@ -206,6 +215,7 @@ export interface DigitalPortfolioItem {
     stars?: number;
     followers?: number;
     topLanguages?: string[];
+    topRepos?: GitHubRepoDetail[];
   };
   linkStatus?: "valid" | "broken" | "unchecked";
 }

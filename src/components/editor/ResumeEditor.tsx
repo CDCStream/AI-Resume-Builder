@@ -295,7 +295,7 @@ export default function ResumeEditor({
       const newOrder = [...currentSectionOrder];
       const draggedIndex = newOrder.indexOf(draggedSection);
       const targetIndex = newOrder.indexOf(dropTargetSection);
-      
+
       if (draggedIndex !== -1 && targetIndex !== -1) {
         newOrder.splice(draggedIndex, 1);
         newOrder.splice(targetIndex, 0, draggedSection);
@@ -1292,7 +1292,7 @@ export default function ResumeEditor({
     </Card>
   );
 
-  const platformOptions = ["GitHub", "Behance", "Portfolio", "Medium", "Dribbble", "Kaggle", "StackOverflow", "Dev.to", "Other"];
+  const platformOptions = ["GitHub"];
 
   const [trustLoading, setTrustLoading] = useState(false);
   const [githubStatsLoading, setGithubStatsLoading] = useState<number | null>(null);
@@ -1447,15 +1447,38 @@ export default function ResumeEditor({
               <Input value={item.url || ""} onChange={(e) => { const arr = [...(resume.digitalPortfolio || [])]; arr[index] = { ...arr[index], url: e.target.value }; onResumeChange({ ...resume, digitalPortfolio: arr }); }} placeholder="https://github.com/username" />
             </div>
             {item.platform === "GitHub" && (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="text-xs" onClick={() => fetchGitHubStats(index)} disabled={githubStatsLoading === index}>
-                  {githubStatsLoading === index ? "Fetching..." : "Fetch GitHub Stats"}
-                </Button>
-                {item.stats && (
-                  <div className="flex items-center gap-3 text-xs text-gray-600">
-                    <span>{item.stats.repos} repos</span>
-                    <span>{item.stats.stars} stars</span>
-                    <span>{item.stats.followers} followers</span>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => fetchGitHubStats(index)} disabled={githubStatsLoading === index}>
+                    {githubStatsLoading === index ? "Fetching..." : "Fetch GitHub Stats"}
+                  </Button>
+                  {item.stats && (
+                    <div className="flex items-center gap-3 text-xs text-gray-600">
+                      <span>{item.stats.repos} repos</span>
+                      <span>⭐ {item.stats.stars}</span>
+                      <span>{item.stats.followers} followers</span>
+                    </div>
+                  )}
+                </div>
+                {item.stats?.topRepos && item.stats.topRepos.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-gray-700">Top Repositories</p>
+                    {item.stats.topRepos.map((repo, ri) => (
+                      <div key={ri} className="flex items-center justify-between p-2.5 border rounded-md bg-gray-50 text-xs">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-gray-900 truncate">{repo.name}</p>
+                          {repo.description && <p className="text-gray-500 truncate mt-0.5">{repo.description}</p>}
+                        </div>
+                        <div className="flex items-center gap-3 ml-3 text-gray-500 shrink-0">
+                          {repo.language && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />{repo.language}</span>}
+                          <span>⭐ {repo.stars?.toLocaleString()}</span>
+                          <span className="flex items-center gap-0.5">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                            {repo.forks?.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1463,7 +1486,7 @@ export default function ResumeEditor({
           </div>
         ))}
 
-        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, digitalPortfolio: [...(resume.digitalPortfolio || []), { platform: "", url: "", label: "", linkStatus: "unchecked" }] }); }}>+ Add Portfolio Link</Button>
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, digitalPortfolio: [...(resume.digitalPortfolio || []), { platform: "GitHub", url: "", label: "", linkStatus: "unchecked" }] }); }}>+ Add GitHub Profile</Button>
 
         {resume.digitalPortfolio && resume.digitalPortfolio.length > 0 && (
           <div className="flex gap-2 pt-2">
@@ -1650,8 +1673,8 @@ export default function ResumeEditor({
           </div>
         </div>
         <div className="flex flex-col gap-2 mt-8">
-          <Button 
-            onClick={handleSaveClick} 
+          <Button
+            onClick={handleSaveClick}
             variant="outline"
             className="no-print"
             disabled={isSaving}
@@ -1668,8 +1691,8 @@ export default function ResumeEditor({
               "Save"
             )}
           </Button>
-          <Button 
-            onClick={handleDownloadPDF} 
+          <Button
+            onClick={handleDownloadPDF}
             className="no-print"
             disabled={isExportingPDF}
           >
@@ -2297,7 +2320,7 @@ export default function ResumeEditor({
         <Card className="group">
           <div className="flex items-stretch">
             {/* Drag Handle */}
-            <div 
+            <div
               className="w-8 flex items-center justify-center bg-gray-50 border-r border-gray-100 cursor-grab active:cursor-grabbing hover:bg-blue-50 transition-colors rounded-l-xl"
               title="Drag to reorder"
             >
@@ -2487,7 +2510,7 @@ export default function ResumeEditor({
         <Card className="group">
           <div className="flex items-stretch">
             {/* Drag Handle */}
-            <div 
+            <div
               className="w-8 flex items-center justify-center bg-gray-50 border-r border-gray-100 cursor-grab active:cursor-grabbing hover:bg-blue-50 transition-colors rounded-l-xl"
               title="Drag to reorder"
             >
@@ -2668,7 +2691,7 @@ export default function ResumeEditor({
         <Card className="group">
           <div className="flex items-stretch">
             {/* Drag Handle */}
-            <div 
+            <div
               className="w-8 flex items-center justify-center bg-gray-50 border-r border-gray-100 cursor-grab active:cursor-grabbing hover:bg-blue-50 transition-colors rounded-l-xl"
               title="Drag to reorder"
             >

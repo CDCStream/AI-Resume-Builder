@@ -39,11 +39,12 @@ export async function POST(request: NextRequest) {
     const userData = await userRes.json();
 
     const reposRes = await fetch(
-      `https://api.github.com/users/${username}/repos?per_page=100&sort=updated`,
+      `https://api.github.com/users/${username}/repos?per_page=100&sort=stars&direction=desc`,
       { headers }
     );
     let totalStars = 0;
     const langCounts: Record<string, number> = {};
+    const topRepos: { name: string; description: string; language: string; stars: number; forks: number; url: string }[] = [];
 
     if (reposRes.ok) {
       const repos = await reposRes.json();
@@ -52,6 +53,21 @@ export async function POST(request: NextRequest) {
         if (repo.language) {
           langCounts[repo.language] = (langCounts[repo.language] || 0) + 1;
         }
+      }
+
+      const sorted = [...repos].sort(
+        (a: { stargazers_count: number }, b: { stargazers_count: number }) =>
+          (b.stargazers_count || 0) - (a.stargazers_count || 0)
+      );
+      for (const repo of sorted.slice(0, 6)) {
+        topRepos.push({
+          name: repo.name,
+          description: repo.description || "",
+          language: repo.language || "",
+          stars: repo.stargazers_count || 0,
+          forks: repo.forks_count || 0,
+          url: repo.html_url || "",
+        });
       }
     }
 
@@ -66,6 +82,7 @@ export async function POST(request: NextRequest) {
         stars: totalStars,
         followers: userData.followers || 0,
         topLanguages,
+        topRepos,
       },
     });
   } catch (error) {

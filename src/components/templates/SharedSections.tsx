@@ -499,8 +499,7 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
                   </div>
                   {item.stats && (
                     <p className={`${t.subTextClass} text-[11px] mt-0.5`}>
-                      {item.stats.repos} repos · {item.stats.stars} stars · {item.stats.followers} followers
-                      {item.stats.topLanguages && item.stats.topLanguages.length > 0 && ` · ${item.stats.topLanguages.join(", ")}`}
+                      {item.stats.repos} repos · ⭐ {item.stats.stars?.toLocaleString()} · {item.stats.followers} followers
                     </p>
                   )}
                 </div>
@@ -510,6 +509,24 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
                   </div>
                 )}
               </div>
+              {item.stats?.topRepos && item.stats.topRepos.length > 0 && (
+                <div className="mt-1.5 ml-8 space-y-1">
+                  {item.stats.topRepos.map((repo, ri) => (
+                    <div key={ri} className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`font-semibold ${t.textClass} truncate`}>{repo.name}</span>
+                        {repo.language && (
+                          <span className={`${t.subTextClass} shrink-0`}>{repo.language}</span>
+                        )}
+                      </div>
+                      <div className={`flex items-center gap-2 shrink-0 ${t.subTextClass}`}>
+                        <span>⭐ {repo.stars?.toLocaleString()}</span>
+                        <span>🍴 {repo.forks?.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             ))}
           </div>
         </section>
