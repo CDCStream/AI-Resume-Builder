@@ -195,19 +195,34 @@ export interface IndustryExpertise {
   level?: string; // "Beginner" | "Intermediate" | "Advanced" | "Expert"
 }
 
+export interface DigitalPortfolioItem {
+  platform?: string;
+  url?: string;
+  label?: string;
+  trustScore?: number;
+  trustLevel?: string;
+  stats?: {
+    repos?: number;
+    stars?: number;
+    followers?: number;
+    topLanguages?: string[];
+  };
+  linkStatus?: "valid" | "broken" | "unchecked";
+}
+
 export type SectionType =
   | "summary" | "experience" | "education" | "skills" | "languages"
   | "courses" | "internships" | "activities" | "hobbies" | "references" | "awards"
   | "volunteering" | "certifications" | "projects" | "publications"
   | "strengths" | "industryExpertise" | "philosophy" | "books"
-  | "socialLinks" | "custom";
+  | "digitalPortfolio" | "socialLinks" | "custom";
 
 export const defaultSectionOrder: SectionType[] = [
   "summary", "experience", "internships", "education", "activities", "awards",
   "skills", "languages", "courses", "hobbies", "references",
   "publications", "projects", "certifications", "volunteering",
   "strengths", "industryExpertise", "philosophy", "books",
-  "socialLinks", "custom",
+  "digitalPortfolio", "socialLinks", "custom",
 ];
 
 export interface Resume {
@@ -233,6 +248,7 @@ export interface Resume {
   philosophy?: Philosophy;
   books?: Book[];
   socialLinks?: SocialLink[];
+  digitalPortfolio?: DigitalPortfolioItem[];
   industryExpertise?: IndustryExpertise[];
   sectionOrder?: SectionType[];
 }

@@ -4,6 +4,7 @@ import { Resume, SectionType, defaultSectionOrder } from "@/lib/types/resume";
 import { LanguageGrid } from "./LanguageDots";
 import { formatDate } from "./utils";
 import { ReactNode, useMemo } from "react";
+import { QRCodeSVG } from "qrcode.react";
 
 export interface ThemeConfig {
   headingClass: string;
@@ -47,7 +48,7 @@ export function renderSections(
 }
 
 function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig): ReactNode {
-  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise } = resume;
+  const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, digitalPortfolio, socialLinks, industryExpertise } = resume;
 
   const tc = t.titleClass || "font-semibold text-gray-900";
 
@@ -444,6 +445,68 @@ function renderSection(resume: Resume, sectionType: SectionType, t: ThemeConfig)
                   <p className={`text-sm font-medium ${tc}`}>{book.title}</p>
                   {book.author && <p className={t.subTextClass}>{book.author}</p>}
                 </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+
+    case "digitalPortfolio":
+      if (!digitalPortfolio || digitalPortfolio.length === 0 || !digitalPortfolio.some(d => d.url || d.platform)) return null;
+      return (
+        <section key="digitalPortfolio" className="mb-6" data-section="digitalPortfolio">
+          <h2 className={t.headingClass}>Digital Portfolio</h2>
+          <div className="space-y-2">
+            {digitalPortfolio.filter(d => d.url || d.platform).map((item, index) => (
+              <div key={index} className={`resume-item flex items-center gap-3 ${t.cardClass || ""}`}>
+                <span className="shrink-0 w-5 h-5 text-gray-500">
+                  {item.platform === "GitHub" ? (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                  ) : item.platform === "Behance" ? (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 3.211 3.483 3.312 4.588 2.029h3.168zm-7.686-4h4.965c-.105-1.547-1.136-2.219-2.477-2.219-1.466 0-2.277.768-2.488 2.219zm-9.574 6.988H0V5.021h6.953c5.476.081 5.58 5.444 2.72 6.906 3.461 1.26 3.577 8.061-3.207 8.061zM3 11h3.584c2.508 0 2.906-3-.312-3H3v3zm3.391 3H3v3.016h3.341c3.055 0 2.868-3.016.05-3.016z"/></svg>
+                  ) : item.platform === "Medium" ? (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zm7.42 0c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42zM24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
+                  ) : item.platform === "Dribbble" ? (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 24C5.385 24 0 18.615 0 12S5.385 0 12 0s12 5.385 12 12-5.385 12-12 12zm10.12-10.358c-.35-.11-3.17-.953-6.384-.438 1.34 3.684 1.887 6.684 1.992 7.308 2.3-1.555 3.936-4.02 4.395-6.87zm-6.115 7.808c-.153-.9-.75-4.032-2.19-7.77l-.066.02c-5.79 2.015-7.86 6.025-8.04 6.4 1.73 1.358 3.92 2.166 6.29 2.166 1.42 0 2.77-.29 4-.81zm-11.62-2.58c.232-.4 3.045-5.055 8.332-6.765.135-.045.27-.084.405-.12-.26-.585-.54-1.167-.832-1.74C7.17 11.775 2.206 11.71 1.756 11.7l-.004.312c0 2.633.998 5.037 2.634 6.855zm-2.42-8.955c.46.008 4.683.026 9.477-1.248-1.698-3.018-3.53-5.558-3.8-5.928-2.868 1.35-5.01 3.99-5.676 7.17zm7.275-7.534c.282.386 2.145 2.916 3.822 6 3.645-1.365 5.19-3.44 5.373-3.702-2.4-2.135-5.568-3.43-9.01-3.43-.063 0-.124.002-.186.005l.001.127z"/></svg>
+                  ) : item.platform === "Kaggle" ? (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.825 23.859c-.022.092-.117.141-.281.141h-3.139c-.187 0-.351-.082-.492-.248l-5.178-6.589-1.448 1.374v5.111c0 .235-.117.352-.351.352H5.505c-.236 0-.354-.117-.354-.352V.353c0-.233.118-.353.354-.353h2.431c.234 0 .351.12.351.353v14.343l6.203-6.272c.165-.165.33-.246.495-.246h3.239c.144 0 .236.06.281.18.046.149.034.233-.035.257l-6.555 6.344 6.836 8.507c.095.104.117.208.074.312z"/></svg>
+                  ) : item.platform === "StackOverflow" ? (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 21H3v-8.7h1.5v7.2h9V12.3H15V21zm3.6-14.19l-1.09 1.32 5.3 4.37 1.09-1.32-5.3-4.37zm2.26 6.72l-.6 1.58 6.02 2.3.6-1.58-6.02-2.3zM18.15 2.69l-1.38.93 3.72 5.5 1.38-.93-3.72-5.5zm-1.66 13.83l.09 1.7 6.14-.33-.09-1.7-6.14.33zM5 17.6h8V16H5v1.6z"/></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  )}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {item.url ? (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-700 hover:underline truncate">
+                        {item.label || item.platform || item.url}
+                      </a>
+                    ) : (
+                      <span className={`text-sm font-medium ${t.textClass}`}>{item.label || item.platform}</span>
+                    )}
+                    {item.trustScore !== undefined && (
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                        item.trustScore >= 70 ? "bg-green-100 text-green-700" :
+                        item.trustScore >= 40 ? "bg-yellow-100 text-yellow-700" :
+                        "bg-red-100 text-red-700"
+                      }`}>
+                        {item.trustLevel || `${item.trustScore}/100`}
+                      </span>
+                    )}
+                  </div>
+                  {item.stats && (
+                    <p className={`${t.subTextClass} text-[11px] mt-0.5`}>
+                      {item.stats.repos} repos · {item.stats.stars} stars · {item.stats.followers} followers
+                      {item.stats.topLanguages && item.stats.topLanguages.length > 0 && ` · ${item.stats.topLanguages.join(", ")}`}
+                    </p>
+                  )}
+                </div>
+                {item.url && (
+                  <div className="shrink-0 ml-2">
+                    <QRCodeSVG value={item.url} size={36} level="L" />
+                  </div>
+                )}
               </div>
             ))}
           </div>

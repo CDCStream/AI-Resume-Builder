@@ -42,6 +42,7 @@ type AdditionalSection =
   | "strengths"
   | "philosophy"
   | "books"
+  | "digitalPortfolio"
   | "socialLinks"
   | "industryExpertise"
   | "custom";
@@ -218,6 +219,9 @@ export default function ResumeEditor({
     if (resume.books && resume.books.length > 0 && resume.books.some(b => b.title)) {
       sectionsToActivate.push("books");
     }
+    if (resume.digitalPortfolio && resume.digitalPortfolio.length > 0 && resume.digitalPortfolio.some(d => d.platform || d.url)) {
+      sectionsToActivate.push("digitalPortfolio");
+    }
     if (resume.socialLinks && resume.socialLinks.length > 0 && resume.socialLinks.some(l => l.network)) {
       sectionsToActivate.push("socialLinks");
     }
@@ -260,6 +264,7 @@ export default function ResumeEditor({
     if (resume.industryExpertise && resume.industryExpertise.length > 0) sections.push("industryExpertise");
     if (resume.philosophy?.quote) sections.push("philosophy");
     if (resume.books && resume.books.length > 0) sections.push("books");
+    if (resume.digitalPortfolio && resume.digitalPortfolio.length > 0) sections.push("digitalPortfolio");
     if (resume.socialLinks && resume.socialLinks.length > 0) sections.push("socialLinks");
     if (resume.customSections && resume.customSections.length > 0) sections.push("custom");
     return sections;
@@ -336,6 +341,7 @@ export default function ResumeEditor({
     strengths: "Strengths",
     philosophy: "My Life Philosophy",
     books: "Books",
+    digitalPortfolio: "Digital Portfolio",
     socialLinks: "Find Me Online",
     industryExpertise: "Industry Expertise",
     custom: "Custom Section",
@@ -389,6 +395,9 @@ export default function ResumeEditor({
           break;
         case "books":
           updatedResume.books = [];
+          break;
+        case "digitalPortfolio":
+          updatedResume.digitalPortfolio = [];
           break;
         case "socialLinks":
           updatedResume.socialLinks = [];
@@ -481,6 +490,8 @@ export default function ResumeEditor({
         return renderPhilosophySection();
       case "books":
         return renderBooksSection();
+      case "digitalPortfolio":
+        return renderDigitalPortfolioSection();
       case "socialLinks":
         return renderSocialLinksSection();
       case "industryExpertise":
@@ -1273,6 +1284,193 @@ export default function ResumeEditor({
           </div>
         ))}
         <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, books: [...(resume.books || []), { title: "", author: "" }] }); }}>+ Add Book</Button>
+      </CardContent>}
+    </Card>
+  );
+
+  const platformOptions = ["GitHub", "Behance", "Portfolio", "Medium", "Dribbble", "Kaggle", "StackOverflow", "Dev.to", "Other"];
+
+  const [trustLoading, setTrustLoading] = useState(false);
+  const [githubStatsLoading, setGithubStatsLoading] = useState<number | null>(null);
+  const [linkCheckLoading, setLinkCheckLoading] = useState(false);
+
+  const analyzeTrustScore = async () => {
+    const items = resume.digitalPortfolio;
+    if (!items || items.length === 0) return;
+    setTrustLoading(true);
+    try {
+      const res = await fetch("/api/portfolio-trust", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items,
+          resumeContext: {
+            name: resume.basics?.name,
+            title: resume.basics?.label,
+            skills: resume.skills?.map(s => s.name).filter(Boolean),
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.results) {
+        const updated = [...(resume.digitalPortfolio || [])];
+        data.results.forEach((r: { index: number; trustScore: number; trustLevel: string }) => {
+          if (updated[r.index]) {
+            updated[r.index] = { ...updated[r.index], trustScore: r.trustScore, trustLevel: r.trustLevel };
+          }
+        });
+        onResumeChange({ ...resume, digitalPortfolio: updated });
+      }
+    } catch (e) {
+      console.error("Trust analysis failed:", e);
+    } finally {
+      setTrustLoading(false);
+    }
+  };
+
+  const fetchGitHubStats = async (index: number) => {
+    const item = resume.digitalPortfolio?.[index];
+    if (!item?.url) return;
+    setGithubStatsLoading(index);
+    try {
+      const res = await fetch("/api/github-stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ githubUrl: item.url }),
+      });
+      const data = await res.json();
+      if (data.stats) {
+        const updated = [...(resume.digitalPortfolio || [])];
+        updated[index] = { ...updated[index], stats: data.stats };
+        onResumeChange({ ...resume, digitalPortfolio: updated });
+      }
+    } catch (e) {
+      console.error("GitHub stats failed:", e);
+    } finally {
+      setGithubStatsLoading(null);
+    }
+  };
+
+  const checkAllLinks = async () => {
+    const items = resume.digitalPortfolio;
+    if (!items || items.length === 0) return;
+    setLinkCheckLoading(true);
+    try {
+      const urls = items.map(i => i.url).filter(Boolean) as string[];
+      const res = await fetch("/api/link-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls }),
+      });
+      const data = await res.json();
+      if (data.results) {
+        const updated = [...items];
+        data.results.forEach((r: { url: string; status: "valid" | "broken" }) => {
+          const idx = updated.findIndex(i => i.url === r.url);
+          if (idx >= 0) updated[idx] = { ...updated[idx], linkStatus: r.status };
+        });
+        onResumeChange({ ...resume, digitalPortfolio: updated });
+      }
+    } catch (e) {
+      console.error("Link check failed:", e);
+    } finally {
+      setLinkCheckLoading(false);
+    }
+  };
+
+  const renderDigitalPortfolioSection = () => (
+    <Card key="digitalPortfolio">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => toggleCollapse("digitalPortfolio")}>
+          <CollapseButton section="digitalPortfolio" />
+          <CardTitle className="text-lg">Digital Portfolio & Proof of Work</CardTitle>
+        </div>
+        <button onClick={() => setSectionToDelete("digitalPortfolio")} className="text-gray-400 hover:text-red-500 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </CardHeader>
+      {!isCollapsed("digitalPortfolio") && <CardContent className="space-y-4">
+        {resume.digitalPortfolio?.map((item, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-3 relative">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-gray-900">{item.label || item.platform || "(Not specified)"}</p>
+                {item.trustScore !== undefined && (
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    item.trustScore >= 70 ? "bg-green-100 text-green-700" :
+                    item.trustScore >= 40 ? "bg-yellow-100 text-yellow-700" :
+                    "bg-red-100 text-red-700"
+                  }`}>
+                    {item.trustLevel || `${item.trustScore}/100`}
+                  </span>
+                )}
+                {item.linkStatus === "valid" && (
+                  <span className="text-xs text-green-600 flex items-center gap-0.5">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Live
+                  </span>
+                )}
+                {item.linkStatus === "broken" && (
+                  <span className="text-xs text-red-600 flex items-center gap-0.5">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    Broken
+                  </span>
+                )}
+              </div>
+              <button onClick={() => { const arr = [...(resume.digitalPortfolio || [])]; arr.splice(index, 1); onResumeChange({ ...resume, digitalPortfolio: arr }); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Platform</Label>
+                <select
+                  value={item.platform || ""}
+                  onChange={(e) => { const arr = [...(resume.digitalPortfolio || [])]; arr[index] = { ...arr[index], platform: e.target.value }; onResumeChange({ ...resume, digitalPortfolio: arr }); }}
+                  className="w-full h-10 rounded-md border border-gray-200 bg-white px-3 text-sm"
+                >
+                  <option value="">Select platform</option>
+                  {platformOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Label</Label>
+                <Input value={item.label || ""} onChange={(e) => { const arr = [...(resume.digitalPortfolio || [])]; arr[index] = { ...arr[index], label: e.target.value }; onResumeChange({ ...resume, digitalPortfolio: arr }); }} placeholder="e.g. My Design Portfolio" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">URL</Label>
+              <Input value={item.url || ""} onChange={(e) => { const arr = [...(resume.digitalPortfolio || [])]; arr[index] = { ...arr[index], url: e.target.value }; onResumeChange({ ...resume, digitalPortfolio: arr }); }} placeholder="https://github.com/username" />
+            </div>
+            {item.platform === "GitHub" && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => fetchGitHubStats(index)} disabled={githubStatsLoading === index}>
+                  {githubStatsLoading === index ? "Fetching..." : "Fetch GitHub Stats"}
+                </Button>
+                {item.stats && (
+                  <div className="flex items-center gap-3 text-xs text-gray-600">
+                    <span>{item.stats.repos} repos</span>
+                    <span>{item.stats.stars} stars</span>
+                    <span>{item.stats.followers} followers</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        <Button variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { onResumeChange({ ...resume, digitalPortfolio: [...(resume.digitalPortfolio || []), { platform: "", url: "", label: "", linkStatus: "unchecked" }] }); }}>+ Add Portfolio Link</Button>
+
+        {resume.digitalPortfolio && resume.digitalPortfolio.length > 0 && (
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" size="sm" className="text-xs gap-1" onClick={analyzeTrustScore} disabled={trustLoading}>
+              {trustLoading ? "Analyzing..." : "Analyze Trust Score"}
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs gap-1" onClick={checkAllLinks} disabled={linkCheckLoading}>
+              {linkCheckLoading ? "Checking..." : "Check All Links"}
+            </Button>
+          </div>
+        )}
       </CardContent>}
     </Card>
   );
@@ -2938,6 +3136,25 @@ export default function ResumeEditor({
                 </svg>
               </div>
               <span className="font-medium">Books</span>
+            </button>
+
+            {/* Digital Portfolio */}
+            <button
+              onClick={() => toggleSection("digitalPortfolio")}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                isSectionActive("digitalPortfolio")
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSectionActive("digitalPortfolio") ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600"
+              }`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.836-3.244a4.5 4.5 0 00-6.364-6.364L4.5 8.25l4.5 4.5a4.5 4.5 0 006.364 0l3.75-3.75z" />
+                </svg>
+              </div>
+              <span className="font-medium">Digital Portfolio</span>
             </button>
 
             {/* Find Me Online */}
