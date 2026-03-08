@@ -239,7 +239,7 @@ export default function LandingPage() {
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
                 Build your resume, cover letter & prep interviews with Humanized AI —{" "}
-                <span className="relative">
+                <span className="relative inline-block whitespace-nowrap">
                   <span className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     get hired faster
                   </span>
