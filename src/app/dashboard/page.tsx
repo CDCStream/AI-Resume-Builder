@@ -118,15 +118,7 @@ export default function DashboardPage() {
     updateCoverLetter,
   } = useCoverLetters();
 
-  // New users with no content → send them straight to the editor
-  useEffect(() => {
-    if (!resumesLoading && !coverLettersLoading && resumes.length === 0 && coverLetters.length === 0) {
-      const isCheckout = searchParams.get("checkout");
-      if (!isCheckout) {
-        router.replace("/resume");
-      }
-    }
-  }, [resumesLoading, coverLettersLoading, resumes.length, coverLetters.length, router, searchParams]);
+  // No auto-redirect: let users explore the dashboard even with no documents
 
   const [activeTab, setActiveTab] = useState("resumes");
   const [deleteDialog, setDeleteDialog] = useState<{

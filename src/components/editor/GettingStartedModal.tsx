@@ -80,7 +80,7 @@ export default function GettingStartedModal({
           <div className="flex items-center justify-between mb-2">
             <button
               onClick={() => { onClose(); router.push("/dashboard"); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
             >
               <Home className="w-4 h-4" />
               Home
