@@ -31,15 +31,16 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://linimpact.ai"),
   title: {
-    default: "AI Resume & Cover Letter Builder | ATS-Friendly Templates | LinImpact.ai",
+    default: "AI Resume & Cover Letter Builder + Interview Prep | ATS-Friendly | LinImpact.ai",
     template: "%s | LinImpact.ai"
   },
-  description: "Create professional, ATS-optimized resumes and tailored cover letters in minutes with AI. 14+ templates, LinkedIn import & interview prep. Get started today!",
+  description: "Create ATS-optimized resumes, tailored cover letters & practice interviews with AI. 14+ templates, LinkedIn import, mock interview prep with real-time feedback. Start free!",
   keywords: [
     "resume builder", "ai resume builder", "best resume builder", "ats friendly resume",
     "ats resume template", "cover letter generator", "cv builder", "resume maker",
     "professional resume", "linkedin resume builder", "ats checker", "cover letter template",
-    "interview prep", "resume examples", "software engineer resume", "best resume builder"
+    "interview prep", "ai interview practice", "mock interview ai", "interview preparation tool",
+    "resume examples", "software engineer resume", "best resume builder"
   ],
   authors: [{ name: "LinImpact.ai" }],
   creator: "LinImpact.ai",
@@ -65,14 +66,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://linimpact.ai",
     siteName: "LinImpact.ai",
-    title: "AI Resume & Cover Letter Builder | ATS-Optimized",
-    description: "Build professional, ATS-friendly resumes and cover letters with AI. 14+ templates, LinkedIn import & more.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "LinImpact.ai - AI Resume & Cover Letter Builder" }],
+    title: "AI Resume & Cover Letter Builder + Interview Prep | ATS-Optimized",
+    description: "Build professional resumes, cover letters & prep for interviews with AI. 14+ templates, LinkedIn import, mock interviews & more.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "LinImpact.ai - AI Resume, Cover Letter & Interview Prep Platform" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Resume & Cover Letter Builder | ATS-Optimized Templates",
-    description: "Create professional resumes & cover letters with AI. ATS-friendly templates & more.",
+    title: "AI Resume & Cover Letter Builder + Interview Prep | ATS-Optimized",
+    description: "Create professional resumes, cover letters & practice interviews with AI. ATS-friendly templates, mock interviews & more.",
     images: ["/og-image.png"],
     creator: "@linimpactai",
   },

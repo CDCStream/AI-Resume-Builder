@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
-import { Lock, Crown } from "lucide-react";
+import { Lock, Crown, Home } from "lucide-react";
 
 interface GettingStartedModalProps {
   isOpen: boolean;
@@ -76,9 +76,21 @@ export default function GettingStartedModal({
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in duration-200">
 
         {/* Header */}
-        <div className="px-8 pt-8 pb-4 text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Let's get started</h2>
-          <p className="text-gray-500 mt-2">How do you want to create your resume?</p>
+        <div className="px-8 pt-8 pb-4">
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => { onClose(); router.push("/dashboard"); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </button>
+            <div className="w-[72px]" />
+          </div>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900">Let&apos;s get started</h2>
+            <p className="text-gray-500 mt-2">How do you want to create your resume?</p>
+          </div>
         </div>
 
         {/* Options */}

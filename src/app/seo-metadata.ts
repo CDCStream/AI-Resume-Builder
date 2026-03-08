@@ -5,8 +5,8 @@ import { Metadata } from "next";
 // cv builder, ats checker, interview prep, linkedin resume, professional resume
 
 export const homeMetadata: Metadata = {
-  title: "AI Resume & Cover Letter Builder | ATS-Friendly Templates | LinImpact.ai",
-  description: "Create professional, ATS-optimized resumes and tailored cover letters in minutes with AI. 14+ templates, LinkedIn import & interview prep. Get started today!",
+  title: "AI Resume & Cover Letter Builder + Interview Prep | ATS-Friendly | LinImpact.ai",
+  description: "Create ATS-optimized resumes, tailored cover letters & practice interviews with AI. 14+ templates, LinkedIn import, mock interview prep with real-time feedback. Start free!",
   keywords: [
     "resume builder",
     "ai resume builder", 
@@ -22,6 +22,10 @@ export const homeMetadata: Metadata = {
     "ats checker",
     "cover letter template",
     "interview prep",
+    "ai interview practice",
+    "mock interview ai",
+    "interview preparation tool",
+    "job interview questions",
     "resume examples",
     "software engineer resume",
     "entry level resume",
@@ -48,21 +52,21 @@ export const homeMetadata: Metadata = {
     locale: "en_US",
     url: "https://linimpact.ai",
     siteName: "LinImpact.ai",
-    title: "AI Resume & Cover Letter Builder | ATS-Optimized | LinImpact.ai",
-    description: "Build professional resumes and tailored cover letters with AI. 14+ templates, LinkedIn import & more. Land your dream job faster!",
+    title: "AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
+    description: "Build professional resumes, tailored cover letters & prep for interviews with AI. 14+ templates, LinkedIn import, mock interviews & more. Land your dream job faster!",
     images: [
       {
         url: "https://linimpact.ai/og-image.png",
         width: 1200,
         height: 630,
-        alt: "LinImpact.ai - AI Resume & Cover Letter Builder",
+        alt: "LinImpact.ai - AI Resume, Cover Letter & Interview Prep Platform",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Resume & Cover Letter Builder | ATS-Optimized",
-    description: "Create professional resumes and cover letters with AI. ATS-friendly templates & more.",
+    title: "AI Resume & Cover Letter Builder + Interview Prep | ATS-Optimized",
+    description: "Create professional resumes, cover letters & practice interviews with AI. ATS-friendly templates, mock interviews & more.",
     images: ["https://linimpact.ai/og-image.png"],
     creator: "@linimpactai",
   },
@@ -199,7 +203,7 @@ export const organizationSchema = {
   "name": "LinImpact.ai",
   "url": "https://linimpact.ai",
   "logo": "https://linimpact.ai/logo.png",
-  "description": "AI-powered resume & cover letter builder helping job seekers create professional, ATS-optimized resumes and tailored cover letters.",
+  "description": "AI-powered resume builder, cover letter generator & interview prep platform helping job seekers create professional, ATS-optimized applications and ace their interviews.",
   "sameAs": [
     "https://twitter.com/linimpactai",
     "https://linkedin.com/company/linimpactai",
@@ -216,7 +220,7 @@ export const organizationSchema = {
 export const softwareSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "LinImpact.ai Resume & Cover Letter Builder",
+  "name": "LinImpact.ai Resume, Cover Letter & Interview Prep Platform",
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web Browser",
   "offers": {
@@ -230,5 +234,5 @@ export const softwareSchema = {
     "ratingValue": "4.9",
     "reviewCount": "10000"
   },
-  "description": "AI-powered resume & cover letter builder with ATS optimization, LinkedIn import, and interview preparation tools."
+  "description": "AI-powered resume builder, cover letter generator & interview prep platform with ATS optimization, LinkedIn import, mock interviews with real-time feedback, and more."
 };
