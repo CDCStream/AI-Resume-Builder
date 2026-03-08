@@ -1457,7 +1457,7 @@ export default function ResumeEditor({
                   {item.stats && (
                     <div className="flex items-center gap-3 text-xs text-gray-600">
                       <span>{item.stats.repos} repos</span>
-                      <span>⭐ {item.stats.stars}</span>
+                      <span className="flex items-center gap-0.5"><svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>{item.stats.stars}</span>
                       <span>{item.stats.followers} followers</span>
                     </div>
                   )}
@@ -1473,11 +1473,8 @@ export default function ResumeEditor({
                         </div>
                         <div className="flex items-center gap-3 ml-3 text-gray-500 shrink-0">
                           {repo.language && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />{repo.language}</span>}
-                          <span>⭐ {repo.stars?.toLocaleString()}</span>
-                          <span className="flex items-center gap-0.5">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                            {repo.forks?.toLocaleString()}
-                          </span>
+                          <span className="flex items-center gap-0.5"><svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>{repo.stars?.toLocaleString()}</span>
+                          <span className="flex items-center gap-0.5"><svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75v-.878a2.25 2.25 0 111.5 0v.878a2.25 2.25 0 01-2.25 2.25h-1.5v2.128a2.251 2.251 0 11-1.5 0V8.5h-1.5A2.25 2.25 0 013.5 6.25v-.878a2.25 2.25 0 111.5 0zM5 3.25a.75.75 0 10-1.5 0 .75.75 0 001.5 0zm6.75.75a.75.75 0 10 0-1.5.75.75 0 000 1.5zM8 12.75a.75.75 0 10 0-1.5.75.75 0 000 1.5z"/></svg>{repo.forks?.toLocaleString()}</span>
                         </div>
                       </div>
                     ))}
@@ -1492,9 +1489,6 @@ export default function ResumeEditor({
 
         {resume.digitalPortfolio && resume.digitalPortfolio.length > 0 && (
           <div className="flex gap-2 pt-2 flex-wrap">
-            <Button variant="outline" size="sm" className="text-xs gap-1" onClick={analyzeTrustScore} disabled={trustLoading}>
-              {trustLoading ? "Analyzing..." : "Analyze Trust Score"}
-            </Button>
             <Button variant="outline" size="sm" className="text-xs gap-1" onClick={checkAllLinks} disabled={linkCheckLoading}>
               {linkCheckLoading ? "Checking..." : "Check All Links"}
             </Button>
