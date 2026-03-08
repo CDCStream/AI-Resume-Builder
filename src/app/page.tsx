@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -29,10 +29,13 @@ import {
   Eye,
   Plus,
   Minus,
-  HelpCircle
+  HelpCircle,
+  Info,
+  ClipboardList
 } from "lucide-react";
 import Script from "next/script";
 import { faqSchema } from "./seo-metadata";
+import { insertPlatformSurvey } from "@/lib/supabase/database";
 
 const CompanyOrbit = dynamic(() => import("@/components/ui/company-logos").then(m => m.CompanyOrbit), { ssr: false });
 const HowItWorksGuide = dynamic(() => import("@/components/landing/HowItWorksGuide").then(m => m.HowItWorksGuide), { ssr: false });
@@ -124,6 +127,33 @@ export default function LandingPage() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [surveyModalOpen, setSurveyModalOpen] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [otherPlatformText, setOtherPlatformText] = useState("");
+  const [surveySubmitting, setSurveySubmitting] = useState(false);
+  const [surveySubmitted, setSurveySubmitted] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const surveyPlatforms = [
+    "Kaggle", "Hugging Face", "Stack Overflow", "Medium", "Quora",
+    "Substack", "dev.to", "Behance", "Dribbble", "YouTube", "Loom", "Product Hunt"
+  ];
+
+  const togglePlatform = (p: string) => {
+    setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+  };
+
+  const handleSurveySubmit = async () => {
+    if (selectedPlatforms.length === 0 && !otherPlatformText.trim()) return;
+    setSurveySubmitting(true);
+    const allPlatforms = [...selectedPlatforms];
+    if (otherPlatformText.trim()) allPlatforms.push(`Other: ${otherPlatformText.trim()}`);
+    await insertPlatformSurvey(allPlatforms, otherPlatformText.trim() || undefined);
+    setSurveySubmitted(true);
+    setSurveySubmitting(false);
+    setTimeout(() => { setSurveyModalOpen(false); setSurveySubmitted(false); setSelectedPlatforms([]); setOtherPlatformText(""); }, 2000);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -236,6 +266,35 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Content */}
             <div className="text-center lg:text-left">
+              {/* New Feature Banner */}
+              <div className="mb-6 space-y-2">
+                <div className="inline-flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-sm font-semibold text-green-700">
+                    <Sparkles className="w-4 h-4" />
+                    New Feature Launched!
+                  </span>
+                  <span className="text-sm font-medium text-gray-800">Digital Portfolio & Proof of Work Section</span>
+                  <div className="relative group">
+                    <Info className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors" />
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 p-3 rounded-lg bg-gray-900 text-white text-xs leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl">
+                      In 2026, recruiters care less about keyword-stuffed resumes and more about proof of real work. This section lets you link your GitHub profile directly to your resume, automatically pulling repo stats, stars, and languages — turning your code into credible career evidence.
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 rotate-45" />
+                    </div>
+                  </div>
+                  <button onClick={() => setDemoModalOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors">
+                    <Play className="w-3 h-3 fill-white" />
+                    Watch Demo
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap text-xs text-gray-500">
+                  <span>Currently supports <strong className="text-gray-700">GitHub</strong> only.</span>
+                  <button onClick={() => setSurveyModalOpen(true)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-blue-200 text-blue-600 font-medium hover:bg-blue-50 transition-colors">
+                    <ClipboardList className="w-3 h-3" />
+                    Vote for next platforms
+                  </button>
+                </div>
+              </div>
+
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
                 Build your resume, cover letter & prep interviews with Humanized AI —{" "}
@@ -1506,6 +1565,72 @@ export default function LandingPage() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
+
+      {/* Demo Video Modal */}
+      {demoModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setDemoModalOpen(false); if (videoRef.current) videoRef.current.pause(); }} />
+          <div className="relative w-full max-w-4xl mx-4">
+            <button onClick={() => { setDemoModalOpen(false); if (videoRef.current) videoRef.current.pause(); }} className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors">
+              <X className="w-8 h-8" />
+            </button>
+            <video ref={videoRef} src="/videos/Digital Portfolio & Proof of work.mp4" controls autoPlay className="w-full rounded-xl shadow-2xl" />
+          </div>
+        </div>
+      )}
+
+      {/* Platform Survey Modal */}
+      {surveyModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSurveyModalOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {!surveySubmitted ? (
+              <>
+                <button onClick={() => setSurveyModalOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+                <div className="px-6 pt-6 pb-2">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-3">
+                    <ClipboardList className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Which platforms should we add next?</h3>
+                  <p className="text-sm text-gray-500 mt-1">Select all that you&apos;d like to see in Digital Portfolio.</p>
+                </div>
+                <div className="px-6 py-4 max-h-72 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-2">
+                    {surveyPlatforms.map((p) => (
+                      <button key={p} onClick={() => togglePlatform(p)} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors text-left ${selectedPlatforms.includes(p) ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 hover:border-blue-300 text-gray-700"}`}>
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${selectedPlatforms.includes(p) ? "border-blue-500 bg-blue-500" : "border-gray-300"}`}>
+                          {selectedPlatforms.includes(p) && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        </span>
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-xs font-medium text-gray-600">Others</label>
+                    <input type="text" value={otherPlatformText} onChange={(e) => setOtherPlatformText(e.target.value)} placeholder="Type platform name..." className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none" />
+                  </div>
+                </div>
+                <div className="px-6 pb-6 flex gap-3">
+                  <button onClick={() => setSurveyModalOpen(false)} className="flex-1 h-10 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+                  <button onClick={handleSurveySubmit} disabled={surveySubmitting || (selectedPlatforms.length === 0 && !otherPlatformText.trim())} className={`flex-1 h-10 rounded-xl font-medium text-sm transition-all ${selectedPlatforms.length > 0 || otherPlatformText.trim() ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
+                    {surveySubmitting ? "Submitting..." : "Submit Vote"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="px-8 py-12 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Thank you!</h3>
+                <p className="text-gray-500 mt-2 text-sm">Your vote has been recorded.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

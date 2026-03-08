@@ -367,3 +367,27 @@ export async function insertFeedback(
 
   return true;
 }
+
+// Platform Survey
+export async function insertPlatformSurvey(
+  platforms: string[],
+  otherText?: string
+): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from("platform_surveys")
+    .insert({
+      user_id: user?.id || null,
+      platforms,
+      other_text: otherText || null,
+    });
+
+  if (error) {
+    console.error("Error inserting platform survey:", error);
+    return false;
+  }
+
+  return true;
+}
