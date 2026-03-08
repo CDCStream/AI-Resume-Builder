@@ -5,8 +5,8 @@ import { Metadata } from "next";
 // cv builder, ats checker, interview prep, linkedin resume, professional resume
 
 export const homeMetadata: Metadata = {
-  title: "AI Resume & Cover Letter Builder + Interview Prep | ATS-Friendly | LinImpact.ai",
-  description: "Create ATS-optimized resumes, tailored cover letters & practice interviews with AI. 14+ templates, LinkedIn import, mock interview prep with real-time feedback. Start free!",
+  title: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
+  description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, no credit card required.",
   keywords: [
     "resume builder",
     "ai resume builder", 
@@ -26,6 +26,10 @@ export const homeMetadata: Metadata = {
     "mock interview ai",
     "interview preparation tool",
     "job interview questions",
+    "humanized ai resume",
+    "ai resume writer",
+    "best ai resume builder 2026",
+    "resume builder not generic",
     "resume examples",
     "software engineer resume",
     "entry level resume",
@@ -52,8 +56,8 @@ export const homeMetadata: Metadata = {
     locale: "en_US",
     url: "https://linimpact.ai",
     siteName: "LinImpact.ai",
-    title: "AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
-    description: "Build professional resumes, tailored cover letters & prep for interviews with AI. 14+ templates, LinkedIn import, mock interviews & more. Land your dream job faster!",
+    title: "Humanized AI Resume, Cover Letter & Interview Prep | LinImpact.ai",
+    description: "Not generic AI. Build resumes, cover letters & prep for interviews with humanized AI that reads like a professional writer. 14+ templates, ATS optimization & more.",
     images: [
       {
         url: "https://linimpact.ai/og-image.png",
@@ -65,8 +69,8 @@ export const homeMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Resume & Cover Letter Builder + Interview Prep | ATS-Optimized",
-    description: "Create professional resumes, cover letters & practice interviews with AI. ATS-friendly templates, mock interviews & more.",
+    title: "Humanized AI Resume & Cover Letter Builder + Interview Prep",
+    description: "Not generic AI. Create resumes, cover letters & practice interviews with humanized AI. ATS-friendly templates, mock interviews & more.",
     images: ["https://linimpact.ai/og-image.png"],
     creator: "@linimpactai",
   },
@@ -191,6 +195,22 @@ export const faqSchema = {
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Software engineers should use clean, minimal templates that highlight technical skills and projects. Include a skills section with programming languages, frameworks, and tools. LinImpact.ai offers specialized templates for tech professionals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it worth paying for an AI resume builder?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story. The result reads like a professional writer's work. Features like ATS scoring, recruiter heatmap simulation, and AI interview prep provide a measurable advantage. LinImpact.ai offers a free 3-day trial with no credit card required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the best AI resume builder for competitive job markets?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In competitive markets, your resume must pass ATS filters and grab attention in 6 seconds. LinImpact.ai offers humanized AI content that avoids the generic AI red flag, ATS optimization with real-time scoring, AI mock interviews with STAR method coaching, and job-matched cover letters. A free 3-day trial is available with no credit card required."
       }
     }
   ]

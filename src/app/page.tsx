@@ -52,8 +52,8 @@ const faqs = [
     answer: "A cover letter should be 250-400 words, fitting on one page with standard margins. Research shows hiring managers spend only 7 seconds scanning cover letters, so keep it concise and impactful. Focus on your 3 most relevant qualifications rather than repeating your entire resume. Our AI ensures optimal length while highlighting key points."
   },
   {
-    question: "What is the best resume format for 2024?",
-    answer: "The reverse-chronological format remains the most widely accepted and ATS-friendly resume format in 2024. It lists your most recent experience first, which recruiters prefer. For career changers, a combination/hybrid format highlighting transferable skills works well. Our resume builder offers 14 professionally designed templates, all optimized for modern ATS systems and hiring practices."
+    question: "What is the best resume format for 2026?",
+    answer: "The reverse-chronological format remains the most widely accepted and ATS-friendly resume format in 2026. It lists your most recent experience first, which recruiters prefer. For career changers, a combination/hybrid format highlighting transferable skills works well. Our resume builder offers 14 professionally designed templates, all optimized for modern ATS systems and hiring practices."
   },
   {
     question: "How can I make my resume stand out to recruiters?",
@@ -86,6 +86,14 @@ const faqs = [
   {
     question: "How do I prepare for a job interview?",
     answer: "Effective interview preparation includes: 1) Research the company's mission, recent news, and culture, 2) Practice answering common questions using the STAR method (Situation, Task, Action, Result), 3) Prepare thoughtful questions to ask the interviewer, 4) Review your resume and be ready to discuss every item. Our Interview Prep AI generates personalized practice questions based on your resume and target job role."
+  },
+  {
+    question: "Is it worth paying for an AI resume builder?",
+    answer: "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story — not just fills in blanks. The result is indistinguishable from a $100 professional writer's work. Plus, features like ATS score analysis, 6-second recruiter heatmap simulation, and AI interview prep give you a measurable advantage. With a free 3-day trial (no credit card required), you can see the difference before committing."
+  },
+  {
+    question: "What is the best AI resume builder for competitive job markets?",
+    answer: "In competitive markets (tech, finance, healthcare), your resume needs to do more than look good — it must pass ATS filters and grab a recruiter's attention in 6 seconds. LinImpact.ai is built for this: 1) Humanized AI content that avoids the 'generic AI' red flag recruiters now watch for, 2) ATS optimization with real-time scoring, 3) AI-powered mock interviews with STAR method coaching, 4) Cover letter generator matched to specific job postings. We offer a 3-day free trial with no credit card required — try every feature before you decide."
   }
 ];
 
@@ -230,7 +238,7 @@ export default function LandingPage() {
             <div className="text-center lg:text-left">
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
-                Build your resume, cover letter & prep interviews with AI —{" "}
+                Build your resume, cover letter & prep interviews with Humanized AI —{" "}
                 <span className="relative">
                   <span className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     get hired faster
@@ -249,7 +257,7 @@ export default function LandingPage() {
 
               {/* Subheadline */}
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                Only 2% of applications win. Create ATS-optimized resumes, tailored cover letters, and ace your interviews with AI-powered mock practice.
+                Only 2% of applications win. Our AI doesn&apos;t generate generic text — it narrates your professional story, making it indistinguishable from a $100 professional writer&apos;s work.
                 <span className="font-semibold text-gray-900"> Yours will be one of them.</span>
               </p>
 
@@ -286,6 +294,10 @@ export default function LandingPage() {
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                   <span>ATS-optimized templates</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-indigo-500" />
+                  <span>Humanized AI, not generic</span>
                 </div>
               </div>
               <p className="mt-3 text-xs text-gray-400 flex items-center gap-1.5 justify-center lg:justify-start">
@@ -683,8 +695,8 @@ export default function LandingPage() {
             {[
               {
                 icon: Brain,
-                title: "AI-Powered Writing",
-                description: "Get intelligent suggestions to improve your content, optimize keywords, and highlight achievements that matter.",
+                title: "Humanized AI Writing",
+                description: "No generic templates. Our AI narrates your unique professional story with human-like tone — indistinguishable from a $100 professional resume writer's work.",
                 color: "blue"
               },
               {
