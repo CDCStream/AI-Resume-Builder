@@ -325,7 +325,7 @@ export async function updateProfile(
 }
 
 // Feedback
-export async function hasUserGivenFeedback(source: "resume_pdf" | "cover_letter_pdf"): Promise<boolean> {
+export async function hasUserGivenFeedback(source: "resume_pdf" | "cover_letter_pdf" | "digital_portfolio"): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return true; // Don't show modal if not authenticated
 
@@ -345,7 +345,7 @@ export async function hasUserGivenFeedback(source: "resume_pdf" | "cover_letter_
 
 export async function insertFeedback(
   rating: number,
-  source: "resume_pdf" | "cover_letter_pdf",
+  source: "resume_pdf" | "cover_letter_pdf" | "digital_portfolio",
   comment?: string
 ): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();

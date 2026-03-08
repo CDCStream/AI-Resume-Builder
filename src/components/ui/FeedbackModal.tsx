@@ -7,7 +7,7 @@ import { insertFeedback } from "@/lib/supabase/database";
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
-  source: "resume_pdf" | "cover_letter_pdf";
+  source: "resume_pdf" | "cover_letter_pdf" | "digital_portfolio";
 }
 
 export default function FeedbackModal({ isOpen, onClose, source }: FeedbackModalProps) {
