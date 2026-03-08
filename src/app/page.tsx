@@ -273,12 +273,12 @@ export default function LandingPage() {
                     <Sparkles className="w-4 h-4" />
                     New Feature Launched!
                   </span>
-                  <span className="text-sm font-medium text-gray-800">Digital Portfolio & Proof of Work Section</span>
+                  <span className="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Digital Portfolio & Proof of Work</span>
                   <div className="relative group">
                     <Info className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors" />
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 p-3 rounded-lg bg-gray-900 text-white text-xs leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl">
+                    <div className="absolute left-0 top-full mt-2 w-72 p-3 rounded-lg bg-gray-900 text-white text-xs leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl">
                       In 2026, recruiters care less about keyword-stuffed resumes and more about proof of real work. This section lets you link your GitHub profile directly to your resume, automatically pulling repo stats, stars, and languages — turning your code into credible career evidence.
-                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 rotate-45" />
+                      <div className="absolute left-4 -top-1 w-2 h-2 bg-gray-900 rotate-45" />
                     </div>
                   </div>
                   <button onClick={() => setDemoModalOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors">
@@ -287,7 +287,7 @@ export default function LandingPage() {
                   </button>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap text-xs text-gray-500">
-                  <span>Currently supports <strong className="text-gray-700">GitHub</strong> only.</span>
+                  <span className="inline-flex items-center gap-1">Currently supports <svg className="w-4 h-4 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg> <strong className="text-gray-700">GitHub</strong> only.</span>
                   <button onClick={() => setSurveyModalOpen(true)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-blue-200 text-blue-600 font-medium hover:bg-blue-50 transition-colors">
                     <ClipboardList className="w-3 h-3" />
                     Vote for next platforms
@@ -1583,7 +1583,7 @@ export default function LandingPage() {
       {surveyModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSurveyModalOpen(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
             {!surveySubmitted ? (
               <>
                 <button onClick={() => setSurveyModalOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
@@ -1596,7 +1596,7 @@ export default function LandingPage() {
                   <h3 className="text-lg font-bold text-gray-900">Which platforms should we add next?</h3>
                   <p className="text-sm text-gray-500 mt-1">Select all that you&apos;d like to see in Digital Portfolio.</p>
                 </div>
-                <div className="px-6 py-4 max-h-72 overflow-y-auto">
+                <div className="px-6 py-4">
                   <div className="grid grid-cols-2 gap-2">
                     {surveyPlatforms.map((p) => (
                       <button key={p} onClick={() => togglePlatform(p)} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors text-left ${selectedPlatforms.includes(p) ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 hover:border-blue-300 text-gray-700"}`}>
