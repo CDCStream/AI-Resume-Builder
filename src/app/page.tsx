@@ -268,8 +268,8 @@ export default function LandingPage() {
             <div className="text-center lg:text-left">
               {/* New Feature Banner */}
               <div className="mb-6 space-y-2">
-                <div className="inline-flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-sm font-semibold text-green-700">
+                <div className="flex items-center gap-2 flex-nowrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-sm font-semibold text-green-700 whitespace-nowrap">
                     <Sparkles className="w-4 h-4" />
                     New Feature Launched!
                   </span>
@@ -281,7 +281,7 @@ export default function LandingPage() {
                       <div className="absolute left-4 -top-1 w-2 h-2 bg-gray-900 rotate-45" />
                     </div>
                   </div>
-                  <button onClick={() => setDemoModalOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors">
+                  <button onClick={() => setDemoModalOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors whitespace-nowrap shrink-0">
                     <Play className="w-3 h-3 fill-white" />
                     Watch Demo
                   </button>
