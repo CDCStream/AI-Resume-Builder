@@ -1,11 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, Lock, Eye, EyeOff, Loader2, FileText, CheckCircle, Home } from "lucide-react";
 import { trackLogin, trackError } from "@/lib/mixpanel";
+
+function SearchParamsHandler({ onSuccess, onError }: { onSuccess: (msg: string) => void; onError: (msg: string) => void }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    const authError = searchParams.get("error");
+
+    if (verified === "true") {
+      onSuccess("Email verified successfully! You can now sign in.");
+      window.history.replaceState({}, "", "/login");
+    }
+
+    if (authError === "verification_failed") {
+      onError("Email verification failed. Please try again or request a new link.");
+    } else if (authError === "auth_callback_error") {
+      onError("Authentication failed. Please try again.");
+    }
+  }, [searchParams, onSuccess, onError]);
+
+  return null;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,24 +38,6 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const verified = searchParams.get("verified");
-    const authError = searchParams.get("error");
-    
-    if (verified === "true") {
-      setSuccessMessage("Email verified successfully! You can now sign in.");
-      // Clean up URL
-      window.history.replaceState({}, "", "/login");
-    }
-    
-    if (authError === "verification_failed") {
-      setError("Email verification failed. Please try again or request a new link.");
-    } else if (authError === "auth_callback_error") {
-      setError("Authentication failed. Please try again.");
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +67,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-4">
+      <Suspense fallback={null}>
+        <SearchParamsHandler onSuccess={setSuccessMessage} onError={setError} />
+      </Suspense>
       {/* Home Button */}
       <Link 
         href="/" 
