@@ -45,6 +45,7 @@ function calculateReadingTime(content: string): string {
 export const metadata = {
   title: "Career Insights & Expert Tips | LinImpact.ai Blog",
   description: "Discover proven strategies for resume writing, job searching, and career growth. Expert advice from LinImpact.ai to help you land your dream job.",
+  alternates: { canonical: "https://www.linimpact.ai/blog" },
 };
 
 export const revalidate = 60;

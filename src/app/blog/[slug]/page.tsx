@@ -107,6 +107,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: `${post.title} | LinImpact.ai Blog`,
     description: post.description,
+    alternates: { canonical: `https://www.linimpact.ai/blog/${slug}` },
     openGraph: {
       title: post.title,
       description: post.description,
