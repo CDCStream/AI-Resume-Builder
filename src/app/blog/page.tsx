@@ -189,12 +189,47 @@ export default async function BlogPage() {
       </section>
 
       <footer className="bg-gray-900 text-gray-400 py-12">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <Link href="/" className="inline-flex items-center mb-4">
-            <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
-            <span className="text-white font-bold ml-2">LinImpact.ai</span>
-          </Link>
-          <p className="text-sm">© {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h4 className="text-white font-semibold text-sm mb-3">Product</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/" className="hover:text-white transition-colors">Resume Builder</Link></li>
+                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="/register" className="hover:text-white transition-colors">Get Started Free</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-semibold text-sm mb-3">Salary Guides</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/salary/software-engineer" className="hover:text-white transition-colors">Software Engineer</Link></li>
+                <li><Link href="/salary/data-analyst" className="hover:text-white transition-colors">Data Analyst</Link></li>
+                <li><Link href="/salary/project-manager" className="hover:text-white transition-colors">Project Manager</Link></li>
+                <li><Link href="/salary/ux-designer" className="hover:text-white transition-colors">UX Designer</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-semibold text-sm mb-3">Legal</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-semibold text-sm mb-3">Follow Us</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="https://twitter.com/linimpactai" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter / X</a></li>
+                <li><a href="https://www.linkedin.com/company/linimpact" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">LinkedIn</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 pt-6 flex items-center justify-between">
+            <Link href="/" className="inline-flex items-center">
+              <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
+              <span className="text-white font-bold ml-2">LinImpact.ai</span>
+            </Link>
+            <p className="text-sm">&copy; {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>

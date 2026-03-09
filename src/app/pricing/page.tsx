@@ -575,17 +575,48 @@ export default function PricingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-gray-200">
+      <footer className="py-10 border-t border-gray-200 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">Product</h4>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li><Link href="/" className="hover:text-gray-900 transition-colors">Resume Builder</Link></li>
+                <li><Link href="/interview-prep" className="hover:text-gray-900 transition-colors">Interview Prep</Link></li>
+                <li><Link href="/register" className="hover:text-gray-900 transition-colors">Get Started Free</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">Resources</h4>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li><Link href="/blog" className="hover:text-gray-900 transition-colors">Career Blog</Link></li>
+                <li><Link href="/blog/how-to-write-a-resume" className="hover:text-gray-900 transition-colors">Resume Guide</Link></li>
+                <li><Link href="/salary/software-engineer" className="hover:text-gray-900 transition-colors">Salary Guides</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">Legal</h4>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li><Link href="/terms" className="hover:text-gray-900 transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">Follow Us</h4>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li><a href="https://twitter.com/linimpactai" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">Twitter / X</a></li>
+                <li><a href="https://www.linkedin.com/company/linimpact" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">LinkedIn</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
-              <span className="text-sm text-gray-500">© 2024 LinImpact.ai. All rights reserved.</span>
+              <span className="text-sm text-gray-500">&copy; {new Date().getFullYear()} LinImpact.ai. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-gray-500">
               <Link href="/terms" className="hover:text-gray-900 transition-colors">Terms</Link>
               <Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>
-              <Link href="/contact" className="hover:text-gray-900 transition-colors">Contact</Link>
             </div>
           </div>
         </div>

@@ -1424,6 +1424,48 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Salary Guides Section - internal linking for SEO */}
+      <section className="py-16 sm:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+              Salary Guides by Role
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Research real salary data before your next interview. Know your worth and negotiate with confidence.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {[
+              { slug: "software-engineer", title: "Software Engineer" },
+              { slug: "data-analyst", title: "Data Analyst" },
+              { slug: "project-manager", title: "Project Manager" },
+              { slug: "product-manager", title: "Product Manager" },
+              { slug: "ux-designer", title: "UX Designer" },
+              { slug: "devops-engineer", title: "DevOps Engineer" },
+              { slug: "cyber-security", title: "Cyber Security Analyst" },
+              { slug: "financial-analyst", title: "Financial Analyst" },
+              { slug: "registered-nurse", title: "Registered Nurse" },
+              { slug: "marketing-manager", title: "Marketing Manager" },
+              { slug: "scrum-master", title: "Scrum Master" },
+              { slug: "solutions-architect", title: "Solutions Architect" },
+              { slug: "dental-hygienist", title: "Dental Hygienist" },
+              { slug: "administrative-assistant", title: "Administrative Assistant" },
+              { slug: "systems-administrator", title: "Systems Administrator" },
+              { slug: "executive-assistant", title: "Executive Assistant" },
+            ].map((role) => (
+              <Link
+                key={role.slug}
+                href={`/salary/${role.slug}`}
+                className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm transition-all text-center"
+              >
+                {role.title} Salary →
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 relative overflow-hidden">
         {/* Background decoration */}
@@ -1479,7 +1521,7 @@ export default function LandingPage() {
           </div>
 
           {/* Links Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
             <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Product</h4>
               <ul className="space-y-2.5 text-sm">
@@ -1497,7 +1539,16 @@ export default function LandingPage() {
                 <li><Link href="/blog/how-to-write-a-resume" className="hover:text-white transition-colors">Resume Writing Guide</Link></li>
                 <li><Link href="/blog/skills-examples-for-resume" className="hover:text-white transition-colors">Skills for Resume</Link></li>
                 <li><Link href="/blog/resume-bullet-point-examples" className="hover:text-white transition-colors">Bullet Point Examples</Link></li>
-                <li><Link href="/salary/software-engineer" className="hover:text-white transition-colors">Salary Guides</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4 text-sm">Salary Guides</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li><Link href="/salary/software-engineer" className="hover:text-white transition-colors">Software Engineer</Link></li>
+                <li><Link href="/salary/data-analyst" className="hover:text-white transition-colors">Data Analyst</Link></li>
+                <li><Link href="/salary/project-manager" className="hover:text-white transition-colors">Project Manager</Link></li>
+                <li><Link href="/salary/ux-designer" className="hover:text-white transition-colors">UX Designer</Link></li>
+                <li><Link href="/salary/devops-engineer" className="hover:text-white transition-colors">DevOps Engineer</Link></li>
               </ul>
             </div>
             <div>
