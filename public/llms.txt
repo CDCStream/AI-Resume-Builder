@@ -51,14 +51,14 @@ LinImpact.ai is an AI-powered resume builder that helps job seekers create profe
 - Job application best practices
 
 ## Technical Information
-- Website: https://linimpact.ai
+- Website: https://www.linimpact.ai
 - Platform: Web-based (works on all modern browsers)
 - Languages: English
 - Data Privacy: We do not sell user data. Resumes are stored securely.
 
 ## Contact
 - Email: support@linimpact.ai
-- Website: https://linimpact.ai/contact
+- Website: https://www.linimpact.ai/contact
 
 ## Social Media
 - Twitter: @linimpactai

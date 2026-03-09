@@ -1,5 +1,5 @@
 # LinImpact.ai - AI Resume Builder
-# https://linimpact.ai
+# https://www.linimpact.ai
 
 User-agent: *
 Allow: /
@@ -48,7 +48,7 @@ Disallow: /settings/
 Disallow: /billing/
 
 # Sitemap location
-Sitemap: https://linimpact.ai/sitemap.xml
+Sitemap: https://www.linimpact.ai/sitemap.xml
 
 # LLMs.txt for AI assistants
-# See: https://linimpact.ai/llms.txt
+# See: https://www.linimpact.ai/llms.txt

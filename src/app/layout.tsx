@@ -29,7 +29,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://linimpact.ai"),
+  metadataBase: new URL("https://www.linimpact.ai"),
   title: {
     default: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
     template: "%s | LinImpact.ai"
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://linimpact.ai",
+    url: "https://www.linimpact.ai",
     siteName: "LinImpact.ai",
     title: "Humanized AI Resume, Cover Letter & Interview Prep | LinImpact.ai",
     description: "Not generic AI. Build resumes, cover letters & prep for interviews with humanized AI that reads like a professional writer. 14+ templates & more.",
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     creator: "@linimpactai",
   },
   alternates: {
-    canonical: "https://linimpact.ai",
+    canonical: "https://www.linimpact.ai",
   },
   verification: {
     google: "LHeyt4LnhoU9oIGu22RxrZaqY6OMxtb036g0ctmt8k8",
