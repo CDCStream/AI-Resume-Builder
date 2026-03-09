@@ -1479,33 +1479,41 @@ export default function LandingPage() {
           </div>
 
           {/* Links Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
             <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Product</h4>
               <ul className="space-y-2.5 text-sm">
                 <li><Link href="/register" className="hover:text-white transition-colors">Resume & Cover Letter Builder</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Cover Letter Generator</Link></li>
                 <li><Link href="/interview-prep" className="hover:text-white transition-colors">AI Interview Prep</Link></li>
-                <li><Link href="/register" className="hover:text-white transition-colors">Templates</Link></li>
+                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">ATS Checker</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Resources</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">Resume Examples</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Career Guide</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Interview Tips</Link></li>
+                <li><Link href="/blog" className="hover:text-white transition-colors">Career Blog</Link></li>
+                <li><Link href="/blog/how-to-write-a-resume" className="hover:text-white transition-colors">Resume Writing Guide</Link></li>
+                <li><Link href="/blog/skills-examples-for-resume" className="hover:text-white transition-colors">Skills for Resume</Link></li>
+                <li><Link href="/blog/resume-bullet-point-examples" className="hover:text-white transition-colors">Bullet Point Examples</Link></li>
+                <li><Link href="/salary/software-engineer" className="hover:text-white transition-colors">Salary Guides</Link></li>
               </ul>
             </div>
-            <div className="col-span-2 sm:col-span-1">
+            <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Company</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/blog" className="hover:text-white transition-colors">About Us</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4 text-sm">Follow Us</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li><a href="https://twitter.com/linimpactai" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter / X</a></li>
+                <li><a href="https://www.linkedin.com/company/linimpact" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">LinkedIn</a></li>
+                <li><a href="https://github.com/CDCStream" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a></li>
               </ul>
             </div>
           </div>
@@ -1532,9 +1540,9 @@ export default function LandingPage() {
               © 2026 LinImpact.ai. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <Link href="#" className="hover:text-white transition-colors">Twitter</Link>
-              <Link href="#" className="hover:text-white transition-colors">LinkedIn</Link>
-              <Link href="#" className="hover:text-white transition-colors">Instagram</Link>
+              <a href="https://twitter.com/linimpactai" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
+              <a href="https://www.linkedin.com/company/linimpact" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">LinkedIn</a>
+              <a href="https://github.com/CDCStream" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
             </div>
           </div>
         </div>

@@ -175,11 +175,11 @@ export default async function SalaryPageRoute({ params }: Props) {
     },
     {
       q: `What skills increase a ${data.job_title}'s salary?`,
-      a: `Specialized certifications, leadership experience, and in-demand technical skills typically command higher salaries. Senior-level ${data.job_title}s earn significantly more than entry-level professionals.`,
+      a: `Specialized certifications, leadership experience, and in-demand technical skills typically command higher salaries. Senior-level ${data.job_title}s earn significantly more than entry-level professionals. Check the BLS Occupational Outlook Handbook for detailed skill requirements.`,
     },
     {
       q: `How can I negotiate a higher ${data.job_title} salary?`,
-      a: `Research market rates (you're already doing that!), highlight your unique skills, quantify your achievements, and consider the total compensation package. A well-crafted resume that showcases your value can strengthen your negotiating position.`,
+      a: `Research market rates (you're already doing that!), highlight your unique skills, quantify your achievements, and consider the total compensation package. A well-crafted, ATS-optimized resume that showcases your value can strengthen your negotiating position.`,
     },
   ];
 
@@ -269,7 +269,8 @@ export default async function SalaryPageRoute({ params }: Props) {
             {data.job_title} Salary
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl leading-relaxed">
-            How much does a {data.job_title} make? Based on analysis of <strong>{data.total_listings.toLocaleString()} real job listings</strong> in the United States,
+            How much does a {data.job_title} make? Based on analysis of <strong>{data.total_listings.toLocaleString()} real job listings</strong> from{" "}
+            <a href="https://www.indeed.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Indeed</a> in the United States,
             the average {data.job_title} earns <strong>{fmt(data.avg_salary)}</strong> per year, with salaries ranging from {fmt(data.min_salary)} to {fmt(data.max_salary)}.
           </p>
 
@@ -446,18 +447,52 @@ export default async function SalaryPageRoute({ params }: Props) {
             </div>
           </section>
 
+          {/* Methodology & Sources */}
+          <section className="mb-14">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Methodology & Data Sources</h2>
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 text-sm text-gray-600 leading-relaxed space-y-3">
+              <p>
+                Our salary data is aggregated from <strong>{data.total_listings.toLocaleString()}+ real job listings</strong> sourced from{" "}
+                <a href="https://www.indeed.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Indeed</a>,
+                one of the largest job boards in the world. Data is validated against federal statistics from the{" "}
+                <a href="https://www.bls.gov/oes/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">U.S. Bureau of Labor Statistics (BLS)</a>{" "}
+                Occupational Employment and Wage Statistics program.
+              </p>
+              <p>
+                For additional salary benchmarking, we recommend cross-referencing with{" "}
+                <a href="https://www.glassdoor.com/Salaries/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Glassdoor Salary Explorer</a>,{" "}
+                <a href="https://www.payscale.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">PayScale</a>, and{" "}
+                <a href="https://www.salary.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Salary.com</a>.
+                Salary figures represent annualized estimates and may vary based on benefits, bonuses, and equity compensation.
+              </p>
+              <p>
+                Last updated: {data.last_synced_at ? new Date(data.last_synced_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Recently"}.
+                Learn more about career planning in our{" "}
+                <Link href="/blog" className="text-blue-600 hover:underline">career insights blog</Link>.
+              </p>
+            </div>
+          </section>
+
           {/* CTA */}
           <section className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 md:p-12 text-center text-white mb-14">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to Land a {data.job_title} Role?</h2>
             <p className="text-blue-100 mb-6 max-w-xl mx-auto">
               Build a professional, ATS-optimized resume that highlights your value and helps you negotiate the salary you deserve.
             </p>
-            <Link
-              href="/register"
-              className="inline-block px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              Build Your Resume →
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/register"
+                className="inline-block px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Build Your Resume →
+              </Link>
+              <Link
+                href="/blog/how-to-write-a-resume"
+                className="inline-block px-6 py-3 border border-white/40 text-white font-medium rounded-lg hover:bg-white/10 transition-colors text-sm"
+              >
+                Resume Writing Tips
+              </Link>
+            </div>
           </section>
 
           {/* Related Salary Pages (internal linking for SEO) */}
@@ -482,13 +517,53 @@ export default async function SalaryPageRoute({ params }: Props) {
 
         {/* Footer */}
         <footer className="bg-gray-900 text-gray-400 py-12">
-          <div className="max-w-5xl mx-auto px-4 text-center">
-            <Link href="/" className="inline-flex items-center mb-4">
-              <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
-              <span className="text-white font-bold ml-2">LinImpact.ai</span>
-            </Link>
-            <p className="text-sm mb-2">Salary data sourced from Indeed job listings. Updated {data.last_synced_at ? new Date(data.last_synced_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "regularly"}.</p>
-            <p className="text-xs text-gray-500">© {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+              <div>
+                <h4 className="text-white font-semibold text-sm mb-3">Product</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/" className="hover:text-white transition-colors">Resume Builder</Link></li>
+                  <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                  <li><Link href="/register" className="hover:text-white transition-colors">Get Started Free</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold text-sm mb-3">Resources</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/blog" className="hover:text-white transition-colors">Career Blog</Link></li>
+                  <li><Link href="/blog/how-to-write-a-resume" className="hover:text-white transition-colors">Resume Writing Guide</Link></li>
+                  <li><Link href="/blog/skills-examples-for-resume" className="hover:text-white transition-colors">Skills for Resume</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold text-sm mb-3">Salary Guides</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/salary/software-engineer" className="hover:text-white transition-colors">Software Engineer</Link></li>
+                  <li><Link href="/salary/data-analyst" className="hover:text-white transition-colors">Data Analyst</Link></li>
+                  <li><Link href="/salary/project-manager" className="hover:text-white transition-colors">Project Manager</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold text-sm mb-3">External Sources</h4>
+                <ul className="space-y-2 text-sm">
+                  <li><a href="https://www.bls.gov/oes/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Bureau of Labor Statistics</a></li>
+                  <li><a href="https://www.indeed.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Indeed</a></li>
+                  <li><a href="https://www.glassdoor.com/Salaries/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Glassdoor</a></li>
+                </ul>
+              </div>
+            </div>
+            <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <Link href="/" className="inline-flex items-center">
+                <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
+                <span className="text-white font-bold ml-2">LinImpact.ai</span>
+              </Link>
+              <p className="text-sm text-center">Salary data sourced from Indeed job listings. Updated {data.last_synced_at ? new Date(data.last_synced_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "regularly"}.</p>
+              <div className="flex items-center gap-4 text-xs">
+                <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+                <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 text-center mt-4">&copy; {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
           </div>
         </footer>
       </div>
