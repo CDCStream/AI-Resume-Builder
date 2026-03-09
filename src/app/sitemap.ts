@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.linimpact.ai';
-  
+
   // Get all blog posts from Supabase
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from('blog_posts')
       .select('slug, published_at, updated_at')
       .eq('status', 'published');
-    
+
     if (posts) {
       blogPosts = posts.map((post) => ({
         url: `${baseUrl}/blog/${post.slug}`,
@@ -63,6 +63,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/register`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/login`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/privacy`,
       lastModified: new Date(),
       changeFrequency: 'yearly',
@@ -74,7 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
-    
+
     // Blog index
     {
       url: `${baseUrl}/blog`,
@@ -82,7 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.8,
     },
-    
+
     // Blog posts
     ...blogPosts,
 

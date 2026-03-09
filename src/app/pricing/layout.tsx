@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AI Resume Builder Plans & Pricing",
+  title: "Pricing | AI Resume Builder Plans - Free Trial & Pro",
   description: "Affordable AI resume builder pricing. Start free with our 3-day trial. Pro plans from $7.85/mo. ATS-friendly templates, cover letter generator, LinkedIn import & interview prep included.",
   keywords: [
     "resume builder pricing",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI Resume Builder Pricing | Free Trial & Pro Plans | LinImpact.ai",
     description: "Start free. Pro plans from $7.85/mo. Create ATS-optimized resumes with AI.",
-    url: "https://www.linimpact.ai/pricing",
+    url: "https://linimpact.ai/pricing",
     type: "website",
   },
   twitter: {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     description: "Start free. Pro from $7.85/mo. ATS-optimized resumes with AI.",
   },
   alternates: {
-    canonical: "https://www.linimpact.ai/pricing",
+    canonical: "https://linimpact.ai/pricing",
   },
 };
 

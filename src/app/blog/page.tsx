@@ -12,17 +12,17 @@ const supabase = createClient(
 const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = {
   "Sarah Chen": {
     name: "Sarah Chen",
-    role: "Career Coach & Resume Strategist",
+    role: "Career Coach",
     avatar: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&h=150&fit=crop&crop=face",
   },
   "Michael Ross": {
     name: "Michael Ross",
-    role: "HR Expert & Talent Acquisition Lead",
+    role: "HR Expert",
     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
   },
   "Emma Williams": {
     name: "Emma Williams",
-    role: "Resume Specialist & Content Strategist",
+    role: "Resume Specialist",
     avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face",
   },
 };
@@ -30,7 +30,7 @@ const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = 
 function getAuthorInfo(authorName: string) {
   return AUTHORS[authorName] || {
     name: authorName,
-    role: "Career Expert",
+    role: "Writer",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
   };
 }
@@ -43,11 +43,8 @@ function calculateReadingTime(content: string): string {
 }
 
 export const metadata = {
-  title: "Career Insights & Expert Resume Tips — Blog",
+  title: "Career Insights & Expert Tips | LinImpact.ai Blog",
   description: "Discover proven strategies for resume writing, job searching, and career growth. Expert advice from LinImpact.ai to help you land your dream job.",
-  alternates: {
-    canonical: "https://www.linimpact.ai/blog",
-  },
 };
 
 export const revalidate = 60;
@@ -120,7 +117,7 @@ export default async function BlogPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post) => (
-              <article 
+              <article
                 key={post.slug}
                 className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
               >
@@ -135,7 +132,7 @@ export default async function BlogPage() {
                     )}
                   </div>
                 </Link>
-                
+
                 <div className="p-6 flex flex-col flex-1">
                   {post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -148,7 +145,7 @@ export default async function BlogPage() {
                   <Link href={`/blog/${post.slug}`}>
                     <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors line-clamp-2">{post.title}</h2>
                   </Link>
-                  
+
                   <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{post.description}</p>
 
                   <div className="flex items-center gap-3 mb-4">
@@ -178,79 +175,6 @@ export default async function BlogPage() {
         )}
       </main>
 
-      {/* How-to Guide for SEO content depth */}
-      <section className="py-16 bg-white border-t border-gray-100">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">How to Build a Winning Resume in 2026</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Step 1: Choose the Right Format</h3>
-              <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                The reverse-chronological format remains the most ATS-friendly choice in 2026. It lists your most recent experience first and is preferred by 75% of recruiters. If you&apos;re changing careers, consider a hybrid format that highlights transferable skills.
-              </p>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Step 2: Optimize for ATS</h3>
-              <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                Applicant Tracking Systems scan your resume before a human ever sees it. Use standard section headings, include relevant keywords from the job description, and avoid graphics or tables that confuse ATS parsers. LinImpact.ai&apos;s ATS scorer gives you real-time feedback.
-              </p>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Step 3: Write with Impact</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Replace generic descriptions with quantified achievements. Instead of &ldquo;managed a team,&rdquo; write &ldquo;led a 12-person engineering team that delivered 3 products ahead of schedule.&rdquo; Numbers grab attention and prove your impact.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Step 4: Craft a Tailored Cover Letter</h3>
-              <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                A personalized cover letter increases your interview chances by 50%. Address the hiring manager by name, reference specific company initiatives, and explain why you&apos;re the right fit. LinImpact.ai generates job-matched cover letters in seconds.
-              </p>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Step 5: Prepare for Interviews</h3>
-              <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                Practice with AI mock interviews using the STAR method (Situation, Task, Action, Result). Prepare your elevator pitch, research common questions for your role, and rehearse your answers until they sound natural, not scripted.
-              </p>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Step 6: Add Proof of Work</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                In 2026, recruiters value verifiable work over keyword-stuffed resumes. Link your GitHub repos, portfolio projects, or published articles directly in your resume using LinImpact.ai&apos;s Digital Portfolio feature to build trust and credibility.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Salary Guides — Cross-linking for SEO */}
-      <section className="py-16 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Salary Guides by Role</h2>
-          <p className="text-gray-600 text-center mb-8">Explore real salary data for popular roles based on job listings.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {[
-              { slug: "software-engineer", label: "Software Engineer" },
-              { slug: "data-analyst", label: "Data Analyst" },
-              { slug: "product-manager", label: "Product Manager" },
-              { slug: "project-manager", label: "Project Manager" },
-              { slug: "ux-designer", label: "UX Designer" },
-              { slug: "devops-engineer", label: "DevOps Engineer" },
-              { slug: "cyber-security", label: "Cyber Security" },
-              { slug: "marketing-manager", label: "Marketing Manager" },
-              { slug: "financial-analyst", label: "Financial Analyst" },
-              { slug: "registered-nurse", label: "Registered Nurse" },
-              { slug: "dental-hygienist", label: "Dental Hygienist" },
-              { slug: "scrum-master", label: "Scrum Master" },
-              { slug: "solutions-architect", label: "Solutions Architect" },
-              { slug: "systems-administrator", label: "Systems Administrator" },
-              { slug: "administrative-assistant", label: "Administrative Assistant" },
-              { slug: "executive-assistant", label: "Executive Assistant" },
-            ].map((role) => (
-              <Link
-                key={role.slug}
-                href={`/salary/${role.slug}`}
-                className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm transition-all text-center"
-              >
-                {role.label} Salary
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="bg-gradient-to-r from-blue-600 to-cyan-600 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Ready to Build Your Perfect Resume?</h2>
@@ -270,12 +194,6 @@ export default async function BlogPage() {
             <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
             <span className="text-white font-bold ml-2">LinImpact.ai</span>
           </Link>
-          <div className="flex items-center justify-center gap-6 text-sm mb-4">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
-            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-          </div>
           <p className="text-sm">© {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
         </div>
       </footer>

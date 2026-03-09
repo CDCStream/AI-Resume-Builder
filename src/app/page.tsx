@@ -31,10 +31,7 @@ import {
   Minus,
   HelpCircle,
   Info,
-  ClipboardList,
-  BookOpen,
-  TrendingUp,
-  CreditCard
+  ClipboardList
 } from "lucide-react";
 import Script from "next/script";
 import { faqSchema } from "./seo-metadata";
@@ -198,11 +195,11 @@ export default function LandingPage() {
               </Link>
             </nav>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="hidden lg:inline-flex" asChild>
-                <Link href="/login">Sign in</Link>
+              <Button variant="ghost" size="sm" className="hidden lg:inline-flex" onClick={() => router.push("/login")}>
+                Sign in
               </Button>
-              <Button size="sm" className="hidden lg:inline-flex bg-blue-600 hover:bg-blue-700" asChild>
-                <Link href="/register">Get Started</Link>
+              <Button size="sm" className="hidden lg:inline-flex bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/register")}>
+                Get Started
               </Button>
               <button
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -236,11 +233,11 @@ export default function LandingPage() {
                   Blog
                 </Link>
                 <div className="border-t border-gray-100 mt-2 pt-3 flex flex-col gap-2 px-3">
-                  <Button variant="outline" size="sm" className="w-full justify-center border-blue-200" asChild>
-                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
+                  <Button variant="outline" size="sm" className="w-full justify-center border-blue-200" onClick={() => { router.push("/login"); setMobileMenuOpen(false); }}>
+                    Sign in
                   </Button>
-                  <Button size="sm" className="w-full justify-center bg-blue-600 hover:bg-blue-700" asChild>
-                    <Link href="/register" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
+                  <Button size="sm" className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => { router.push("/register"); setMobileMenuOpen(false); }}>
+                    Get Started
                   </Button>
                 </div>
               </nav>
@@ -328,22 +325,18 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   className="text-base px-8 py-6 h-14 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/25 transition-all hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5"
-                  asChild
+                  onClick={() => router.push("/register")}
                 >
-                  <Link href="/register">
-                    Create Resume
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Link>
+                  Create Resume
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <Button
                   size="lg"
                   className="text-base px-8 py-6 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-600/25 transition-all hover:shadow-xl hover:shadow-indigo-600/30 hover:-translate-y-0.5"
-                  asChild
+                  onClick={() => router.push("/register")}
                 >
-                  <Link href="/register">
-                    Upload CV & Generate Cover Letter
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Link>
+                  Upload CV & Generate Cover Letter
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>
 
@@ -843,9 +836,9 @@ export default function LandingPage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Professional White */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
@@ -873,12 +866,12 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Professional White</h3>
               <p className="text-sm text-gray-500">Clean & minimal design</p>
-            </Link>
+        </div>
 
             {/* Modern Sidebar */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 overflow-hidden flex">
@@ -906,12 +899,12 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Modern Sidebar</h3>
               <p className="text-sm text-gray-500">Two-column dark sidebar</p>
-            </Link>
+            </div>
 
             {/* Creative Timeline */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
@@ -943,12 +936,12 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Creative Timeline</h3>
               <p className="text-sm text-gray-500">Purple timeline design</p>
-            </Link>
+            </div>
 
             {/* Executive Dark */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-zinc-900 rounded-lg p-3 overflow-hidden">
@@ -971,12 +964,12 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Executive Dark</h3>
               <p className="text-sm text-gray-500">Dark luxury with gold</p>
-            </Link>
+            </div>
 
             {/* Professional Teal */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
@@ -1002,12 +995,12 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Professional Teal</h3>
               <p className="text-sm text-gray-500">Teal header accent</p>
-            </Link>
+            </div>
 
             {/* Modern Grid */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-gray-50 rounded-lg border border-gray-100 p-2 overflow-hidden">
@@ -1037,12 +1030,12 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Modern Grid</h3>
               <p className="text-sm text-gray-500">Card-based grid layout</p>
-            </Link>
+        </div>
 
             {/* Classic Traditional */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
@@ -1065,12 +1058,12 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Classic Traditional</h3>
               <p className="text-sm text-gray-500">Traditional ATS-friendly</p>
-            </Link>
+            </div>
 
             {/* Minimalist Clean */}
-            <Link
-              href="/register"
-              className="group cursor-pointer block"
+            <div
+              className="group cursor-pointer"
+              onClick={() => router.push("/register")}
             >
               <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
@@ -1099,15 +1092,13 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-gray-900">Minimalist Clean</h3>
               <p className="text-sm text-gray-500">Ultra-clean design</p>
-            </Link>
+            </div>
           </div>
 
           <div className="text-center mt-10">
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/register">
-                Browse All 14 Templates
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
+            <Button variant="outline" size="lg" onClick={() => router.push("/register")}>
+              Browse All 14 Templates
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>
@@ -1226,9 +1217,9 @@ export default function LandingPage() {
 
               <Button
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                asChild
+                onClick={() => router.push("/register")}
               >
-                <Link href="/register">Start Trial</Link>
+                Start Trial
               </Button>
             </div>
 
@@ -1269,8 +1260,11 @@ export default function LandingPage() {
             </ul>
 
               <div className="mt-auto">
-                <Button className="w-full bg-gray-900 hover:bg-gray-800" asChild>
-                  <Link href="/register">Get Pro Monthly</Link>
+                <Button
+                  className="w-full bg-gray-900 hover:bg-gray-800"
+                  onClick={() => router.push("/register")}
+                >
+                  Get Pro Monthly
                 </Button>
           </div>
             </div>
@@ -1317,8 +1311,11 @@ export default function LandingPage() {
               </ul>
 
               <div className="mt-auto">
-                <Button className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/25" asChild>
-                  <Link href="/register">Get Pro Quarterly</Link>
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/25"
+                  onClick={() => router.push("/register")}
+                >
+                  Get Pro Quarterly
                 </Button>
               </div>
             </div>
@@ -1365,8 +1362,11 @@ export default function LandingPage() {
             </ul>
 
               <div className="mt-auto">
-                <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25" asChild>
-                  <Link href="/register">Get Best Value</Link>
+                <Button
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25"
+                  onClick={() => router.push("/register")}
+                >
+                  Get Best Value
                 </Button>
           </div>
       </div>
@@ -1417,91 +1417,9 @@ export default function LandingPage() {
 
           <div className="mt-12 text-center">
             <p className="text-gray-600 mb-4">Still have questions about our AI resume, cover letter & interview prep platform?</p>
-            <Button variant="outline" asChild>
-              <a href="mailto:support@linimpact.ai">Contact Support</a>
+            <Button variant="outline" onClick={() => router.push("/contact")}>
+              Contact Support
             </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Career Resources — Internal Linking for SEO */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Career Resources</h2>
-            <p className="text-lg text-gray-600 mt-3 max-w-2xl mx-auto">Expert guides and tools to accelerate your job search</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-10">
-            <Link href="/blog" className="group bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                <BookOpen className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Career Blog</h3>
-              <p className="text-sm text-gray-600">Resume tips, interview strategies, and career advice from industry experts.</p>
-            </Link>
-
-            <Link href="/salary/software-engineer" className="group bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4 group-hover:bg-emerald-200 transition-colors">
-                <TrendingUp className="w-6 h-6 text-emerald-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Salary Guide</h3>
-              <p className="text-sm text-gray-600">Research salary ranges for 16+ roles based on real job listings data.</p>
-            </Link>
-
-            <Link href="/pricing" className="group bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
-                <CreditCard className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Plans & Pricing</h3>
-              <p className="text-sm text-gray-600">Start free with a 3-day trial. Pro plans from $7.85/mo with all features.</p>
-            </Link>
-          </div>
-
-          {/* Popular Salary Guides */}
-          <div className="mb-10">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Popular Salary Guides</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { slug: "software-engineer", label: "Software Engineer" },
-                { slug: "data-analyst", label: "Data Analyst" },
-                { slug: "product-manager", label: "Product Manager" },
-                { slug: "ux-designer", label: "UX Designer" },
-                { slug: "devops-engineer", label: "DevOps Engineer" },
-                { slug: "project-manager", label: "Project Manager" },
-                { slug: "cyber-security", label: "Cyber Security" },
-                { slug: "registered-nurse", label: "Registered Nurse" },
-              ].map((role) => (
-                <Link
-                  key={role.slug}
-                  href={`/salary/${role.slug}`}
-                  className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm transition-all text-center"
-                >
-                  {role.label} Salary →
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Popular Blog Posts */}
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Popular Articles</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { slug: "how-to-write-a-resume", label: "How to Write a Resume" },
-                { slug: "ats-friendly-resume", label: "ATS-Friendly Resume Tips" },
-                { slug: "resume-bullet-point-examples", label: "Resume Bullet Point Examples" },
-                { slug: "skills-examples-for-resume", label: "Skills Examples for Resume" },
-              ].map((article) => (
-                <Link
-                  key={article.slug}
-                  href={`/blog/${article.slug}`}
-                  className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm transition-all"
-                >
-                  {article.label} →
-                </Link>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -1525,12 +1443,10 @@ export default function LandingPage() {
             <Button
               size="lg"
               className="text-base px-10 py-6 h-14 bg-white text-blue-600 hover:bg-gray-100 shadow-xl"
-              asChild
+              onClick={() => router.push("/register")}
             >
-              <Link href="/register">
-                Get Started Free
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
+              Get Started Free
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
           <p className="text-sm text-blue-200 mt-6">
@@ -1577,14 +1493,17 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Resources</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="/salary/software-engineer" className="hover:text-white transition-colors">Salary Guide</Link></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Resume Examples</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Career Guide</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Interview Tips</Link></li>
               </ul>
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <h4 className="font-semibold text-white mb-4 text-sm">Legal</h4>
+              <h4 className="font-semibold text-white mb-4 text-sm">Company</h4>
               <ul className="space-y-2.5 text-sm">
+                <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               </ul>
@@ -1613,9 +1532,9 @@ export default function LandingPage() {
               © 2026 LinImpact.ai. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <a href="mailto:support@linimpact.ai" className="hover:text-white transition-colors">Contact</a>
-              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+              <Link href="#" className="hover:text-white transition-colors">Twitter</Link>
+              <Link href="#" className="hover:text-white transition-colors">LinkedIn</Link>
+              <Link href="#" className="hover:text-white transition-colors">Instagram</Link>
             </div>
           </div>
         </div>

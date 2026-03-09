@@ -203,7 +203,7 @@ function InterviewPrepContent() {
   // Fetch job details from LinkedIn URL
   const fetchJobDetails = async (url: string) => {
     if (!url.trim()) return;
-    
+
     setIsLoadingJob(true);
     try {
       const response = await fetch("/api/fetch-job", {
@@ -373,9 +373,9 @@ function InterviewPrepContent() {
         <meta charset="UTF-8">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            font-size: 11px; 
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11px;
             line-height: 1.4;
             color: #333;
             padding: 30px;
@@ -411,14 +411,14 @@ function InterviewPrepContent() {
         </style>
       </head>
       <body>
-        <h2>Interview Preparation Guide</h2>
+        <h1>Interview Preparation Guide</h1>
         <div class="subtitle">${jobTitle || "Position"} at ${company || "Company"}</div>
-        
+
         <div class="section">
           <h2>🎤 30-Second Elevator Pitch</h2>
           <div class="pitch-box">${guide.elevatorPitch}</div>
         </div>
-        
+
         <div class="section">
           <h2>⭐ STAR Stories</h2>
           ${guide.starStories.map(story => `
@@ -434,7 +434,7 @@ function InterviewPrepContent() {
             </div>
           `).join("")}
         </div>
-        
+
         <div class="section page-break">
           <h2>🎯 Key Talking Points</h2>
           ${guide.talkingPoints.map(point => `
@@ -445,7 +445,7 @@ function InterviewPrepContent() {
             </div>
           `).join("")}
         </div>
-        
+
         <div class="section page-break">
           <h2>❓ Expected Questions & Best Answers</h2>
           ${guide.expectedQuestions.map(qa => `
@@ -461,7 +461,7 @@ function InterviewPrepContent() {
             </div>
           `).join("")}
         </div>
-        
+
         <div class="section page-break">
           <h2>🙋 Smart Questions to Ask</h2>
           ${guide.questionsToAsk.map(q => `
@@ -572,8 +572,8 @@ function InterviewPrepContent() {
               Your 3-day free trial has expired. Upgrade to Pro to continue preparing for your interviews with AI-generated guides and practice questions.
             </p>
             <div className="flex flex-col gap-3">
-              <Button 
-                onClick={() => router.push("/pricing")} 
+              <Button
+                onClick={() => router.push("/pricing")}
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
               >
                 <Crown className="w-4 h-4 mr-2" />
@@ -626,9 +626,9 @@ function InterviewPrepContent() {
             </Button>
             <div className="flex items-center gap-3">
               <div className="flex items-center cursor-pointer" onClick={() => router.push("/dashboard")}>
-                <img 
-                  src="/logo.png" 
-                  alt="LinImpact.ai Logo" 
+                <img
+                  src="/logo.png"
+                  alt="LinImpact.ai Logo"
                   className="w-14 h-14 object-contain"
                 />
                 <span className="text-xl font-extrabold tracking-tight -ml-1" style={{ fontFamily: 'var(--font-poppins)' }}>

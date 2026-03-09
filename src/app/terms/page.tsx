@@ -180,8 +180,6 @@ export default function TermsOfServicePage() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-white/40 text-sm">© 2026 LinImpact.ai. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="/" className="text-white/60 hover:text-white text-sm transition-colors">Home</Link>
-              <Link href="/blog" className="text-white/60 hover:text-white text-sm transition-colors">Blog</Link>
               <Link href="/privacy" className="text-white/60 hover:text-white text-sm transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="text-white/60 hover:text-white text-sm transition-colors">Terms of Service</Link>
             </div>

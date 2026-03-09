@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const year = new Date().getFullYear();
 
   return {
-    title: `${title} Salary in ${year}: Pay Ranges & Data`,
+    title: `${title} Salary in ${year}: How Much Do They Make? | LinImpact.ai`,
     description: `${title} salary ranges from ${data?.min_salary ? "$" + data.min_salary.toLocaleString() : "varies"} to ${data?.max_salary ? "$" + data.max_salary.toLocaleString() : "varies"} per year${avg ? `, with an average of ${avg}` : ""}. See salary by location, experience, and company.`,
     alternates: { canonical: `https://www.linimpact.ai/salary/${slug}` },
     openGraph: {
@@ -142,47 +142,12 @@ export default async function SalaryPageRoute({ params }: Props) {
 
     const title = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return (
-      <div className="min-h-screen bg-white">
-        <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center">
-              <img src="/logo.png" alt="LinImpact.ai" className="w-10 h-10 object-contain" />
-              <span className="text-xl font-extrabold tracking-tight -ml-2" style={{ fontFamily: "var(--font-poppins)" }}>
-                <span className="text-cyan-500">Lin</span>
-                <span className="text-blue-600">Impact</span>
-                <span className="text-slate-500 font-semibold">.ai</span>
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link href="/blog" className="text-sm text-gray-600 hover:text-gray-900">Blog</Link>
-              <Link href="/pricing" className="text-sm text-gray-600 hover:text-gray-900">Pricing</Link>
-              <Link href="/register" className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">Build Resume</Link>
-            </div>
-          </div>
-        </nav>
-        <div className="flex items-center justify-center" style={{ minHeight: "calc(100vh - 16rem)" }}>
-          <div className="text-center max-w-md px-4">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{title} Salary</h1>
-            <p className="text-gray-500 mb-6">Salary data is being collected. Please check back soon.</p>
-            <Link href="/" className="text-blue-600 hover:underline">← Back to LinImpact.ai</Link>
-          </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">{title} Salary</h1>
+          <p className="text-gray-500 mb-6">Salary data is being collected. Please check back soon.</p>
+          <Link href="/" className="text-blue-600 hover:underline">← Back to LinImpact.ai</Link>
         </div>
-        <footer className="bg-gray-900 text-gray-400 py-12">
-          <div className="max-w-5xl mx-auto px-4 text-center">
-            <Link href="/" className="inline-flex items-center mb-4">
-              <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
-              <span className="text-white font-bold ml-2">LinImpact.ai</span>
-            </Link>
-            <div className="flex items-center justify-center gap-6 text-sm mb-4">
-              <Link href="/" className="hover:text-white transition-colors">Home</Link>
-              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-            </div>
-            <p className="text-xs text-gray-500">© {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
-          </div>
-        </footer>
       </div>
     );
   }
@@ -522,13 +487,6 @@ export default async function SalaryPageRoute({ params }: Props) {
               <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
               <span className="text-white font-bold ml-2">LinImpact.ai</span>
             </Link>
-            <div className="flex items-center justify-center gap-6 text-sm mb-4">
-              <Link href="/" className="hover:text-white transition-colors">Home</Link>
-              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-            </div>
             <p className="text-sm mb-2">Salary data sourced from Indeed job listings. Updated {data.last_synced_at ? new Date(data.last_synced_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "regularly"}.</p>
             <p className="text-xs text-gray-500">© {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
           </div>
