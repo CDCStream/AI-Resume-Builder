@@ -118,11 +118,13 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={null}>
             <GoogleAnalytics />
-            <MixpanelProvider>
-              {children}
-              <CookieBanner />
-            </MixpanelProvider>
           </Suspense>
+          <MixpanelProvider>
+            <Suspense>
+              {children}
+            </Suspense>
+            <CookieBanner />
+          </MixpanelProvider>
         </AuthProvider>
       </body>
     </html>
