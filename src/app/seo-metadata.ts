@@ -5,7 +5,7 @@ import { Metadata } from "next";
 // cv builder, ats checker, interview prep, linkedin resume, professional resume
 
 export const homeMetadata: Metadata = {
-  title: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
+  title: "Humanized AI Resume Builder + Interview Prep | LinImpact.ai",
   description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, no credit card required.",
   keywords: [
     "resume builder",
@@ -54,13 +54,13 @@ export const homeMetadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://linimpact.ai",
+    url: "https://www.linimpact.ai",
     siteName: "LinImpact.ai",
     title: "Humanized AI Resume, Cover Letter & Interview Prep | LinImpact.ai",
     description: "Not generic AI. Build resumes, cover letters & prep for interviews with humanized AI that reads like a professional writer. 14+ templates, ATS optimization & more.",
     images: [
       {
-        url: "https://linimpact.ai/og-image.png",
+        url: "https://www.linimpact.ai/og-image.png",
         width: 1200,
         height: 630,
         alt: "LinImpact.ai - AI Resume, Cover Letter & Interview Prep Platform",
@@ -71,11 +71,11 @@ export const homeMetadata: Metadata = {
     card: "summary_large_image",
     title: "Humanized AI Resume & Cover Letter Builder + Interview Prep",
     description: "Not generic AI. Create resumes, cover letters & practice interviews with humanized AI. ATS-friendly templates, mock interviews & more.",
-    images: ["https://linimpact.ai/og-image.png"],
+    images: ["https://www.linimpact.ai/og-image.png"],
     creator: "@linimpactai",
   },
   alternates: {
-    canonical: "https://linimpact.ai",
+    canonical: "https://www.linimpact.ai",
   },
   verification: {
     google: "your-google-verification-code",
@@ -83,7 +83,7 @@ export const homeMetadata: Metadata = {
 };
 
 export const pricingMetadata: Metadata = {
-  title: "Pricing | AI Resume & Cover Letter Builder Plans | LinImpact.ai",
+  title: "AI Resume Builder Plans & Pricing",
   description: "Choose the perfect plan for your job search. Free trial, Pro monthly, quarterly & semi-annual options. ATS-optimized resumes, tailored cover letters & interview prep included.",
   keywords: [
     "resume builder pricing",
@@ -98,15 +98,15 @@ export const pricingMetadata: Metadata = {
   openGraph: {
     title: "Resume & Cover Letter Builder Pricing | LinImpact.ai",
     description: "Affordable AI resume & cover letter builder plans. Professional resumes, tailored cover letters & more. Upgrade anytime.",
-    url: "https://linimpact.ai/pricing",
+    url: "https://www.linimpact.ai/pricing",
   },
   alternates: {
-    canonical: "https://linimpact.ai/pricing",
+    canonical: "https://www.linimpact.ai/pricing",
   },
 };
 
 export const blogMetadata: Metadata = {
-  title: "Career Insights & Resume Tips | LinImpact.ai Blog",
+  title: "Career Insights & Expert Resume Tips — Blog",
   description: "Expert advice on resume writing, cover letters, job interviews & career growth. Learn how to write ATS-friendly resumes and land your dream job.",
   keywords: [
     "resume tips",
@@ -121,10 +121,10 @@ export const blogMetadata: Metadata = {
   openGraph: {
     title: "Career Tips & Resume Writing Guide | LinImpact.ai Blog",
     description: "Expert career advice, resume writing tips, and job search strategies.",
-    url: "https://linimpact.ai/blog",
+    url: "https://www.linimpact.ai/blog",
   },
   alternates: {
-    canonical: "https://linimpact.ai/blog",
+    canonical: "https://www.linimpact.ai/blog",
   },
 };
 
@@ -221,8 +221,8 @@ export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "LinImpact.ai",
-  "url": "https://linimpact.ai",
-  "logo": "https://linimpact.ai/logo.png",
+  "url": "https://www.linimpact.ai",
+  "logo": "https://www.linimpact.ai/logo.png",
   "description": "AI-powered resume builder, cover letter generator & interview prep platform helping job seekers create professional, ATS-optimized applications and ace their interviews.",
   "sameAs": [
     "https://twitter.com/linimpactai",

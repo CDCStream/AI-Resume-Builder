@@ -411,7 +411,7 @@ function InterviewPrepContent() {
         </style>
       </head>
       <body>
-        <h1>Interview Preparation Guide</h1>
+        <h2>Interview Preparation Guide</h2>
         <div class="subtitle">${jobTitle || "Position"} at ${company || "Company"}</div>
         
         <div class="section">

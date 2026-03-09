@@ -31,7 +31,10 @@ import {
   Minus,
   HelpCircle,
   Info,
-  ClipboardList
+  ClipboardList,
+  BookOpen,
+  TrendingUp,
+  CreditCard
 } from "lucide-react";
 import Script from "next/script";
 import { faqSchema } from "./seo-metadata";
@@ -1424,6 +1427,42 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Career Resources — Internal Linking for SEO */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Career Resources</h2>
+            <p className="text-lg text-gray-600 mt-3 max-w-2xl mx-auto">Expert guides and tools to accelerate your job search</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            <Link href="/blog" className="group bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                <BookOpen className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Career Blog</h3>
+              <p className="text-sm text-gray-600">Resume tips, interview strategies, and career advice from industry experts.</p>
+            </Link>
+
+            <Link href="/salary/software-engineer" className="group bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4 group-hover:bg-emerald-200 transition-colors">
+                <TrendingUp className="w-6 h-6 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Salary Guide</h3>
+              <p className="text-sm text-gray-600">Research salary ranges for 16+ roles based on real job listings data.</p>
+            </Link>
+
+            <Link href="/pricing" className="group bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
+                <CreditCard className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Plans & Pricing</h3>
+              <p className="text-sm text-gray-600">Start free with a 3-day trial. Pro plans from $7.85/mo with all features.</p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 relative overflow-hidden">
         {/* Background decoration */}
@@ -1493,17 +1532,14 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Resources</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">Resume Examples</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Career Guide</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Interview Tips</Link></li>
+                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+                <li><Link href="/salary/software-engineer" className="hover:text-white transition-colors">Salary Guide</Link></li>
+                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
               </ul>
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <h4 className="font-semibold text-white mb-4 text-sm">Company</h4>
+              <h4 className="font-semibold text-white mb-4 text-sm">Legal</h4>
               <ul className="space-y-2.5 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               </ul>

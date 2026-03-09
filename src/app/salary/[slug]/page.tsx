@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const year = new Date().getFullYear();
 
   return {
-    title: `${title} Salary in ${year}: How Much Do They Make? | LinImpact.ai`,
+    title: `${title} Salary in ${year}: Pay Ranges & Data`,
     description: `${title} salary ranges from ${data?.min_salary ? "$" + data.min_salary.toLocaleString() : "varies"} to ${data?.max_salary ? "$" + data.max_salary.toLocaleString() : "varies"} per year${avg ? `, with an average of ${avg}` : ""}. See salary by location, experience, and company.`,
     alternates: { canonical: `https://www.linimpact.ai/salary/${slug}` },
     openGraph: {
@@ -487,6 +487,13 @@ export default async function SalaryPageRoute({ params }: Props) {
               <img src="/logo.png" alt="LinImpact.ai" className="w-8 h-8" />
               <span className="text-white font-bold ml-2">LinImpact.ai</span>
             </Link>
+            <div className="flex items-center justify-center gap-6 text-sm mb-4">
+              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
+              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            </div>
             <p className="text-sm mb-2">Salary data sourced from Indeed job listings. Updated {data.last_synced_at ? new Date(data.last_synced_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "regularly"}.</p>
             <p className="text-xs text-gray-500">© {new Date().getFullYear()} LinImpact.ai. All rights reserved.</p>
           </div>

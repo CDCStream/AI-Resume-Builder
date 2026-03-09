@@ -564,6 +564,34 @@ export default function PricingPage() {
             </div>
           </div>
 
+          {/* How to Get Started */}
+          <div className="mt-20 max-w-3xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">How to Get Started</h2>
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-sm">1</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Sign up for free</h3>
+                  <p className="text-sm text-gray-600 mt-1">Create your account in seconds. No credit card required. You get full access to all features during your 3-day free trial.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-sm">2</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Build your resume with AI</h3>
+                  <p className="text-sm text-gray-600 mt-1">Choose from 14+ professional templates, import your LinkedIn profile, or upload an existing resume. Our humanized AI writes content that sounds like a professional writer, not a robot.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-sm">3</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Optimize and download</h3>
+                  <p className="text-sm text-gray-600 mt-1">Check your ATS score, generate a matching cover letter, and practice for interviews with AI mock sessions. Download as PDF and start applying with confidence.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Back to Home */}
           <div className="mt-12 text-center">
             <Button variant="ghost" onClick={() => router.push("/")} className="text-gray-600">
@@ -583,9 +611,9 @@ export default function PricingPage() {
               <span className="text-sm text-gray-500">© 2024 LinImpact.ai. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-gray-500">
+              <Link href="/blog" className="hover:text-gray-900 transition-colors">Blog</Link>
               <Link href="/terms" className="hover:text-gray-900 transition-colors">Terms</Link>
               <Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>
-              <Link href="/contact" className="hover:text-gray-900 transition-colors">Contact</Link>
             </div>
           </div>
         </div>
