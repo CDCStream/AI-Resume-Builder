@@ -5,7 +5,7 @@ import { Metadata } from "next";
 // cv builder, ats checker, interview prep, linkedin resume, professional resume
 
 export const homeMetadata: Metadata = {
-  title: "Humanized AI Resume Builder + Interview Prep | LinImpact.ai",
+  title: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
   description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, no credit card required.",
   keywords: [
     "resume builder",

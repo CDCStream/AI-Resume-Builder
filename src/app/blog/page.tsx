@@ -215,6 +215,42 @@ export default async function BlogPage() {
         </div>
       </section>
 
+      {/* Salary Guides — Cross-linking for SEO */}
+      <section className="py-16 bg-gray-50 border-t border-gray-100">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Salary Guides by Role</h2>
+          <p className="text-gray-600 text-center mb-8">Explore real salary data for popular roles based on job listings.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {[
+              { slug: "software-engineer", label: "Software Engineer" },
+              { slug: "data-analyst", label: "Data Analyst" },
+              { slug: "product-manager", label: "Product Manager" },
+              { slug: "project-manager", label: "Project Manager" },
+              { slug: "ux-designer", label: "UX Designer" },
+              { slug: "devops-engineer", label: "DevOps Engineer" },
+              { slug: "cyber-security", label: "Cyber Security" },
+              { slug: "marketing-manager", label: "Marketing Manager" },
+              { slug: "financial-analyst", label: "Financial Analyst" },
+              { slug: "registered-nurse", label: "Registered Nurse" },
+              { slug: "dental-hygienist", label: "Dental Hygienist" },
+              { slug: "scrum-master", label: "Scrum Master" },
+              { slug: "solutions-architect", label: "Solutions Architect" },
+              { slug: "systems-administrator", label: "Systems Administrator" },
+              { slug: "administrative-assistant", label: "Administrative Assistant" },
+              { slug: "executive-assistant", label: "Executive Assistant" },
+            ].map((role) => (
+              <Link
+                key={role.slug}
+                href={`/salary/${role.slug}`}
+                className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm transition-all text-center"
+              >
+                {role.label} Salary
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="bg-gradient-to-r from-blue-600 to-cyan-600 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Ready to Build Your Perfect Resume?</h2>

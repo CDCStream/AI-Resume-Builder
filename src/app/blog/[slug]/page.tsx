@@ -200,7 +200,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const [post, allPosts] = await Promise.all([getPost(slug), getAllPosts()]);
 
   if (!post) {
     notFound();
@@ -210,6 +210,15 @@ export default async function BlogPostPage({ params }: Props) {
   const readingTime = calculateReadingTime(post.content);
   const faqs = generateFaqsFromPost(post.title, post.tags, post.description);
   const publishDate = new Date(post.published_at).toISOString();
+
+  const relatedPosts = allPosts
+    .filter((p) => p.slug !== post.slug)
+    .map((p) => ({
+      ...p,
+      score: p.tags.filter((t) => post.tags.includes(t)).length,
+    }))
+    .sort((a, b) => b.score - a.score || new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+    .slice(0, 3);
 
   const articleSchema = {
     "@context": "https://schema.org",
@@ -408,6 +417,27 @@ export default async function BlogPostPage({ params }: Props) {
             <Link href="/register">Get Started Free</Link>
           </Button>
         </div>
+
+        {relatedPosts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Articles</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              {relatedPosts.map((rp) => (
+                <Link key={rp.slug} href={`/blog/${rp.slug}`} className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all">
+                  {rp.image && (
+                    <div className="aspect-video bg-gray-100">
+                      <img src={rp.image} alt={rp.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 text-sm">{rp.title}</h3>
+                    <p className="text-xs text-gray-500 mt-2">{calculateReadingTime(rp.content)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="text-center py-12">
           <Button variant="outline" asChild>

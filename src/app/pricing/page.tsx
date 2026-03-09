@@ -229,11 +229,11 @@ export default function PricingPage() {
             </div>
 
             <div className="hidden lg:flex items-center gap-3">
-              <Button variant="ghost" onClick={() => router.push("/login")}>
-                Log in
+              <Button variant="ghost" asChild>
+                <Link href="/login">Log in</Link>
               </Button>
-              <Button onClick={() => router.push("/register")} className="bg-blue-600 hover:bg-blue-700">
-                Get Started Free
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Link href="/register">Get Started Free</Link>
               </Button>
             </div>
 
@@ -262,11 +262,11 @@ export default function PricingPage() {
                   Pricing
                 </Link>
                 <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-gray-100">
-                  <Button variant="outline" className="w-full justify-center" onClick={() => router.push("/login")}>
-                    Log in
+                  <Button variant="outline" className="w-full justify-center" asChild>
+                    <Link href="/login">Log in</Link>
                   </Button>
-                  <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/register")}>
-                    Get Started Free
+                  <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700" asChild>
+                    <Link href="/register">Get Started Free</Link>
                   </Button>
                 </div>
               </div>
@@ -594,9 +594,11 @@ export default function PricingPage() {
 
           {/* Back to Home */}
           <div className="mt-12 text-center">
-            <Button variant="ghost" onClick={() => router.push("/")} className="text-gray-600">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
+            <Button variant="ghost" asChild className="text-gray-600">
+              <Link href="/">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Link>
             </Button>
           </div>
         </div>

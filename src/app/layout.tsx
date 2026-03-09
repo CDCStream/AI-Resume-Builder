@@ -31,7 +31,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.linimpact.ai"),
   title: {
-    default: "Humanized AI Resume Builder + Interview Prep | LinImpact.ai",
+    default: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
     template: "%s | LinImpact.ai"
   },
   description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, no credit card required.",
