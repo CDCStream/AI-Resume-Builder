@@ -63,7 +63,7 @@ function formatDate(dateString: string): string {
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, signOut } = useAuth();
+  const { user, signOut, avatarUrl } = useAuth();
   const { isTrialing, trialExpired, trialDaysRemaining, isLoading: subscriptionLoading, refetch } = useSubscription();
 
   // Handle checkout success - verify and activate subscription
@@ -279,7 +279,7 @@ export default function DashboardPage() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 p-1 rounded-full hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   <Avatar className="w-11 h-11 border-2 border-blue-200">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarImage src={avatarUrl || user?.user_metadata?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-semibold text-sm">
                       {user?.user_metadata?.full_name
                         ? user.user_metadata.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)

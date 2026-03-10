@@ -368,6 +368,45 @@ export async function insertFeedback(
   return true;
 }
 
+// Avatar / Profile Photo
+export async function uploadAvatar(
+  userId: string,
+  file: File
+): Promise<string | null> {
+  const ext = file.name.split(".").pop() || "jpg";
+  const filePath = `${userId}/avatar.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, file, { upsert: true, contentType: file.type });
+
+  if (uploadError) {
+    console.error("Error uploading avatar:", uploadError);
+    return null;
+  }
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+  const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+
+  await updateProfile({ avatar_url: publicUrl });
+  return publicUrl;
+}
+
+export async function syncCvPhotoToProfile(
+  userId: string,
+  base64DataUrl: string
+): Promise<string | null> {
+  try {
+    const res = await fetch(base64DataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+    return uploadAvatar(userId, file);
+  } catch (e) {
+    console.error("Error syncing CV photo to profile:", e);
+    return null;
+  }
+}
+
 // Platform Survey
 export async function insertPlatformSurvey(
   platforms: string[],

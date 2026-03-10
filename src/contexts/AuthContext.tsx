@@ -8,6 +8,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  avatarUrl: string | null;
+  refreshProfile: () => Promise<void>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -22,8 +24,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const supabaseRef = useRef(createClient());
   const currentUserIdRef = useRef<string | null>(null);
+
+  const fetchAvatar = useCallback(async (userId: string, userMeta?: Record<string, any>) => {
+    const supabase = supabaseRef.current;
+    const { data } = await supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", userId)
+      .single();
+
+    if (data?.avatar_url) {
+      setAvatarUrl(data.avatar_url);
+    } else if (userMeta?.avatar_url) {
+      setAvatarUrl(userMeta.avatar_url);
+    } else {
+      setAvatarUrl(null);
+    }
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    if (currentUserIdRef.current) {
+      await fetchAvatar(currentUserIdRef.current, user?.user_metadata);
+    }
+  }, [fetchAvatar, user?.user_metadata]);
 
   useEffect(() => {
     const supabase = supabaseRef.current;
@@ -31,10 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       const newUser = session?.user ?? null;
-      // Only update user ref if the actual user ID changed
       if (newUser?.id !== currentUserIdRef.current) {
         currentUserIdRef.current = newUser?.id ?? null;
         setUser(newUser);
+        if (newUser) fetchAvatar(newUser.id, newUser.user_metadata);
       }
       setLoading(false);
     });
@@ -45,17 +71,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       const newUser = session?.user ?? null;
       const newUserId = newUser?.id ?? null;
-      // Only trigger user state update on actual user change (sign in/out),
-      // not on TOKEN_REFRESHED which keeps the same user
       if (newUserId !== currentUserIdRef.current) {
         currentUserIdRef.current = newUserId;
         setUser(newUser);
+        if (newUser) fetchAvatar(newUser.id, newUser.user_metadata);
+        else setAvatarUrl(null);
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchAvatar]);
 
   const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     const { data, error } = await supabaseRef.current.auth.signUp({
@@ -117,6 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
+    avatarUrl,
+    refreshProfile,
     signUp,
     signIn,
     signInWithGoogle,

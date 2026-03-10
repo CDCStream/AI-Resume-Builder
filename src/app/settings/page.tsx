@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,26 +17,69 @@ import {
   Loader2,
   CreditCard,
   Crown,
-  CheckCircle
+  CheckCircle,
+  Camera,
+  Trash2
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { updateProfile, uploadAvatar } from "@/lib/supabase/database";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, avatarUrl, refreshProfile } = useAuth();
   const { isPro, isTrialing, trialDaysRemaining, plan, subscription } = useSubscription();
   
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File size must be less than 2MB");
+      return;
+    }
+
+    setAvatarPreview(URL.createObjectURL(file));
+    setUploadingAvatar(true);
+    try {
+      const url = await uploadAvatar(user.id, file);
+      if (url) await refreshProfile();
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarPreview(null);
+    await updateProfile({ avatar_url: null });
+    await refreshProfile();
+  };
+
+  const displayAvatar = avatarPreview || avatarUrl;
+  const initials = user?.user_metadata?.full_name
+    ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : user?.email?.charAt(0).toUpperCase() || "U";
 
   const handleSave = async () => {
     setSaving(true);
-    // TODO: Implement profile update
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      await updateProfile({ full_name: fullName });
+      await refreshProfile();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error("Save failed:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -78,7 +121,53 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription>Manage your account information</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 space-y-4">
+            <CardContent className="pt-6 space-y-6">
+              {/* Avatar Upload */}
+              <div className="flex items-center gap-6">
+                <div className="relative group">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-blue-200 bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                    {displayAvatar ? (
+                      <img src={displayAvatar} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white font-semibold text-xl">{initials}</span>
+                    )}
+                  </div>
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
+                  )}
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-700">Profile Photo</p>
+                  <p className="text-xs text-gray-500">JPG, PNG or WebP. Max 2MB.</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar}>
+                      Upload
+                    </Button>
+                    {displayAvatar && (
+                      <Button variant="ghost" size="sm" onClick={handleRemoveAvatar} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-3.5 h-3.5 mr-1" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-500" />

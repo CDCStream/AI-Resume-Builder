@@ -13,8 +13,9 @@ import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X, Loader2, PanelL
 import { exportResumeToPDF } from "@/lib/utils/pdfExport";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useSubscription } from "@/hooks/useSubscription";
-import { hasUserGivenFeedback } from "@/lib/supabase/database";
+import { hasUserGivenFeedback, syncCvPhotoToProfile } from "@/lib/supabase/database";
 import FeedbackModal from "@/components/ui/FeedbackModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ViewMode = "edit" | "page";
 
@@ -38,6 +39,8 @@ function ResumeEditorContent() {
     loading: resumesLoading,
     isAuthenticated,
   } = useResumes();
+
+  const { user, avatarUrl, refreshProfile } = useAuth();
 
   const [resume, setResume] = useState<Resume>(defaultResume);
   const [selectedTemplate, setSelectedTemplate] = useState("professional-white");
@@ -124,12 +127,18 @@ function ResumeEditorContent() {
       const savedState = JSON.stringify({ resume, selectedTemplate });
       setLastSavedState(savedState);
       setHasUnsavedChanges(false);
+
+      if (resume.basics?.image && !avatarUrl && user?.id) {
+        syncCvPhotoToProfile(user.id, resume.basics.image)
+          .then(() => refreshProfile())
+          .catch(() => {});
+      }
     } catch (error) {
       console.error("Failed to save:", error);
     } finally {
       setIsSaving(false);
     }
-  }, [currentDocument, resume, selectedTemplate, router, createResume, updateResume]);
+  }, [currentDocument, resume, selectedTemplate, router, createResume, updateResume, avatarUrl, user?.id, refreshProfile]);
 
   useEffect(() => {
     if (!currentDocument || !hasUnsavedChanges) return;
