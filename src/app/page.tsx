@@ -39,6 +39,7 @@ import { insertPlatformSurvey } from "@/lib/supabase/database";
 
 const CompanyOrbit = dynamic(() => import("@/components/ui/company-logos").then(m => m.CompanyOrbit), { ssr: false });
 const HowItWorksGuide = dynamic(() => import("@/components/landing/HowItWorksGuide").then(m => m.HowItWorksGuide), { ssr: false });
+const TemplateCarousel = dynamic(() => import("@/components/landing/TemplateCarousel").then(m => m.TemplateCarousel), { ssr: false });
 
 // FAQ Data for SEO/AEO - targeting low competition keywords
 const faqs = [
@@ -822,285 +823,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Templates Section */}
-      <section id="templates" className="py-24 bg-white">
+      {/* Templates Carousel Section */}
+      <section id="templates" className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Pick a template, get hired faster
+              Pick a template and build your resume in minutes!
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              14 professionally designed, ATS-tested resume & cover letter templates to help you stand out and land more interviews.
+              14 professionally designed, ATS-tested resume templates to help you stand out and land more interviews.
             </p>
           </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Professional White */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
-                  {/* Professional White - Clean minimal header */}
-                  <div className="border-b border-gray-200 pb-2 mb-2">
-                    <div className="h-3 w-24 bg-gray-800 rounded mb-1" />
-                    <div className="h-1.5 w-16 bg-blue-500 rounded mb-1" />
-                    <div className="flex gap-2">
-                      <div className="h-1 w-12 bg-gray-300 rounded" />
-                      <div className="h-1 w-14 bg-gray-300 rounded" />
-            </div>
-          </div>
-                  <div className="space-y-2">
-                    <div className="h-1.5 w-12 bg-gray-700 rounded" />
-                    <div className="h-1 w-full bg-gray-200 rounded" />
-                    <div className="h-1 w-11/12 bg-gray-200 rounded" />
-                    <div className="h-1.5 w-14 bg-gray-700 rounded mt-2" />
-                    <div className="h-1 w-full bg-gray-200 rounded" />
-                    <div className="h-1 w-10/12 bg-gray-200 rounded" />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Professional White</h3>
-              <p className="text-sm text-gray-500">Clean & minimal design</p>
         </div>
 
-            {/* Modern Sidebar */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 overflow-hidden flex">
-                  {/* Dark sidebar */}
-                  <div className="w-1/3 bg-slate-700 p-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-500 mx-auto mb-2" />
-                    <div className="h-1.5 w-full bg-slate-500 rounded mb-1" />
-                    <div className="h-1 w-10/12 bg-slate-600 rounded mb-2" />
-                    <div className="h-1 w-full bg-slate-600 rounded mb-1" />
-                    <div className="h-1 w-8/12 bg-slate-600 rounded" />
-                  </div>
-                  {/* Main content */}
-                  <div className="flex-1 p-2">
-                    <div className="h-2 w-16 bg-gray-800 rounded mb-1" />
-                    <div className="h-1 w-full bg-gray-200 rounded mb-1" />
-                    <div className="h-1 w-11/12 bg-gray-200 rounded mb-2" />
-                    <div className="h-1.5 w-12 bg-gray-700 rounded mb-1" />
-                    <div className="h-1 w-full bg-gray-200 rounded mb-1" />
-                    <div className="h-1 w-10/12 bg-gray-200 rounded" />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Modern Sidebar</h3>
-              <p className="text-sm text-gray-500">Two-column dark sidebar</p>
-            </div>
+        <TemplateCarousel onSelect={() => router.push("/register")} />
 
-            {/* Creative Timeline */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
-                  {/* Purple header */}
-                  <div className="bg-violet-600 -mx-3 -mt-3 p-2 mb-2">
-                    <div className="h-2.5 w-20 bg-white/90 rounded mb-1" />
-                    <div className="h-1.5 w-14 bg-white/60 rounded" />
-            </div>
-                  {/* Timeline style content */}
-                  <div className="relative pl-3">
-                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-violet-200" />
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <div className="absolute -left-3 top-0.5 w-1.5 h-1.5 rounded-full bg-violet-500" />
-                        <div className="h-1.5 w-14 bg-gray-700 rounded mb-0.5" />
-                        <div className="h-1 w-full bg-gray-200 rounded" />
-                      </div>
-                      <div className="relative">
-                        <div className="absolute -left-3 top-0.5 w-1.5 h-1.5 rounded-full bg-violet-500" />
-                        <div className="h-1.5 w-12 bg-gray-700 rounded mb-0.5" />
-                        <div className="h-1 w-10/12 bg-gray-200 rounded" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Creative Timeline</h3>
-              <p className="text-sm text-gray-500">Purple timeline design</p>
-            </div>
-
-            {/* Executive Dark */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-zinc-900 rounded-lg p-3 overflow-hidden">
-                  {/* Dark luxury header */}
-                  <div className="border-b border-amber-500/30 pb-2 mb-2">
-                    <div className="h-2.5 w-20 bg-white rounded mb-1" />
-                    <div className="h-1.5 w-14 bg-amber-500 rounded" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-1.5 w-12 bg-amber-500/80 rounded" />
-                    <div className="h-1 w-full bg-zinc-700 rounded" />
-                    <div className="h-1 w-11/12 bg-zinc-700 rounded" />
-                    <div className="h-1.5 w-10 bg-amber-500/80 rounded mt-2" />
-                    <div className="h-1 w-full bg-zinc-700 rounded" />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Executive Dark</h3>
-              <p className="text-sm text-gray-500">Dark luxury with gold</p>
-            </div>
-
-            {/* Professional Teal */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
-                  {/* Teal header */}
-                  <div className="bg-teal-600 -mx-3 -mt-3 p-2 mb-2">
-                    <div className="h-2.5 w-20 bg-white rounded mb-1" />
-                    <div className="h-1.5 w-16 bg-teal-200 rounded" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-1.5 w-14 bg-teal-700 rounded" />
-                    <div className="h-1 w-full bg-gray-200 rounded" />
-                    <div className="h-1 w-11/12 bg-gray-200 rounded" />
-                    <div className="flex gap-1 mt-2">
-                      <div className="h-3 w-8 bg-teal-100 rounded" />
-                      <div className="h-3 w-10 bg-teal-100 rounded" />
-                      <div className="h-3 w-7 bg-teal-100 rounded" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Professional Teal</h3>
-              <p className="text-sm text-gray-500">Teal header accent</p>
-            </div>
-
-            {/* Modern Grid */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-gray-50 rounded-lg border border-gray-100 p-2 overflow-hidden">
-                  {/* Card-based grid layout */}
-                  <div className="bg-indigo-600 rounded p-1.5 mb-2">
-                    <div className="h-2 w-16 bg-white rounded mb-0.5" />
-                    <div className="h-1 w-12 bg-indigo-200 rounded" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-1">
-                    <div className="bg-white rounded p-1.5 border border-gray-100">
-                      <div className="h-1 w-8 bg-indigo-500 rounded mb-1" />
-                      <div className="h-0.5 w-full bg-gray-200 rounded" />
-                    </div>
-                    <div className="bg-white rounded p-1.5 border border-gray-100">
-                      <div className="h-1 w-6 bg-indigo-500 rounded mb-1" />
-                      <div className="h-0.5 w-full bg-gray-200 rounded" />
-                    </div>
-                    <div className="bg-white rounded p-1.5 border border-gray-100 col-span-2">
-                      <div className="h-1 w-10 bg-indigo-500 rounded mb-1" />
-                      <div className="h-0.5 w-full bg-gray-200 rounded" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Modern Grid</h3>
-              <p className="text-sm text-gray-500">Card-based grid layout</p>
-        </div>
-
-            {/* Classic Traditional */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
-                  {/* Traditional centered header */}
-                  <div className="text-center border-b border-gray-300 pb-2 mb-2">
-                    <div className="h-3 w-20 bg-gray-800 rounded mx-auto mb-1" />
-                    <div className="h-1 w-24 bg-gray-400 rounded mx-auto" />
-          </div>
-                  <div className="space-y-2">
-                    <div className="h-1.5 w-16 bg-gray-700 rounded border-b border-gray-300 pb-1" />
-                    <div className="h-1 w-full bg-gray-200 rounded" />
-                    <div className="h-1 w-11/12 bg-gray-200 rounded" />
-                    <div className="h-1.5 w-12 bg-gray-700 rounded mt-2" />
-                    <div className="h-1 w-full bg-gray-200 rounded" />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Classic Traditional</h3>
-              <p className="text-sm text-gray-500">Traditional ATS-friendly</p>
-            </div>
-
-            {/* Minimalist Clean */}
-            <div
-              className="group cursor-pointer"
-              onClick={() => router.push("/register")}
-            >
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white aspect-[3/4] mb-4 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                <div className="absolute inset-3 bg-white rounded-lg border border-gray-100 p-3 overflow-hidden">
-                  {/* Ultra minimal design */}
-                  <div className="mb-3">
-                    <div className="h-2.5 w-24 bg-gray-900 rounded mb-1" />
-                    <div className="h-1 w-32 bg-gray-300 rounded" />
-          </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-0.5 h-3 bg-gray-400" />
-                      <div className="h-1.5 w-14 bg-gray-600 rounded" />
-                    </div>
-                    <div className="h-1 w-full bg-gray-100 rounded" />
-                    <div className="h-1 w-10/12 bg-gray-100 rounded" />
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="w-0.5 h-3 bg-gray-400" />
-                      <div className="h-1.5 w-10 bg-gray-600 rounded" />
-                    </div>
-                    <div className="h-1 w-full bg-gray-100 rounded" />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-semibold">Use This Template</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Minimalist Clean</h3>
-              <p className="text-sm text-gray-500">Ultra-clean design</p>
-            </div>
-          </div>
-
-          <div className="text-center mt-10">
-            <Button variant="outline" size="lg" onClick={() => router.push("/register")}>
-              Browse All 14 Templates
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
+        <div className="text-center mt-10">
+          <Button variant="outline" size="lg" onClick={() => router.push("/register")}>
+            Browse All 14 Templates
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
         </div>
       </section>
 
