@@ -364,7 +364,7 @@ export default function LandingPage() {
               </div>
               <div className="mt-4 flex items-center gap-3 justify-center lg:justify-start">
                 <img src="/gdpr-compliance-badge.webp" alt="GDPR Compliant" className="h-16 w-auto" />
-                <img src="/ssl.webp" alt="SSL Encrypted" className="h-16 w-auto" />
+                <img src="/ssl.avif" alt="SSL Encrypted" className="h-16 w-auto" />
               </div>
 
               {/* Social Proof */}
@@ -716,7 +716,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
             <img src="/gdpr-compliance-badge.webp" alt="GDPR Compliant" className="h-20 w-auto" />
-            <img src="/ssl.webp" alt="SSL Encrypted" className="h-20 w-auto" />
+            <img src="/ssl.avif" alt="SSL Encrypted" className="h-20 w-auto" />
             <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 shadow-sm">
               <div className="w-10 h-10 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-purple-700" />
@@ -1309,7 +1309,7 @@ export default function LandingPage() {
           {/* Security Badges */}
           <div className="flex flex-wrap items-center justify-center gap-5 mb-8">
             <img src="/gdpr-compliance-badge.webp" alt="GDPR Compliant" className="h-18 w-auto" />
-            <img src="/ssl.webp" alt="SSL Encrypted" className="h-18 w-auto" />
+            <img src="/ssl.avif" alt="SSL Encrypted" className="h-18 w-auto" />
             <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gray-800/60 border border-purple-500/30">
               <div className="w-8 h-8 rounded-full bg-purple-500/15 border border-purple-500/40 flex items-center justify-center">
                 <Shield className="w-4 h-4 text-purple-400" />
