@@ -152,15 +152,15 @@ function generateHash(str: string): string {
   return Math.abs(hash).toString(36);
 }
 
-function getCacheKey(profession: string): string {
-  const hash = generateHash(profession);
+function getCacheKey(profession: string, documentId?: string, updatedAt?: string): string {
+  const hash = generateHash(profession + (documentId || "") + (updatedAt || ""));
   return `${CACHE_KEY_PREFIX}${hash}`;
 }
 
-function getCachedAnalysis(profession: string): CachedAnalysis | null {
+function getCachedAnalysis(profession: string, documentId?: string, updatedAt?: string): CachedAnalysis | null {
   if (typeof window === "undefined") return null;
   try {
-    const key = getCacheKey(profession);
+    const key = getCacheKey(profession, documentId, updatedAt);
     const cached = localStorage.getItem(key);
     if (cached) {
       return JSON.parse(cached);
@@ -171,10 +171,10 @@ function getCachedAnalysis(profession: string): CachedAnalysis | null {
   return null;
 }
 
-function saveCachedAnalysis(profession: string, analysis: ATSScoreResponse): void {
+function saveCachedAnalysis(profession: string, analysis: ATSScoreResponse, documentId?: string, updatedAt?: string): void {
   if (typeof window === "undefined") return;
   try {
-    const key = getCacheKey(profession);
+    const key = getCacheKey(profession, documentId, updatedAt);
     const cached: CachedAnalysis = {
       professionHash: generateHash(profession),
       timestamp: Date.now(),
@@ -190,10 +190,10 @@ function saveCachedAnalysis(profession: string, analysis: ATSScoreResponse): voi
   }
 }
 
-function updateCachedState(profession: string, fixedWeakAreas: number[], addedSkills: string[]): void {
+function updateCachedState(profession: string, fixedWeakAreas: number[], addedSkills: string[], documentId?: string, updatedAt?: string): void {
   if (typeof window === "undefined") return;
   try {
-    const key = getCacheKey(profession);
+    const key = getCacheKey(profession, documentId, updatedAt);
     const cached = localStorage.getItem(key);
     if (cached) {
       const data: CachedAnalysis = JSON.parse(cached);
@@ -231,6 +231,8 @@ interface ProfessionATSPanelProps {
   onResumeChange: (resume: Resume) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  documentId?: string | null;
+  documentUpdatedAt?: string;
 }
 
 export default function ProfessionATSPanel({
@@ -238,6 +240,8 @@ export default function ProfessionATSPanel({
   onResumeChange,
   isExpanded,
   onToggleExpand,
+  documentId,
+  documentUpdatedAt,
 }: ProfessionATSPanelProps) {
   const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [selectedProfession, setSelectedProfession] = useState<string>("");
@@ -280,7 +284,7 @@ export default function ProfessionATSPanel({
     }
 
     // Check for cached analysis first
-    const cached = getCachedAnalysis(selectedProfession);
+    const cached = getCachedAnalysis(selectedProfession, documentId || undefined, documentUpdatedAt);
     if (cached) {
       setOriginalAnalysis(cached.originalAnalysis);
       setFixedWeakAreas(cached.currentState.fixedWeakAreas);
@@ -357,7 +361,7 @@ export default function ProfessionATSPanel({
         throw new Error(data.error || "Failed to analyze resume");
       }
 
-      saveCachedAnalysis(selectedProfession, data);
+      saveCachedAnalysis(selectedProfession, data, documentId || undefined, documentUpdatedAt);
       
       setOriginalAnalysis(data);
       setFixedWeakAreas([]);
@@ -383,7 +387,7 @@ export default function ProfessionATSPanel({
     const updatedResult = buildCurrentResult(originalAnalysis, newFixedAreas, newAddedSkills);
     setResult(updatedResult);
     
-    updateCachedState(selectedProfession, newFixedAreas, newAddedSkills);
+    updateCachedState(selectedProfession, newFixedAreas, newAddedSkills, documentId || undefined, documentUpdatedAt);
   };
 
   const handleAutoFix = async (weakArea: WeakArea, index: number) => {

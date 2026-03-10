@@ -84,15 +84,15 @@ function generateHash(str: string): string {
   return Math.abs(hash).toString(36);
 }
 
-function getCacheKey(jobDescription: string): string {
-  const hash = generateHash(jobDescription);
+function getCacheKey(jobDescription: string, documentId?: string, updatedAt?: string): string {
+  const hash = generateHash(jobDescription + (documentId || "") + (updatedAt || ""));
   return `${CACHE_KEY_PREFIX}${hash}`;
 }
 
-function getCachedAnalysis(jobDescription: string): CachedAnalysis | null {
+function getCachedAnalysis(jobDescription: string, documentId?: string, updatedAt?: string): CachedAnalysis | null {
   if (typeof window === "undefined") return null;
   try {
-    const key = getCacheKey(jobDescription);
+    const key = getCacheKey(jobDescription, documentId, updatedAt);
     const cached = localStorage.getItem(key);
     if (cached) {
       return JSON.parse(cached);
@@ -103,10 +103,10 @@ function getCachedAnalysis(jobDescription: string): CachedAnalysis | null {
   return null;
 }
 
-function saveCachedAnalysis(jobDescription: string, analysis: ATSScoreResponse): void {
+function saveCachedAnalysis(jobDescription: string, analysis: ATSScoreResponse, documentId?: string, updatedAt?: string): void {
   if (typeof window === "undefined") return;
   try {
-    const key = getCacheKey(jobDescription);
+    const key = getCacheKey(jobDescription, documentId, updatedAt);
     const cached: CachedAnalysis = {
       jobDescriptionHash: generateHash(jobDescription),
       timestamp: Date.now(),
@@ -122,10 +122,10 @@ function saveCachedAnalysis(jobDescription: string, analysis: ATSScoreResponse):
   }
 }
 
-function updateCachedState(jobDescription: string, fixedWeakAreas: number[], addedSkills: string[]): void {
+function updateCachedState(jobDescription: string, fixedWeakAreas: number[], addedSkills: string[], documentId?: string, updatedAt?: string): void {
   if (typeof window === "undefined") return;
   try {
-    const key = getCacheKey(jobDescription);
+    const key = getCacheKey(jobDescription, documentId, updatedAt);
     const cached = localStorage.getItem(key);
     if (cached) {
       const data: CachedAnalysis = JSON.parse(cached);
@@ -179,6 +179,8 @@ interface ATSScorePanelProps {
   onResumeChange: (resume: Resume) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  documentId?: string | null;
+  documentUpdatedAt?: string;
 }
 
 export default function ATSScorePanel({
@@ -186,6 +188,8 @@ export default function ATSScorePanel({
   onResumeChange,
   isExpanded,
   onToggleExpand,
+  documentId,
+  documentUpdatedAt,
 }: ATSScorePanelProps) {
   const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [jobDescription, setJobDescription] = useState(globalSavedJobDescription.jobDescription);
@@ -297,7 +301,7 @@ export default function ATSScorePanel({
     }
 
     // Check for cached analysis first
-    const cached = getCachedAnalysis(jobDescription);
+    const cached = getCachedAnalysis(jobDescription, documentId || undefined, documentUpdatedAt);
     if (cached) {
       // Use cached analysis
       setOriginalAnalysis(cached.originalAnalysis);
@@ -379,7 +383,7 @@ export default function ATSScorePanel({
       }
 
       // Save to cache
-      saveCachedAnalysis(jobDescription, data);
+      saveCachedAnalysis(jobDescription, data, documentId || undefined, documentUpdatedAt);
       
       setOriginalAnalysis(data);
       setFixedWeakAreas([]);
@@ -408,7 +412,7 @@ export default function ATSScorePanel({
     setResult(updatedResult);
     
     // Persist to cache
-    updateCachedState(jobDescription, newFixedAreas, newAddedSkills);
+    updateCachedState(jobDescription, newFixedAreas, newAddedSkills, documentId || undefined, documentUpdatedAt);
   };
 
   const handleAutoFix = async (weakArea: WeakArea, index: number) => {

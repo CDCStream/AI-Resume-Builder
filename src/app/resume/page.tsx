@@ -359,6 +359,7 @@ function ResumeEditorContent() {
             isExportingPDF={isExportingPDF}
             documentId={currentDocument?.id || null}
             documentName={currentDocument?.name}
+            documentUpdatedAt={currentDocument?.updatedAt}
             onSave={handleSave}
             onRename={handleRename}
             isSaving={isSaving}

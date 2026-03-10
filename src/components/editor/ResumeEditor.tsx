@@ -66,6 +66,7 @@ interface ResumeEditorProps {
   isExportingPDF?: boolean;
   documentId?: string | null;
   documentName?: string;
+  documentUpdatedAt?: string;
   onSave?: (name: string) => void;
   onRename?: (newName: string) => void;
   isSaving?: boolean;
@@ -101,6 +102,7 @@ export default function ResumeEditor({
   isExportingPDF,
   documentId,
   documentName,
+  documentUpdatedAt,
   onSave,
   onRename,
   isSaving,
@@ -1791,6 +1793,8 @@ export default function ResumeEditor({
         onResumeChange={onResumeChange}
         isExpanded={isATSScoreExpanded}
         onToggleExpand={() => setIsATSScoreExpanded(!isATSScoreExpanded)}
+        documentId={documentId}
+        documentUpdatedAt={documentUpdatedAt}
       />
 
       {/* ATS Score Panel - Profession */}
@@ -1799,6 +1803,8 @@ export default function ResumeEditor({
         onResumeChange={onResumeChange}
         isExpanded={isProfessionATSExpanded}
         onToggleExpand={() => setIsProfessionATSExpanded(!isProfessionATSExpanded)}
+        documentId={documentId}
+        documentUpdatedAt={documentUpdatedAt}
       />
 
       {/* Resume Scan Preview - 6-Second Analysis */}
