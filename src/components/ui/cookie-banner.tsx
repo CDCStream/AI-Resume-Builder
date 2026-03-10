@@ -47,7 +47,7 @@ export function CookieBanner() {
                 <div>
                   <h3 className="text-white font-semibold text-sm mb-1">Your Privacy Matters</h3>
                   <p className="text-gray-400 text-sm leading-relaxed">
-                    We use cookies for analytics and to improve your experience. Your data is never sold or used to train AI models.{" "}
+                    We use cookies to personalize your career dashboard and ensure a smooth resume export experience.{" "}
                     <Link href="/privacy" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">
                       Privacy Policy
                     </Link>
