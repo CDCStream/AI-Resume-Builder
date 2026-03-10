@@ -1,21 +1,25 @@
-import mixpanel from "mixpanel-browser";
-
 const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
 
-// Initialize Mixpanel
 let isInitialized = false;
+let mixpanel: any = null;
 
 export const initMixpanel = () => {
   if (typeof window !== "undefined" && MIXPANEL_TOKEN && !isInitialized) {
-    mixpanel.init(MIXPANEL_TOKEN, {
-      debug: process.env.NODE_ENV === "development",
-      track_pageview: false,
-      persistence: "localStorage",
-      ignore_dnt: false,
-      api_host: "https://api-eu.mixpanel.com", // EU data residency
-    });
-    isInitialized = true;
-    console.log("[Mixpanel] SDK initialized with EU host");
+    try {
+      mixpanel = require("mixpanel-browser");
+      if (mixpanel.default) mixpanel = mixpanel.default;
+      mixpanel.init(MIXPANEL_TOKEN, {
+        debug: process.env.NODE_ENV === "development",
+        track_pageview: false,
+        persistence: "localStorage",
+        ignore_dnt: false,
+        api_host: "https://api-eu.mixpanel.com",
+      });
+      isInitialized = true;
+      console.log("[Mixpanel] SDK initialized with EU host");
+    } catch {
+      console.warn("[Mixpanel] Failed to initialize");
+    }
   }
 };
 
