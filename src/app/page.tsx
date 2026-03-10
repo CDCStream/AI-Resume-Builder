@@ -168,10 +168,10 @@ export default function LandingPage() {
                 alt="LinImpact.ai Logo"
                 width={96}
                 height={96}
-                className="w-24 h-24 object-contain"
+                className="w-16 h-16 sm:w-24 sm:h-24 object-contain"
                 priority
               />
-              <span className="text-3xl font-extrabold tracking-tight -ml-4" style={{ fontFamily: 'var(--font-poppins)' }}>
+              <span className="text-xl sm:text-3xl font-extrabold tracking-tight -ml-2 sm:-ml-4" style={{ fontFamily: 'var(--font-poppins)' }}>
                 <span className="text-cyan-500">Lin</span><span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">Impact</span><span className="text-slate-500 font-semibold">.ai</span>
               </span>
             </Link>
@@ -269,26 +269,28 @@ export default function LandingPage() {
             <div className="text-center lg:text-left">
               {/* New Feature Banner */}
               <div className="mb-6 space-y-2">
-                <div className="flex items-center gap-2 flex-nowrap">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-sm font-semibold text-green-700 whitespace-nowrap">
-                    <Sparkles className="w-4 h-4" />
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-xs sm:text-sm font-semibold text-green-700 whitespace-nowrap">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     New Feature Launched!
                   </span>
-                  <span className="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Digital Portfolio & Proof of Work Section</span>
-                  <div className="relative group">
-                    <Info className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors" />
-                    <div className="absolute left-0 top-full mt-2 w-72 p-3 rounded-lg bg-gray-900 text-white text-xs leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl">
-                      In 2026, recruiters care less about keyword-stuffed resumes and more about proof of real work. This section lets you link your GitHub profile directly to your resume, automatically pulling repo stats, stars, and languages — turning your code into credible career evidence.
-                      <div className="absolute left-4 -top-1 w-2 h-2 bg-gray-900 rotate-45" />
+                  <span className="text-xs sm:text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-snug">Digital Portfolio & Proof of Work Section</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="relative group">
+                      <Info className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors" />
+                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 sm:w-72 p-3 rounded-lg bg-gray-900 text-white text-xs leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl">
+                        In 2026, recruiters care less about keyword-stuffed resumes and more about proof of real work. This section lets you link your GitHub profile directly to your resume, automatically pulling repo stats, stars, and languages — turning your code into credible career evidence.
+                        <div className="absolute left-4 sm:left-auto sm:right-4 -top-1 w-2 h-2 bg-gray-900 rotate-45" />
+                      </div>
                     </div>
+                    <button onClick={() => setDemoModalOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors whitespace-nowrap shrink-0">
+                      <Play className="w-3 h-3 fill-white" />
+                      Watch Demo
+                    </button>
                   </div>
-                  <button onClick={() => setDemoModalOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors whitespace-nowrap shrink-0">
-                    <Play className="w-3 h-3 fill-white" />
-                    Watch Demo
-                  </button>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap text-xs text-gray-500">
-                  <span className="inline-flex items-center gap-1">Digital Portfolio & Proof of Work — Currently supports <svg className="w-4 h-4 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg> <strong className="text-gray-700">GitHub</strong> only.</span>
+                  <span className="inline-flex items-center gap-1 flex-wrap">Digital Portfolio & Proof of Work — Currently supports <svg className="w-4 h-4 text-gray-800 inline shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg> <strong className="text-gray-700">GitHub</strong> only.</span>
                   <button onClick={() => setSurveyModalOpen(true)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-blue-200 text-blue-600 font-medium hover:bg-blue-50 transition-colors">
                     <ClipboardList className="w-3 h-3" />
                     Vote for next platforms
@@ -297,13 +299,13 @@ export default function LandingPage() {
               </div>
 
               {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
+              <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.15] sm:leading-[1.1] mb-6 tracking-tight">
                 Build your resume, cover letter & prep interviews with Humanized AI —{" "}
                 <span className="relative inline-block whitespace-nowrap">
                   <span className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     get hired faster
                   </span>
-                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
+                  <svg className="absolute -bottom-1 sm:-bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
                     <path d="M2 8C50 3 150 3 198 8" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round"/>
                     <defs>
                       <linearGradient id="gradient" x1="0" y1="0" x2="200" y2="0">
@@ -316,7 +318,7 @@ export default function LandingPage() {
               </h1>
 
               {/* Subheadline */}
-              <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
                 Only 2% of applications win. Our AI doesn&apos;t generate generic text — it narrates your professional story, making it indistinguishable from a $100 professional writer&apos;s work.
                 <span className="font-semibold text-gray-900"> Yours will be one of them.</span>
               </p>
@@ -342,21 +344,21 @@ export default function LandingPage() {
               </div>
 
               {/* Trust indicators */}
-              <div className="flex flex-wrap items-center gap-6 justify-center lg:justify-start text-sm text-gray-500">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 justify-center lg:justify-start text-xs sm:text-sm text-gray-500">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
                   <span>No credit card required</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
                   <span>3-day free trial</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
                   <span>ATS-optimized templates</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-indigo-500" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500 shrink-0" />
                   <span>Humanized AI, not generic</span>
                 </div>
               </div>

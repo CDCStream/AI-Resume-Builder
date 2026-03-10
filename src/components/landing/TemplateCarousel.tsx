@@ -117,39 +117,46 @@ export function TemplateCarousel({ onSelect }: TemplateCarouselProps) {
             transform: `translateX(-${activeIndex * (100 / visibleCount)}%)`,
           }}
         >
-          {templates.map((t) => (
-            <div
-              key={t.id}
-              className="shrink-0 px-2 sm:px-3"
-              style={{ width: `${100 / visibleCount}%` }}
-            >
+          {templates.map((t, idx) => {
+            const isNearVisible = idx >= activeIndex - 1 && idx <= activeIndex + visibleCount;
+            return (
               <div
-                className="group cursor-pointer"
-                onClick={onSelect}
+                key={t.id}
+                className="shrink-0 px-2 sm:px-3"
+                style={{ width: `${100 / visibleCount}%` }}
               >
-                <div className="relative rounded-xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="relative aspect-[3/4.2]">
-                    <Image
-                      src={t.image}
-                      alt={`${t.name} resume template — ${t.person}, ${t.role}`}
-                      fill
-                      className="object-cover object-top"
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-600/90 via-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                      <span className="text-white font-semibold text-sm bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
-                        Use This Template
-                      </span>
+                <div
+                  className="group cursor-pointer"
+                  onClick={onSelect}
+                >
+                  <div className="relative rounded-xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                    <div className="relative aspect-[3/4.2]">
+                      <Image
+                        src={t.image}
+                        alt={`${t.name} resume template — ${t.person}, ${t.role}`}
+                        fill
+                        className="object-cover object-top"
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 18vw"
+                        loading={idx < 5 ? "eager" : "lazy"}
+                        quality={60}
+                        {...(idx < 3 ? { priority: true } : {})}
+                        placeholder={isNearVisible ? undefined : "empty"}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-blue-600/90 via-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                        <span className="text-white font-semibold text-sm bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
+                          Use This Template
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="mt-3 text-center">
-                  <h3 className="font-semibold text-gray-900 text-sm">{t.name}</h3>
-                  <p className="text-xs text-gray-500">{t.person} — {t.role}</p>
+                  <div className="mt-3 text-center">
+                    <h3 className="font-semibold text-gray-900 text-sm">{t.name}</h3>
+                    <p className="text-xs text-gray-500">{t.person} — {t.role}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
