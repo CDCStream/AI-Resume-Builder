@@ -26,7 +26,13 @@ import ResumeScanPreview from "./ResumeScanPreview";
 import FeedbackModal from "@/components/ui/FeedbackModal";
 import { useRef, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Pencil, Check } from "lucide-react";
+import { LayoutDashboard, Pencil, Check, FileText, Search, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type AdditionalSection =
   | "languages"
@@ -1676,6 +1682,42 @@ export default function ResumeEditor({
           </div>
         </div>
         <div className="flex flex-col gap-2 mt-8">
+          {documentId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="no-print border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Cover Letter
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuItem
+                  onClick={() => router.push("/find-jobs")}
+                  className="flex items-start gap-3 p-3 cursor-pointer"
+                >
+                  <Search className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Find Jobs on LinkedIn</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Search and pick a job, we&apos;ll write your cover letter</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push("/cover-letter")}
+                  className="flex items-start gap-3 p-3 cursor-pointer"
+                >
+                  <FileText className="h-5 w-5 text-indigo-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">I Have the Job Posting</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Paste the job description and get a tailored cover letter</p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button
             onClick={handleSaveClick}
             variant="outline"
