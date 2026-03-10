@@ -319,8 +319,8 @@ export default function LandingPage() {
 
               {/* Subheadline */}
               <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                Only 2% of applications win. Our AI doesn&apos;t generate generic text — it narrates your professional story, making it indistinguishable from a $100 professional writer&apos;s work.
-                <span className="font-semibold text-gray-900"> Yours will be one of them.</span>
+                Only 2% of candidates land the interview. Don&apos;t let a generic AI be the reason you fail. LinImpact narrates your professional story with the precision of a $100 career coach—making your resume indistinguishable from expert human work.
+                <span className="font-semibold text-gray-900"> Secure your spot in the top 2%.</span>
               </p>
 
               {/* CTA Buttons */}
