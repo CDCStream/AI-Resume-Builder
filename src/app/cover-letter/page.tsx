@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
-import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Crown, Check } from "lucide-react";
+import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Crown, Check, MessageSquare } from "lucide-react";
 import { ProfessionalCoverLetter } from "@/components/templates/cover-letter";
 import { useSubscription } from "@/hooks/useSubscription";
 import { hasUserGivenFeedback } from "@/lib/supabase/database";
@@ -573,6 +573,22 @@ function CoverLetterPageContent() {
             </div>
           </div>
           <div className="flex gap-2">
+            {currentDocument && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (selectedResumeId) params.set("resumeId", selectedResumeId);
+                  if (jobUrl) params.set("jobUrl", jobUrl);
+                  router.push(`/interview-prep?${params.toString()}`);
+                }}
+              >
+                <MessageSquare className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Prepare Interview</span>
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={handleSaveClick} disabled={isSaving}>
               {isSaving ? <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" /> : <Save className="w-4 h-4 sm:mr-2" />}
               <span className="hidden sm:inline">Save</span>
