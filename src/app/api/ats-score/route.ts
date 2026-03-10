@@ -628,7 +628,7 @@ function formatResumeForAnalysis(resume: ATSScoreRequest["resume"]): string {
 function getATSScorePrompt(jobDescription: string, resumeText: string, resume: ATSScoreRequest["resume"]): string {
   return `You are an ATS analyst. Analyze resume-job match and return JSON.
 
-**LANGUAGE:** Match the job description language (English/Turkish/German).
+**LANGUAGE:** Match the resume content language (English/Turkish/German). Do NOT infer the user's native language from their name — only match the resume text.
 
 **CRITICAL: Keep responses CONCISE to avoid truncation:**
 - matchedKeywords: max 10 items

@@ -390,12 +390,12 @@ STEP 1: Analyze the "CURRENT CONTENT" section below and identify its primary lan
 STEP 2: Your ENTIRE response must be written in that EXACT same language.
 
 LANGUAGE RULES (STRICT - NO EXCEPTIONS):
-- Detect the language from the CURRENT CONTENT
-- ALL text output MUST be in the DETECTED language:
-  * "optimizedValue" - in detected language
-  * "before" and "after" - in detected language  
-  * "reason" - MUST be in detected language (THIS IS CRITICAL!)
-- The "reason" field is an explanation for the user - it MUST be readable in their language
+- Detect the language from the CURRENT CONTENT text only (ignore the user's name or nationality)
+- ALL text output MUST be in the SAME language as the CURRENT CONTENT:
+  * "optimizedValue" - in content's language
+  * "before" and "after" - in content's language  
+  * "reason" - MUST be in content's language (THIS IS CRITICAL!)
+- Do NOT infer the user's native language from their name or context — only match the CURRENT CONTENT language
 
 LANGUAGE DETECTION EXAMPLES:
 - If content is in ENGLISH → Write ALL fields in ENGLISH
@@ -556,7 +556,7 @@ IMPORTANT: Return a summarized version with key changes. Focus on the most impac
 Detect the language from "CURRENT CONTENT TO OPTIMIZE" section below.
 Your ENTIRE response (including ALL "reason" fields) MUST be written in THAT language.
 
-CRITICAL: The language of your response is determined by the CURRENT CONTENT, NOT by the job description!
+CRITICAL: The language of your response is determined by the CURRENT CONTENT, NOT by the job description and NOT by the user's name or nationality!
 
 LANGUAGE RULES:
 - If CURRENT CONTENT is in ENGLISH (e.g., skill names like "Python, SQL, Machine Learning") → Write ALL output in ENGLISH

@@ -190,9 +190,10 @@ ABSOLUTE RULES FOR missingSkills (MUST FOLLOW):
 5. Partial matches count: "Docker" in skills means Docker is NOT missing
 6. The score should INCREASE if all required skills are present
 
-**LANGUAGE RULE:** 
+**LANGUAGE RULE (STRICT):** 
 - summary, recommendations, weakAreas issue/suggestion: Use the SAME language as the resume content
 - If resume is in Turkish, respond in Turkish. If in English, respond in English.
+- Do NOT infer the user's native language from their name or nationality — only match the resume content language
 
 Return ONLY valid JSON:
 {
