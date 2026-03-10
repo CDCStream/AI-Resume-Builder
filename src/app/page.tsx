@@ -362,10 +362,16 @@ export default function LandingPage() {
                   <span>Humanized AI, not generic</span>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-gray-400 flex items-center gap-1.5 justify-center lg:justify-start">
-                <Lock className="w-3 h-3" />
-                Your data is encrypted and never shared with third parties.
-              </p>
+              <div className="mt-4 flex items-center gap-3 justify-center lg:justify-start">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+                  <span className="text-[11px] font-semibold text-green-700 tracking-wide uppercase">GDPR Compliant</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200">
+                  <Lock className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-[11px] font-semibold text-blue-700 tracking-wide uppercase">SSL Encrypted</span>
+                </div>
+              </div>
 
               {/* Social Proof */}
               <div className="mt-10 pt-8 border-t border-gray-200">
@@ -714,24 +720,33 @@ export default function LandingPage() {
       {/* Trust Bar - GDPR & Security */}
       <section className="py-8 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            <div className="flex items-center gap-2.5 text-sm text-gray-600">
-              <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
-                <ShieldCheck className="w-4 h-4 text-green-600" />
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-green-100 border-2 border-green-300 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5 text-green-700" />
               </div>
-              <span className="font-medium">GDPR Compliant</span>
+              <div>
+                <span className="block text-xs font-bold text-green-800 tracking-wide uppercase">GDPR</span>
+                <span className="block text-[11px] text-green-600">EU Data Protection</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2.5 text-sm text-gray-600">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Lock className="w-4 h-4 text-blue-600" />
+            <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-blue-100 border-2 border-blue-300 flex items-center justify-center">
+                <Lock className="w-5 h-5 text-blue-700" />
               </div>
-              <span className="font-medium">AES-256 Encryption</span>
+              <div>
+                <span className="block text-xs font-bold text-blue-800 tracking-wide uppercase">AES-256</span>
+                <span className="block text-[11px] text-blue-600">End-to-End Encryption</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2.5 text-sm text-gray-600">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-purple-600" />
+            <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-purple-700" />
               </div>
-              <span className="font-medium">No AI Training with Your Data</span>
+              <div>
+                <span className="block text-xs font-bold text-purple-800 tracking-wide uppercase">Privacy First</span>
+                <span className="block text-[11px] text-purple-600">No AI Training with Your Data</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1314,18 +1329,33 @@ export default function LandingPage() {
           </div>
 
           {/* Security Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
-              <ShieldCheck className="w-4 h-4 text-green-400" />
-              <span className="text-xs font-medium text-gray-300">GDPR Compliant</span>
+          <div className="flex flex-wrap items-center justify-center gap-5 mb-8">
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gray-800/60 border border-green-500/30">
+              <div className="w-8 h-8 rounded-full bg-green-500/15 border border-green-500/40 flex items-center justify-center">
+                <ShieldCheck className="w-4 h-4 text-green-400" />
+              </div>
+              <div>
+                <span className="block text-[10px] font-bold text-green-400 tracking-wider uppercase">GDPR</span>
+                <span className="block text-[10px] text-gray-400">EU Compliant</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
-              <Lock className="w-4 h-4 text-blue-400" />
-              <span className="text-xs font-medium text-gray-300">SSL Encrypted</span>
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gray-800/60 border border-blue-500/30">
+              <div className="w-8 h-8 rounded-full bg-blue-500/15 border border-blue-500/40 flex items-center justify-center">
+                <Lock className="w-4 h-4 text-blue-400" />
+              </div>
+              <div>
+                <span className="block text-[10px] font-bold text-blue-400 tracking-wider uppercase">SSL</span>
+                <span className="block text-[10px] text-gray-400">Encrypted</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
-              <Shield className="w-4 h-4 text-purple-400" />
-              <span className="text-xs font-medium text-gray-300">Privacy Protected</span>
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gray-800/60 border border-purple-500/30">
+              <div className="w-8 h-8 rounded-full bg-purple-500/15 border border-purple-500/40 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-purple-400" />
+              </div>
+              <div>
+                <span className="block text-[10px] font-bold text-purple-400 tracking-wider uppercase">Privacy</span>
+                <span className="block text-[10px] text-gray-400">Protected</span>
+              </div>
             </div>
           </div>
 
