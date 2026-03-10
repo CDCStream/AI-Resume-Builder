@@ -163,6 +163,12 @@ function ResumeEditorContent() {
         setHasUnsavedChanges(false);
         setAutoSaveStatus("saved");
         setTimeout(() => setAutoSaveStatus("idle"), 2000);
+
+        if (resume.basics?.image && !avatarUrl && user?.id) {
+          syncCvPhotoToProfile(user.id, resume.basics.image)
+            .then(() => refreshProfile())
+            .catch(() => {});
+        }
       } catch (error) {
         console.error("Auto-save failed:", error);
         setAutoSaveStatus("idle");
@@ -174,7 +180,7 @@ function ResumeEditorContent() {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [resume, selectedTemplate, currentDocument, hasUnsavedChanges, updateResume]);
+  }, [resume, selectedTemplate, currentDocument, hasUnsavedChanges, updateResume, avatarUrl, user?.id, refreshProfile]);
 
   const handleRename = useCallback(async (newName: string) => {
     if (currentDocument) {
@@ -263,11 +269,17 @@ function ResumeEditorContent() {
         setAutoSaveStatus("saved");
         setTimeout(() => setAutoSaveStatus("idle"), 2000);
         router.push(`/resume?id=${newDoc.id}`, { scroll: false });
+
+        if (importedResume.basics?.image && !avatarUrl && user?.id) {
+          syncCvPhotoToProfile(user.id, importedResume.basics.image)
+            .then(() => refreshProfile())
+            .catch(() => {});
+        }
       }
     } catch (error) {
       console.error("Auto-create document failed:", error);
     }
-  }, [isAuthenticated, currentDocument, selectedTemplate, createResume, router]);
+  }, [isAuthenticated, currentDocument, selectedTemplate, createResume, router, avatarUrl, user?.id, refreshProfile]);
 
   const handleLinkedInImport = (importedResume: Resume) => {
     setResume(importedResume);
