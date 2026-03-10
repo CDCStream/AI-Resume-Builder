@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,7 @@ const POPULAR_LOCATIONS = [
 
 function FindJobsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locationInputRef = useRef<HTMLInputElement>(null);
   const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
 
@@ -179,13 +180,18 @@ function FindJobsContent() {
   const [showCoverLetterDialog, setShowCoverLetterDialog] = useState(false);
   const [coverLetterAIAdditions, setCoverLetterAIAdditions] = useState<AIAddition[]>([]);
 
-  // Auto-select resume if only one exists
+  // Auto-select resume from query param or if only one exists
   useEffect(() => {
+    if (selectedResumeId) return;
     const savedState = sessionStorage.getItem("findJobsState");
-    if (!savedState && resumes.length === 1 && !selectedResumeId) {
+    if (savedState) return;
+    const resumeIdParam = searchParams.get("resumeId");
+    if (resumeIdParam && resumes.find((r) => r.id === resumeIdParam)) {
+      setSelectedResumeId(resumeIdParam);
+    } else if (resumes.length === 1) {
       setSelectedResumeId(resumes[0].id);
     }
-  }, [resumes, selectedResumeId]);
+  }, [resumes, selectedResumeId, searchParams]);
 
   // Track if we're restoring state (to prevent reset logic from triggering)
   const [isRestoringState, setIsRestoringState] = useState(true);

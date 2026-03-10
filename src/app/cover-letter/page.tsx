@@ -104,12 +104,16 @@ function CoverLetterPageContent() {
     backgroundUrl?: string;
   } | null>(null);
 
-  // Auto-select resume if only one exists
+  // Auto-select resume from query param or if only one exists
   useEffect(() => {
-    if (resumes.length === 1 && !selectedResumeId) {
+    if (selectedResumeId) return;
+    const resumeIdParam = searchParams.get("resumeId");
+    if (resumeIdParam && resumes.find((r) => r.id === resumeIdParam)) {
+      setSelectedResumeId(resumeIdParam);
+    } else if (resumes.length === 1) {
       setSelectedResumeId(resumes[0].id);
     }
-  }, [resumes, selectedResumeId]);
+  }, [resumes, selectedResumeId, searchParams]);
 
   // Load existing cover letter if editing
   useEffect(() => {

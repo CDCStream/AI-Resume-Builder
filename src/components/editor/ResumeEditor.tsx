@@ -1696,7 +1696,7 @@ export default function ResumeEditor({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72">
                 <DropdownMenuItem
-                  onClick={() => router.push("/find-jobs")}
+                  onClick={() => router.push(`/find-jobs?resumeId=${documentId}`)}
                   className="flex items-start gap-3 p-3 cursor-pointer"
                 >
                   <Search className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
@@ -1706,7 +1706,7 @@ export default function ResumeEditor({
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => router.push("/cover-letter")}
+                  onClick={() => router.push(`/cover-letter?resumeId=${documentId}`)}
                   className="flex items-start gap-3 p-3 cursor-pointer"
                 >
                   <FileText className="h-5 w-5 text-indigo-600 mt-0.5 shrink-0" />
