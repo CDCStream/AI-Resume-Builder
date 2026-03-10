@@ -30,6 +30,7 @@ import { ProfessionalCoverLetter } from "@/components/templates/cover-letter";
 import { useSubscription } from "@/hooks/useSubscription";
 import { hasUserGivenFeedback } from "@/lib/supabase/database";
 import FeedbackModal from "@/components/ui/FeedbackModal";
+import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
 
 interface CoverLetterData {
   recipientName: string;
@@ -663,7 +664,10 @@ function CoverLetterPageContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label className="text-xs text-gray-600">LinkedIn Job URL</Label>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs text-gray-600">LinkedIn Job URL</Label>
+                    <LinkedInUrlHowTo />
+                  </div>
                   <div className="flex gap-2 mt-1">
                     <Input
                       placeholder="https://www.linkedin.com/jobs/view/..."

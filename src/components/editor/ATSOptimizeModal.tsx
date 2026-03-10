@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
 
 interface ATSChange {
   before: string;
@@ -340,7 +341,10 @@ export default function ATSOptimizeModal({
 
                 {/* Job URL Input */}
                 <div className="space-y-1">
-                  <Label htmlFor="linkedinJobUrl" className="text-xs text-blue-600">Job URL</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="linkedinJobUrl" className="text-xs text-blue-600">Job URL</Label>
+                    <LinkedInUrlHowTo />
+                  </div>
                   <div className="flex gap-2">
                     <input
                       type="text"

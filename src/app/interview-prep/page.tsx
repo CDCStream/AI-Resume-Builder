@@ -43,6 +43,7 @@ import {
   Crown,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
 
 interface STARStory {
   title: string;
@@ -674,7 +675,10 @@ function InterviewPrepContent() {
                     </Select>
                   </div>
                   <div>
-                    <Label>LinkedIn Job URL (optional)</Label>
+                    <div className="flex items-center gap-2">
+                      <Label>LinkedIn Job URL (optional)</Label>
+                      <LinkedInUrlHowTo />
+                    </div>
                     <div className="flex gap-2 mt-1">
                       <Input
                         placeholder="https://www.linkedin.com/jobs/view/..."

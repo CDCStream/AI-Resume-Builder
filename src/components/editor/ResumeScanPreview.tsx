@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import HeatmapScanModal from "./HeatmapScanModal";
+import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
 
 interface ScanZone {
   id: string;
@@ -423,6 +424,7 @@ export default function ResumeScanPreview({
                 <div className="flex items-center gap-2 mb-2">
                   <Briefcase className="w-4 h-4 text-indigo-600" />
                   <span className="text-sm font-semibold text-indigo-700">Target Job Post</span>
+                  <LinkedInUrlHowTo />
                   <span className="text-[10px] text-indigo-400 ml-auto">Optional</span>
                 </div>
                 <p className="text-xs text-indigo-500 mb-3">

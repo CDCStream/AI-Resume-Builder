@@ -34,6 +34,7 @@ import {
   Lightbulb
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
 
 interface WeakArea {
   section: string;
@@ -820,10 +821,13 @@ export default function ATSScorePanel({
             <div className="space-y-4">
               {/* LinkedIn Import */}
               <div className="space-y-3 p-4 bg-white rounded-xl border border-gray-200">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <ExternalLink className="w-4 h-4 text-blue-600" />
-                  Import from LinkedIn
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <ExternalLink className="w-4 h-4 text-blue-600" />
+                    Import from LinkedIn
+                  </Label>
+                  <LinkedInUrlHowTo />
+                </div>
                 
                 {/* Job ID Input */}
                 <div className="flex gap-2">
