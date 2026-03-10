@@ -1076,17 +1076,27 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data: userList, error: listError } =
-      await supabaseAdmin.auth.admin.listUsers();
+    let targetUser = null;
+    let page = 1;
+    const perPage = 100;
 
-    if (listError) {
-      return NextResponse.json({ error: listError.message }, { status: 500 });
+    while (!targetUser) {
+      const { data: userList, error: listError } =
+        await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+
+      if (listError) {
+        return NextResponse.json({ error: listError.message }, { status: 500 });
+      }
+
+      if (!userList.users.length) break;
+
+      targetUser = userList.users.find((u) => u.email === DEMO_EMAIL) || null;
+      page++;
     }
 
-    const targetUser = userList.users.find((u) => u.email === DEMO_EMAIL);
     if (!targetUser) {
       return NextResponse.json(
-        { error: `User ${DEMO_EMAIL} not found` },
+        { error: `User ${DEMO_EMAIL} not found in ${(page - 1) * perPage}+ users` },
         { status: 404 }
       );
     }
