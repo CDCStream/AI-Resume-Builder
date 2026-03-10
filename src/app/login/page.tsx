@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, Lock, Eye, EyeOff, Loader2, FileText, CheckCircle, Home } from "lucide-react";
-import { trackLogin, trackError } from "@/lib/mixpanel";
+import { trackLogin, trackError } from "@/lib/analytics";
 
 function SearchParamsHandler({ onSuccess, onError }: { onSuccess: (msg: string) => void; onError: (msg: string) => void }) {
   const searchParams = useSearchParams();

@@ -107,7 +107,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">9. Cookies and Tracking</h2>
             <p className="text-white/70 leading-relaxed">
-              We use cookies and similar tracking technologies to track activity on our service and hold certain information. We use analytics services including Google Analytics and Mixpanel to understand how users interact with our service. You can control cookie preferences through your browser settings.
+              We use cookies and similar tracking technologies to track activity on our service and hold certain information. We use analytics services including Google Analytics and PostHog to understand how users interact with our service. You can control cookie preferences through your browser settings.
             </p>
           </section>
 

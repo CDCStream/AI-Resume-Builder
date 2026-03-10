@@ -47,7 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { gadsPurchaseConversion, gaPurchase } from "@/lib/gtag";
-import { trackSubscriptionActivated } from "@/lib/mixpanel";
+import { trackSubscriptionActivated } from "@/lib/analytics";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);

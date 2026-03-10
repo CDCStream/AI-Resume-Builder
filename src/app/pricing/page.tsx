@@ -22,7 +22,7 @@ import {
   Info
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { trackPricingPageViewed, trackCheckoutStarted, trackPlanSelected } from "@/lib/mixpanel";
+import { trackPricingPageViewed, trackCheckoutStarted, trackPlanSelected } from "@/lib/analytics";
 
 // Pricing FAQ data for SEO/AEO
 const pricingFaqs = [

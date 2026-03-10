@@ -1,97 +1,95 @@
-const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
 let isInitialized = false;
-let mixpanel: any = null;
+let posthog: any = null;
 
-export const initMixpanel = () => {
-  if (typeof window !== "undefined" && MIXPANEL_TOKEN && !isInitialized) {
+export const initAnalytics = () => {
+  if (typeof window !== "undefined" && POSTHOG_KEY && !isInitialized) {
     try {
-      mixpanel = require("mixpanel-browser");
-      if (mixpanel.default) mixpanel = mixpanel.default;
-      mixpanel.init(MIXPANEL_TOKEN, {
-        debug: process.env.NODE_ENV === "development",
-        track_pageview: false,
-        persistence: "localStorage",
-        ignore_dnt: false,
-        api_host: "https://api-eu.mixpanel.com",
+      posthog = require("posthog-js");
+      if (posthog.default) posthog = posthog.default;
+      posthog.init(POSTHOG_KEY, {
+        api_host: POSTHOG_HOST,
+        capture_pageview: false,
+        capture_pageleave: true,
+        persistence: "localStorage+cookie",
+        autocapture: true,
+        loaded: () => {
+          if (process.env.NODE_ENV === "development") {
+            console.log("[PostHog] SDK initialized");
+          }
+        },
       });
       isInitialized = true;
-      console.log("[Mixpanel] SDK initialized with EU host");
     } catch {
-      console.warn("[Mixpanel] Failed to initialize");
+      console.warn("[PostHog] Failed to initialize");
     }
   }
 };
 
-// Track Events
+export const getPostHog = () => {
+  if (typeof window !== "undefined" && isInitialized) return posthog;
+  return null;
+};
+
 export const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-  if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    if (!isInitialized) initMixpanel();
-    try {
-      mixpanel.track(eventName, {
-        ...properties,
-        timestamp: new Date().toISOString(),
-      });
-    } catch {
-      // Mixpanel not ready yet
-    }
-  }
+  if (typeof window === "undefined" || !POSTHOG_KEY) return;
+  if (!isInitialized) initAnalytics();
+  try {
+    posthog.capture(eventName, {
+      ...properties,
+      timestamp: new Date().toISOString(),
+    });
+  } catch { /* PostHog not ready */ }
 };
 
-// Identify User
 export const identifyUser = (userId: string, properties?: Record<string, any>) => {
-  if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    if (!isInitialized) initMixpanel();
-    try {
-      mixpanel.identify(userId);
-      if (properties) {
-        mixpanel.people.set(properties);
-      }
-    } catch { /* Mixpanel not ready */ }
-  }
+  if (typeof window === "undefined" || !POSTHOG_KEY) return;
+  if (!isInitialized) initAnalytics();
+  try {
+    posthog.identify(userId, properties);
+  } catch { /* PostHog not ready */ }
 };
 
-// Set User Properties
 export const setUserProperties = (properties: Record<string, any>) => {
-  if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    if (!isInitialized) initMixpanel();
-    try { mixpanel.people.set(properties); } catch { /* Mixpanel not ready */ }
-  }
+  if (typeof window === "undefined" || !POSTHOG_KEY) return;
+  if (!isInitialized) initAnalytics();
+  try {
+    posthog.people.set(properties);
+  } catch { /* PostHog not ready */ }
 };
 
-// Increment User Property
 export const incrementUserProperty = (property: string, value: number = 1) => {
-  if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    if (!isInitialized) initMixpanel();
-    try { mixpanel.people.increment(property, value); } catch { /* Mixpanel not ready */ }
-  }
+  if (typeof window === "undefined" || !POSTHOG_KEY) return;
+  if (!isInitialized) initAnalytics();
+  try {
+    posthog.people.set_once({ [property]: 0 });
+    posthog.people.set({ [property]: value });
+  } catch { /* PostHog not ready */ }
 };
 
-// Reset (on logout)
-export const resetMixpanel = () => {
-  if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
-    try { mixpanel.reset(); } catch { /* Mixpanel not ready */ }
-  }
+export const resetAnalytics = () => {
+  if (typeof window === "undefined" || !POSTHOG_KEY) return;
+  try { posthog.reset(); } catch { /* PostHog not ready */ }
 };
 
 // ============================================
 // PREDEFINED EVENT TRACKING FUNCTIONS
 // ============================================
 
-// Page Views
 export const trackPageView = (pageName: string, properties?: Record<string, any>) => {
-  trackEvent("Page Viewed", { page: pageName, ...properties });
+  trackEvent("$pageview", { page: pageName, ...properties });
 };
 
-// Auth Events
 export const trackSignUpStarted = (method: string = "email") => {
   trackEvent("Sign Up Started", { method });
 };
 
 export const trackSignUpCompleted = (userId: string, email: string, method: string = "email") => {
   identifyUser(userId, {
-    $email: email,
-    $created: new Date().toISOString(),
+    email,
+    created_at: new Date().toISOString(),
     sign_up_method: method,
     plan: "free_trial",
   });
@@ -99,18 +97,16 @@ export const trackSignUpCompleted = (userId: string, email: string, method: stri
 };
 
 export const trackLogin = (userId: string, email: string, method: string = "email") => {
-  identifyUser(userId, { $email: email, last_login: new Date().toISOString() });
+  identifyUser(userId, { email, last_login: new Date().toISOString() });
   trackEvent("Login", { method });
 };
 
 export const trackLogout = () => {
   trackEvent("Logout");
-  resetMixpanel();
+  resetAnalytics();
 };
 
-// Resume Events
 export const trackResumeCreated = (templateId?: string) => {
-  incrementUserProperty("total_resumes_created");
   trackEvent("Resume Created", { template_id: templateId });
 };
 
@@ -119,7 +115,6 @@ export const trackResumeUpdated = (resumeId: string, section?: string) => {
 };
 
 export const trackResumeDownloaded = (resumeId: string, format: string = "pdf") => {
-  incrementUserProperty("total_downloads");
   trackEvent("Resume Downloaded", { resume_id: resumeId, format });
 };
 
@@ -127,15 +122,11 @@ export const trackTemplateSelected = (templateId: string, templateName: string) 
   trackEvent("Template Selected", { template_id: templateId, template_name: templateName });
 };
 
-// Cover Letter Events
 export const trackCoverLetterGenerated = (jobTitle?: string) => {
-  incrementUserProperty("total_cover_letters");
   trackEvent("Cover Letter Generated", { job_title: jobTitle });
 };
 
-// AI Features
 export const trackAIFeatureUsed = (feature: string, properties?: Record<string, any>) => {
-  incrementUserProperty("total_ai_uses");
   trackEvent("AI Feature Used", { feature, ...properties });
 };
 
@@ -147,7 +138,6 @@ export const trackLinkedInImport = (success: boolean) => {
   trackEvent("LinkedIn Import", { success });
 };
 
-// Pricing & Subscription Events
 export const trackPricingPageViewed = (source?: string) => {
   trackEvent("Pricing Page Viewed", { source });
 };
@@ -175,28 +165,22 @@ export const trackSubscriptionCancelled = (plan: string, reason?: string) => {
   trackEvent("Subscription Cancelled", { plan, reason });
 };
 
-// Blog Events
 export const trackBlogPostViewed = (slug: string, title: string, author?: string) => {
   trackEvent("Blog Post Viewed", { slug, title, author });
 };
 
-// Interview Prep Events
 export const trackInterviewPrepStarted = (jobTitle?: string) => {
   trackEvent("Interview Prep Started", { job_title: jobTitle });
 };
 
 export const trackInterviewPrepCompleted = (score?: number) => {
-  incrementUserProperty("total_interview_preps");
   trackEvent("Interview Prep Completed", { score });
 };
 
-// 6-Second Scan
 export const trackResumeScanUsed = (resumeId?: string) => {
-  incrementUserProperty("total_scans");
   trackEvent("Resume Scan Used", { resume_id: resumeId });
 };
 
-// Error Tracking
 export const trackError = (errorType: string, errorMessage: string, context?: Record<string, any>) => {
   trackEvent("Error Occurred", { error_type: errorType, error_message: errorMessage, ...context });
 };

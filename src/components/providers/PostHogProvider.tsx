@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { initMixpanel, trackPageView } from "@/lib/mixpanel";
+import { initAnalytics, trackPageView } from "@/lib/analytics";
 import { hasConsented } from "@/lib/cookie-consent";
 
-export function MixpanelProvider({ children }: { children: React.ReactNode }) {
+export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isInitialized, setIsInitialized] = useState(false);
   const [consent, setConsent] = useState(false);
@@ -16,7 +16,7 @@ export function MixpanelProvider({ children }: { children: React.ReactNode }) {
       const accepted = (e as CustomEvent).detail === "accepted";
       setConsent(accepted);
       if (accepted && !isInitialized) {
-        initMixpanel();
+        initAnalytics();
         setIsInitialized(true);
       }
     };
@@ -26,7 +26,7 @@ export function MixpanelProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (consent && !isInitialized) {
-      initMixpanel();
+      initAnalytics();
       setIsInitialized(true);
     }
   }, [consent, isInitialized]);
@@ -41,7 +41,6 @@ export function MixpanelProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Helper to get readable page names
 function getPageName(pathname: string): string {
   if (pathname === "/") return "Landing Page";
   if (pathname === "/pricing") return "Pricing Page";
@@ -54,8 +53,7 @@ function getPageName(pathname: string): string {
   if (pathname.startsWith("/admin")) return "Admin Panel";
   if (pathname === "/settings") return "Settings";
   if (pathname === "/billing") return "Billing";
-  
-  // Default: capitalize the path
+
   return pathname
     .split("/")
     .filter(Boolean)

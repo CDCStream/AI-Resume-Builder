@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { MixpanelProvider } from "@/components/providers/MixpanelProvider";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { GoogleAnalytics } from "@/components/providers/GoogleAnalytics";
 import { CookieBanner } from "@/components/ui/cookie-banner";
 import Script from "next/script";
@@ -119,12 +119,12 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <GoogleAnalytics />
           </Suspense>
-          <MixpanelProvider>
+          <PostHogProvider>
             <Suspense>
               {children}
             </Suspense>
             <CookieBanner />
-          </MixpanelProvider>
+          </PostHogProvider>
         </AuthProvider>
       </body>
     </html>
