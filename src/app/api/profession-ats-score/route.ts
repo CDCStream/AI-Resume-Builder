@@ -100,9 +100,14 @@ function formatResumeForAnalysis(resume: ProfessionATSScoreRequest["resume"]): s
   
   if (resume.work && resume.work.length > 0) {
     text += "\nWork Experience:\n";
-    resume.work.forEach((w, i) => {
+    resume.work.forEach((w: any, i: number) => {
       text += `${i + 1}. ${w.position || "Position"} at ${w.name || "Company"}\n`;
       if (w.summary) text += `   ${w.summary}\n`;
+      if (w.highlights && w.highlights.length > 0) {
+        w.highlights.forEach((h: string) => {
+          text += `   - ${h}\n`;
+        });
+      }
     });
   }
   
