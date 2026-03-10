@@ -537,7 +537,10 @@ function CoverLetterPageContent() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3 sm:gap-4">
-            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="border-blue-200 hover:bg-blue-50">
+            <Button variant="outline" size="sm" onClick={() => {
+              const rid = searchParams.get("resumeId");
+              router.push(rid ? `/resume?id=${rid}` : "/dashboard");
+            }} className="border-blue-200 hover:bg-blue-50">
               <ArrowLeft className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Back</span>
             </Button>

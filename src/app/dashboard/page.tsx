@@ -378,7 +378,7 @@ export default function DashboardPage() {
                       {resumes
                         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
                         .map((resume) => (
-                          <TableRow key={resume.id} className="cursor-pointer hover:bg-gray-50">
+                          <TableRow key={resume.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleEdit("resume", resume.id)}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-3">
                                 <FileText className="h-5 w-5 text-blue-500" />
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-gray-500">{formatDate(resume.updatedAt)}</TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon">
@@ -479,7 +479,7 @@ export default function DashboardPage() {
                       {coverLetters
                         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
                         .map((letter) => (
-                          <TableRow key={letter.id} className="cursor-pointer hover:bg-gray-50">
+                          <TableRow key={letter.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleEdit("coverLetter", letter.id)}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-3">
                                 <Mail className="h-5 w-5 text-green-500" />
@@ -496,7 +496,7 @@ export default function DashboardPage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-gray-500">{formatDate(letter.updatedAt)}</TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon">
