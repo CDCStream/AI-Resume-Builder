@@ -113,7 +113,7 @@ export default function SettingsPage() {
 
         <div className="space-y-6">
           {/* Account Settings */}
-          <Card className="border-blue-100 shadow-lg shadow-blue-500/5">
+          <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
               <CardTitle className="flex items-center gap-2 text-blue-900">
                 <User className="w-5 h-5" />
@@ -121,7 +121,7 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription>Manage your account information</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
+            <CardContent className="pt-6 space-y-6 bg-gradient-to-br from-blue-50/50 via-white/80 to-cyan-50/50">
               {/* Avatar Upload */}
               <div className="flex items-center gap-6">
                 <div className="relative group">
@@ -223,7 +223,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Subscription / Billing */}
-          <Card className="border-blue-100 shadow-lg shadow-blue-500/5">
+          <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
               <CardTitle className="flex items-center gap-2 text-blue-900">
                 <CreditCard className="w-5 h-5" />
@@ -231,7 +231,7 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription>Manage your subscription plan</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 bg-gradient-to-br from-blue-50/50 via-white/80 to-cyan-50/50">
               {/* Current Plan Status */}
               <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -330,7 +330,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Password Change */}
-          <Card className="border-blue-100 shadow-lg shadow-blue-500/5">
+          <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
               <CardTitle className="flex items-center gap-2 text-blue-900">
                 <Lock className="w-5 h-5" />
@@ -338,7 +338,7 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription>Manage your password and security settings</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 bg-gradient-to-br from-blue-50/50 via-white/80 to-cyan-50/50">
               <Button 
                 variant="outline"
                 onClick={() => {
