@@ -12,7 +12,7 @@ interface TemplateProps {
 export default function CreativeGradient({ resume }: TemplateProps) {
   const { basics, work, education, skills, languages, courses, customSections, internships, activities, hobbies, references, awards, volunteer, certificates, projects, publications, strengths, philosophy, books, socialLinks, industryExpertise, sectionOrder } = resume;
 
-  const theme: ThemeConfig = { headingClass: "text-lg font-bold text-cyan-400 mb-3", textClass: "text-sm text-slate-200 font-medium", subTextClass: "text-xs text-slate-400", accentColor: "#22D3EE", dotFilledClass: "bg-cyan-400", dotEmptyClass: "bg-slate-600", tagClass: "text-sm bg-slate-700 text-cyan-300 px-3 py-1 rounded-full font-medium", titleClass: "font-semibold text-cyan-300" };
+  const theme: ThemeConfig = { headingClass: "text-lg font-bold text-cyan-400 mb-2", textClass: "text-sm text-slate-200 font-medium", subTextClass: "text-xs text-slate-400", accentColor: "#22D3EE", dotFilledClass: "bg-cyan-400", dotEmptyClass: "bg-slate-600", tagClass: "text-sm bg-slate-700 text-cyan-300 px-3 py-1 rounded-full font-medium", titleClass: "font-semibold text-cyan-300" };
 const orderedSections = useOrderedSections(resume);
 
 
@@ -22,11 +22,11 @@ const orderedSections = useOrderedSections(resume);
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-purple-500/20 to-pink-500/20 rounded-full blur-3xl"></div>
 
-      <div className="relative" style={{ padding: '40px' }}>
+      <div className="relative" style={{ padding: '28px 32px' }}>
         {/* Header */}
-        <header className="text-center mb-10">
+        <header className="text-center mb-6">
           {basics?.image && (
-            <div className="w-28 h-28 rounded-full overflow-hidden mx-auto mb-4 border-4 border-cyan-400/50">
+            <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-3 border-4 border-cyan-400/50">
               <img
                 src={basics.image}
                 alt={basics.name || "Profile"}
@@ -37,10 +37,10 @@ const orderedSections = useOrderedSections(resume);
               />
             </div>
           )}
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-1.5">
             {basics?.name || "Your Name"}
           </h1>
-          <p className="text-xl text-cyan-300 mb-4">{basics?.label || "Professional Title"}</p>
+          <p className="text-lg text-cyan-300 mb-3">{basics?.label || "Professional Title"}</p>
           <div className="flex justify-center gap-6 text-sm text-slate-300">
             {basics?.email && <span>{basics.email}</span>}
             {basics?.phone && <span>{basics.phone}</span>}
