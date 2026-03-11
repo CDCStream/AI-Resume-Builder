@@ -26,7 +26,7 @@ import ResumeScanPreview from "./ResumeScanPreview";
 import FeedbackModal from "@/components/ui/FeedbackModal";
 import { useRef, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Pencil, Check, FileText, Search, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Pencil, Check, FileText, Search, ChevronDown, MessageSquare } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1702,7 +1702,7 @@ export default function ResumeEditor({
                   <Search className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
                   <div>
                     <p className="font-medium text-gray-900">Find Jobs on LinkedIn</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Search and pick a job, we&apos;ll write your cover letter</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Pick a job you like, we&apos;ll write a tailored cover letter for it</p>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -1713,6 +1713,42 @@ export default function ResumeEditor({
                   <div>
                     <p className="font-medium text-gray-900">I Have the Job Posting</p>
                     <p className="text-xs text-gray-500 mt-0.5">Paste the job description and get a tailored cover letter</p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {documentId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="no-print border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Prepare Interview
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuItem
+                  onClick={() => router.push(`/find-jobs?resumeId=${documentId}`)}
+                  className="flex items-start gap-3 p-3 cursor-pointer"
+                >
+                  <Search className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Find Jobs on LinkedIn</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Find the job you want to prepare your interview for</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push(`/interview-prep?resumeId=${documentId}`)}
+                  className="flex items-start gap-3 p-3 cursor-pointer"
+                >
+                  <MessageSquare className="h-5 w-5 text-indigo-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">I Have the Job Posting</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Paste the job posting and start practicing for the interview</p>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>

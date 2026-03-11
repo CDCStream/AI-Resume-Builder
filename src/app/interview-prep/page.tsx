@@ -621,7 +621,10 @@ function InterviewPrepContent() {
       <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")} className="hover:bg-blue-50">
+            <Button variant="ghost" size="sm" onClick={() => {
+              const rid = searchParams.get("resumeId");
+              router.push(rid ? `/resume?id=${rid}` : "/dashboard");
+            }} className="hover:bg-blue-50">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
