@@ -1702,7 +1702,7 @@ export default function ResumeEditor({
                   <Search className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
                   <div>
                     <p className="font-medium text-gray-900">Find Jobs on LinkedIn</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Pick a job you like, we&apos;ll write a tailored cover letter for it</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Find a job you want, we&apos;ll write a tailored cover letter for it</p>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
