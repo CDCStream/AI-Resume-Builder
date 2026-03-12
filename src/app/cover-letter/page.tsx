@@ -31,6 +31,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { hasUserGivenFeedback } from "@/lib/supabase/database";
 import FeedbackModal from "@/components/ui/FeedbackModal";
 import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
+import { useAuth } from "@/contexts/AuthContext";
+import { trackAction } from "@/lib/activity-tracker";
 
 interface CoverLetterData {
   recipientName: string;
@@ -70,6 +72,7 @@ function CoverLetterPageContent() {
   const documentId = searchParams.get("id");
 
   const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
+  const { user } = useAuth();
   const { resumes, loading: resumesLoading } = useResumes();
   const {
     getCoverLetterById,
@@ -343,6 +346,9 @@ function CoverLetterPageContent() {
           senderName: prev.senderName || data.coverLetter.senderName,
           senderTitle: prev.senderTitle || data.coverLetter.senderTitle,
         }));
+        if (user?.id) {
+          trackAction(user.id, "generate_cover_letter", "/cover-letter");
+        }
       }
     } catch (err) {
       setError("Failed to generate cover letter. Please try again.");

@@ -16,6 +16,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { hasUserGivenFeedback, syncCvPhotoToProfile } from "@/lib/supabase/database";
 import FeedbackModal from "@/components/ui/FeedbackModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackAction } from "@/lib/activity-tracker";
 
 type ViewMode = "edit" | "page";
 
@@ -87,6 +88,10 @@ function ResumeEditorContent() {
         showWatermark: !hasPaidPlan,
       });
 
+      if (user?.id) {
+        trackAction(user.id, "download_pdf", "/resume", { template: selectedTemplate, hasPaidPlan });
+      }
+
       const alreadyGiven = await hasUserGivenFeedback("resume_pdf");
       if (!alreadyGiven) {
         setShowFeedbackModal(true);
@@ -124,6 +129,10 @@ function ResumeEditorContent() {
           router.push(`/resume?id=${newDoc.id}`, { scroll: false });
         }
       }
+      if (user?.id) {
+        trackAction(user.id, "save_resume", "/resume", { template: selectedTemplate, isNew: !currentDocument });
+      }
+
       const savedState = JSON.stringify({ resume, selectedTemplate });
       setLastSavedState(savedState);
       setHasUnsavedChanges(false);

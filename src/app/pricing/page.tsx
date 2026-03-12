@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { trackPricingPageViewed, trackCheckoutStarted, trackPlanSelected } from "@/lib/analytics";
+import { useAuth } from "@/contexts/AuthContext";
+import { trackAction } from "@/lib/activity-tracker";
 
 // Pricing FAQ data for SEO/AEO
 const pricingFaqs = [
@@ -134,6 +136,7 @@ const pricingFaqSchema = {
 
 export default function PricingPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -153,6 +156,9 @@ export default function PricingPage() {
   const handleCheckout = async (plan: string) => {
     const details = planDetails[plan];
     trackPlanSelected(plan, details.name, details.price);
+    if (user?.id) {
+      trackAction(user.id, "click_checkout", "/pricing", { plan, planName: details.name, price: details.price });
+    }
 
     if (plan === "FREE") {
       router.push("/register");

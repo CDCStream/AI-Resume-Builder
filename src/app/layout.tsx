@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { ActivityTracker } from "@/components/providers/ActivityTracker";
 import { GoogleAnalytics } from "@/components/providers/GoogleAnalytics";
 import { CookieBanner } from "@/components/ui/cookie-banner";
 import Script from "next/script";
@@ -120,6 +121,7 @@ export default function RootLayout({
             <GoogleAnalytics />
           </Suspense>
           <PostHogProvider>
+            <ActivityTracker />
             <Suspense>
               {children}
             </Suspense>
