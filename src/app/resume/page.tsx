@@ -72,8 +72,31 @@ function ResumeEditorContent() {
   const previewRef = useRef<HTMLDivElement>(null);
   const paginatorRef = useRef<ResumePaginatorRef>(null);
 
-  const { isPro } = useSubscription();
+  const { isPro, refetch: refetchSubscription } = useSubscription();
   const hasPaidPlan = isPro;
+
+  // Handle trial checkout success — verify and activate subscription
+  useEffect(() => {
+    const checkoutStatus = searchParams.get("checkout");
+    if (checkoutStatus === "trial-success") {
+      fetch("/api/checkout/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "TRIAL" }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            // Clear subscription cache so hook re-fetches
+            try { localStorage.removeItem("linimpact_sub_cache"); } catch {}
+            try { sessionStorage.removeItem("linimpact_sub_cache"); } catch {}
+            refetchSubscription();
+            router.replace("/resume", { scroll: false });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [searchParams, refetchSubscription, router]);
 
   const handleDownloadPDF = useCallback(async () => {
     if (!previewRef.current || isExportingPDF) return;

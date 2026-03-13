@@ -17,16 +17,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { customerSessionToken } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const requestedPlan = body.plan;
 
-    // Try to find subscription via Polar API using customer email
+    // If this is a trial verification, check if already activated via webhook
+    if (requestedPlan === "TRIAL") {
+      const { data: existing } = await supabaseAdmin
+        .from("subscriptions")
+        .select("plan, status, current_period_end")
+        .eq("user_id", user.id)
+        .single();
+
+      if (existing?.plan === "TRIAL" && existing?.status === "active") {
+        return NextResponse.json({ success: true, plan: "TRIAL", status: "active" });
+      }
+
+      // Webhook hasn't fired yet — activate trial directly
+      const trialEnd = new Date();
+      trialEnd.setDate(trialEnd.getDate() + 7);
+
+      const { error } = await supabaseAdmin
+        .from("subscriptions")
+        .upsert({
+          user_id: user.id,
+          plan: "TRIAL",
+          status: "active",
+          current_period_end: trialEnd.toISOString(),
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: "user_id",
+        });
+
+      if (error) {
+        console.error("Failed to activate trial:", error);
+        return NextResponse.json({ error: "Database error" }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, plan: "TRIAL", status: "active" });
+    }
+
+    // For recurring subscriptions, find via Polar API
     const subscriptions = await polar.subscriptions.list({
       active: true,
     });
 
     let userSubscription = null;
 
-    // Find subscription matching this user
     for (const sub of subscriptions.result.items) {
       if (sub.metadata && (sub.metadata as Record<string, string>).userId === user.id) {
         userSubscription = sub;
@@ -34,7 +70,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If not found by metadata, try by customer email
     if (!userSubscription && user.email) {
       for (const sub of subscriptions.result.items) {
         if (sub.customer && sub.customer.email === user.email) {
@@ -51,10 +86,8 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
 
-    // Determine plan from metadata or product
     const plan = (userSubscription.metadata as Record<string, string>)?.plan || "PRO_MONTHLY";
 
-    // Upsert subscription in database
     const { error } = await supabaseAdmin
       .from("subscriptions")
       .upsert({
