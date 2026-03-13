@@ -93,11 +93,11 @@ const faqs = [
   },
   {
     question: "Is it worth paying for an AI resume builder?",
-    answer: "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story — not just fills in blanks. The result is indistinguishable from a $100 professional writer's work. Plus, features like ATS score analysis, 6-second recruiter heatmap simulation, and AI interview prep give you a measurable advantage. With a free 3-day trial (no credit card required), you can see the difference before committing."
+    answer: "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story — not just fills in blanks. The result is indistinguishable from a $100 professional writer's work. Plus, features like ATS score analysis, 6-second recruiter heatmap simulation, and AI interview prep give you a measurable advantage. Try all Pro features for 7 days for just $1 and see the difference yourself."
   },
   {
     question: "What is the best AI resume builder for competitive job markets?",
-    answer: "In competitive markets (tech, finance, healthcare), your resume needs to do more than look good — it must pass ATS filters and grab a recruiter's attention in 6 seconds. LinImpact.ai is built for this: 1) Humanized AI content that avoids the 'generic AI' red flag recruiters now watch for, 2) ATS optimization with real-time scoring, 3) AI-powered mock interviews with STAR method coaching, 4) Cover letter generator matched to specific job postings. We offer a 3-day free trial with no credit card required — try every feature before you decide."
+    answer: "In competitive markets (tech, finance, healthcare), your resume needs to do more than look good — it must pass ATS filters and grab a recruiter's attention in 6 seconds. LinImpact.ai is built for this: 1) Humanized AI content that avoids the 'generic AI' red flag recruiters now watch for, 2) ATS optimization with real-time scoring, 3) AI-powered mock interviews with STAR method coaching, 4) Cover letter generator matched to specific job postings. Start your 7-day Pro trial for just $1 — try every feature before you decide."
   }
 ];
 
@@ -347,11 +347,11 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 justify-center lg:justify-start text-xs sm:text-sm text-gray-500">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
-                  <span>No credit card required</span>
+                  <span>7-day Pro trial for $1</span>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
-                  <span>3-day free trial</span>
+                  <span>No watermark</span>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
@@ -923,22 +923,24 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto items-stretch">
-            {/* Free Trial */}
-            <div className="relative bg-white rounded-2xl border-2 border-amber-300 p-6 hover:shadow-lg transition-shadow">
+            {/* $1 Trial */}
+            <div className="relative bg-white rounded-2xl border-2 border-blue-300 p-6 hover:shadow-lg transition-shadow">
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 text-xs font-semibold text-amber-700 bg-amber-100 rounded-full mb-4">
-                  3-DAY FREE TRIAL
+                <span className="inline-block px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full mb-4">
+                  7-DAY PRO TRIAL
                 </span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-gray-900">$0</span>
+                  <span className="text-5xl font-bold text-gray-900">$1</span>
+                  <span className="text-gray-500 text-sm">one-time</span>
                 </div>
-                <p className="text-gray-500 mt-2">Full access for 3 days</p>
+                <p className="text-gray-500 mt-2">Full Pro access for 7 days</p>
               </div>
 
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
-                  "All premium templates",
+                  "All 14+ premium templates",
+                  "No watermark on PDFs",
                   "AI-powered optimization",
                   "ATS score analysis",
                   "LinkedIn import",
@@ -946,17 +948,17 @@ export default function LandingPage() {
                   "6-second resume scan"
                 ].map((feature, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                     <span>{feature}</span>
               </li>
                 ))}
               </ul>
 
               <Button
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
                 onClick={() => router.push("/register")}
               >
-                Start Trial
+                Start $1 Trial
               </Button>
             </div>
 
@@ -1229,7 +1231,7 @@ export default function LandingPage() {
             </Button>
           </div>
           <p className="text-sm text-blue-200 mt-6">
-            No credit card required • Start building in seconds
+            7-day Pro trial for just $1 • Start building in seconds
           </p>
         </div>
       </section>

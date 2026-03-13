@@ -59,7 +59,22 @@ export async function updateSession(request: NextRequest) {
   // If user is authenticated and trying to access auth routes (except reset-password)
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    // Check if user has an active subscription before redirecting
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("plan, status, current_period_end")
+      .eq("user_id", user.id)
+      .single();
+
+    const hasPaidPlan = sub?.status === "active" && sub.plan !== "FREE" && sub.plan !== "TRIAL";
+    const hasActiveTrial = sub?.plan === "TRIAL" && sub?.status === "active" &&
+      sub?.current_period_end && new Date(sub.current_period_end) > new Date();
+
+    if (hasPaidPlan || hasActiveTrial) {
+      url.pathname = "/dashboard";
+    } else {
+      url.pathname = "/trial-checkout";
+    }
     return NextResponse.redirect(url);
   }
 

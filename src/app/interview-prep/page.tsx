@@ -562,7 +562,7 @@ function InterviewPrepContent() {
               <Crown className="h-8 w-8 text-amber-500" />
             </div>
             <CardTitle className="text-gray-900">
-              Your Free Trial Has Ended
+              Your Trial Has Ended
             </CardTitle>
             <CardDescription>
               Upgrade to Pro to continue using Interview Prep AI
@@ -570,7 +570,7 @@ function InterviewPrepContent() {
           </CardHeader>
           <CardContent className="pt-6">
             <p className="text-gray-600 text-center mb-6">
-              Your 3-day free trial has expired. Upgrade to Pro to continue preparing for your interviews with AI-generated guides and practice questions.
+              Your trial has expired. Upgrade to Pro to continue preparing for your interviews with AI-generated guides and practice questions.
             </p>
             <div className="flex flex-col gap-3">
               <Button

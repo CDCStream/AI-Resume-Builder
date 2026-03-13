@@ -7,6 +7,7 @@ export const polar = new Polar({
 
 // Product IDs - these will be set after creating products in Polar dashboard
 export const POLAR_PRODUCTS = {
+  TRIAL: process.env.POLAR_PRODUCT_TRIAL_ID || "",
   PRO_MONTHLY: process.env.POLAR_PRODUCT_MONTHLY_ID || "",
   PRO_QUARTERLY: process.env.POLAR_PRODUCT_QUARTERLY_ID || "",
   PRO_SEMI_ANNUAL: process.env.POLAR_PRODUCT_SEMI_ANNUAL_ID || "",
@@ -14,13 +15,16 @@ export const POLAR_PRODUCTS = {
 
 // Price configurations
 export const PRICING = {
-  FREE: {
-    name: "3-Day Free Trial",
-    price: 0,
-    period: "3 days",
+  TRIAL: {
+    name: "7-Day Pro Trial",
+    price: 1,
+    period: "7 days",
+    polarProductId: POLAR_PRODUCTS.TRIAL,
     features: [
-      "Unlimited resumes & covers",
-      "All premium templates",
+      "Full Pro access for 7 days",
+      "Unlimited resumes & cover letters",
+      "All 14+ premium templates",
+      "No watermark",
       "AI-powered optimization",
       "ATS score analysis",
       "LinkedIn import",

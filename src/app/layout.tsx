@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     default: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
     template: "%s | LinImpact.ai"
   },
-  description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, no credit card required.",
+  description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, 7-day Pro trial for $1.",
   keywords: [
     "resume builder", "ai resume builder", "best resume builder", "ats friendly resume",
     "ats resume template", "cover letter generator", "cv builder", "resume maker",

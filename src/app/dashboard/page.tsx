@@ -212,9 +212,9 @@ export default function DashboardPage() {
             <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
               <Crown className="h-10 w-10 text-amber-500" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Your Free Trial Has Ended</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Your Trial Has Ended</h2>
             <p className="text-gray-600 mb-6">
-              Your 3-day free trial has expired. Upgrade to Pro to continue using all premium features and take your career to the next level.
+              Your 7-day Pro trial has expired. Upgrade to Pro to continue using all premium features and take your career to the next level.
             </p>
             <div className="space-y-3">
               <Button
@@ -239,7 +239,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5" />
               <span className="font-medium">
-                Free Trial: {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining
+                Pro Trial: {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining
               </span>
             </div>
             <Button

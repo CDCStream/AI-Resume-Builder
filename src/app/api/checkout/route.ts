@@ -18,7 +18,12 @@ export async function POST(request: NextRequest) {
 
     // Map plan to Polar product ID
     let productId: string;
+    let successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=success`;
     switch (plan) {
+      case "TRIAL":
+        productId = POLAR_PRODUCTS.TRIAL;
+        successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/resume?checkout=trial-success`;
+        break;
       case "PRO_MONTHLY":
         productId = POLAR_PRODUCTS.PRO_MONTHLY;
         break;
@@ -45,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Create checkout session with Polar
     const checkout = await polar.checkouts.create({
       products: [productId],
-      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=success`,
+      successUrl,
       customerEmail: user.email || undefined,
       metadata: {
         userId: user.id,

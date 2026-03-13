@@ -61,7 +61,7 @@ export default function RegisterPage() {
           body: JSON.stringify({ email, name: fullName }),
         }).catch(() => {});
 
-        router.push("/resume");
+        router.push("/trial-checkout");
         return;
       }
     } catch (err) {

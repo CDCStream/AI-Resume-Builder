@@ -1,6 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+async function getRedirectForUser(supabase: Awaited<ReturnType<typeof createClient>>, fallback: string): Promise<string> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return fallback;
+
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("plan, status, current_period_end")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!sub) return "/trial-checkout";
+
+    const hasPaidPlan = sub.status === "active" && sub.plan !== "FREE" && sub.plan !== "TRIAL";
+    const hasActiveTrial = sub.plan === "TRIAL" && sub.status === "active" &&
+      sub.current_period_end && new Date(sub.current_period_end) > new Date();
+
+    if (hasPaidPlan || hasActiveTrial) return fallback;
+
+    return "/trial-checkout";
+  } catch {
+    return fallback;
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -19,8 +44,7 @@ export async function GET(request: Request) {
     });
     
     if (!error) {
-      // Send verified users directly to the resume editor
-      const redirect = redirectTo || "/resume";
+      const redirect = redirectTo || await getRedirectForUser(supabase, "/resume");
       return NextResponse.redirect(`${origin}${redirect}`);
     }
     
@@ -32,7 +56,8 @@ export async function GET(request: Request) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const redirect = await getRedirectForUser(supabase, next);
+      return NextResponse.redirect(`${origin}${redirect}`);
     }
   }
 

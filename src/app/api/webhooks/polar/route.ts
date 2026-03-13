@@ -85,6 +85,14 @@ export async function POST(request: NextRequest) {
         await handleSubscriptionRevoked(event.data);
         break;
 
+      case "order.created":
+        await handleOrderCreated(event.data);
+        break;
+
+      case "checkout.completed":
+        await handleCheckoutCompleted(event.data);
+        break;
+
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
@@ -196,5 +204,90 @@ async function handleSubscriptionRevoked(data: any) {
 
   if (error) {
     console.error("Failed to revoke subscription:", error);
+  }
+}
+
+async function handleOrderCreated(data: any) {
+  const plan = data.metadata?.plan;
+  if (plan !== "TRIAL") {
+    console.log("Order created for non-trial plan, skipping:", plan);
+    return;
+  }
+
+  const userId = await resolveUserId(data);
+  if (!userId) {
+    console.error("Could not resolve userId for trial order");
+    return;
+  }
+
+  const trialEnd = new Date();
+  trialEnd.setDate(trialEnd.getDate() + 7);
+
+  const { error } = await supabaseAdmin
+    .from("subscriptions")
+    .upsert({
+      user_id: userId,
+      polar_subscription_id: data.id,
+      polar_customer_id: data.customerId || data.customer_id || data.customer?.id,
+      plan: "TRIAL",
+      status: "active",
+      current_period_end: trialEnd.toISOString(),
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: "user_id",
+    });
+
+  if (error) {
+    console.error("Failed to create trial subscription:", error);
+  } else {
+    console.log(`Trial activated for user ${userId}, expires ${trialEnd.toISOString()}`);
+  }
+}
+
+async function handleCheckoutCompleted(data: any) {
+  const plan = data.metadata?.plan;
+  if (plan !== "TRIAL") return;
+
+  const userId = await resolveUserId(data);
+  if (!userId) {
+    console.error("Could not resolve userId for checkout completed");
+    return;
+  }
+
+  // Check if trial already activated via order.created
+  const { data: existing } = await supabaseAdmin
+    .from("subscriptions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("plan", "TRIAL")
+    .eq("status", "active")
+    .single();
+
+  if (existing) {
+    console.log("Trial already activated for user", userId);
+    return;
+  }
+
+  const trialEnd = new Date();
+  trialEnd.setDate(trialEnd.getDate() + 7);
+
+  const { error } = await supabaseAdmin
+    .from("subscriptions")
+    .upsert({
+      user_id: userId,
+      polar_subscription_id: data.id || null,
+      polar_customer_id: data.customerId || data.customer_id || data.customer?.id || null,
+      plan: "TRIAL",
+      status: "active",
+      current_period_end: trialEnd.toISOString(),
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: "user_id",
+    });
+
+  if (error) {
+    console.error("Failed to create trial from checkout:", error);
+  } else {
+    console.log(`Trial activated via checkout for user ${userId}`);
   }
 }

@@ -6,7 +6,7 @@ import { Metadata } from "next";
 
 export const homeMetadata: Metadata = {
   title: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
-  description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, no credit card required.",
+  description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, 7-day Pro trial for $1.",
   keywords: [
     "resume builder",
     "ai resume builder",
@@ -84,7 +84,7 @@ export const homeMetadata: Metadata = {
 
 export const pricingMetadata: Metadata = {
   title: "Pricing | AI Resume & Cover Letter Builder Plans | LinImpact.ai",
-  description: "Choose the perfect plan for your job search. Free trial, Pro monthly, quarterly & semi-annual options. ATS-optimized resumes, tailored cover letters & interview prep included.",
+  description: "Choose the perfect plan for your job search. 7-day Pro trial for $1, Pro monthly, quarterly & semi-annual options. ATS-optimized resumes, tailored cover letters & interview prep included.",
   keywords: [
     "resume builder pricing",
     "ai resume builder cost",
@@ -202,7 +202,7 @@ export const faqSchema = {
       "name": "Is it worth paying for an AI resume builder?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story. The result reads like a professional writer's work. Features like ATS scoring, recruiter heatmap simulation, and AI interview prep provide a measurable advantage. LinImpact.ai offers a free 3-day trial with no credit card required."
+        "text": "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story. The result reads like a professional writer's work. Features like ATS scoring, recruiter heatmap simulation, and AI interview prep provide a measurable advantage. LinImpact.ai offers a 7-day Pro trial for just $1."
       }
     },
     {
@@ -210,7 +210,7 @@ export const faqSchema = {
       "name": "What is the best AI resume builder for competitive job markets?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "In competitive markets, your resume must pass ATS filters and grab attention in 6 seconds. LinImpact.ai offers humanized AI content that avoids the generic AI red flag, ATS optimization with real-time scoring, AI mock interviews with STAR method coaching, and job-matched cover letters. A free 3-day trial is available with no credit card required."
+        "text": "In competitive markets, your resume must pass ATS filters and grab attention in 6 seconds. LinImpact.ai offers humanized AI content that avoids the generic AI red flag, ATS optimization with real-time scoring, AI mock interviews with STAR method coaching, and job-matched cover letters. Start your 7-day Pro trial for just $1."
       }
     }
   ]
@@ -245,9 +245,9 @@ export const softwareSchema = {
   "operatingSystem": "Web Browser",
   "offers": {
     "@type": "Offer",
-    "price": "0",
+    "price": "1",
     "priceCurrency": "USD",
-    "description": "Free trial with all features"
+    "description": "7-day Pro trial with all features"
   },
   "aggregateRating": {
     "@type": "AggregateRating",

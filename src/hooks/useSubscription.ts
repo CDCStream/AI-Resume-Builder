@@ -4,9 +4,8 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react
 import { createClient } from "@/lib/supabase/client";
 
 export type SubscriptionStatus = "trialing" | "active" | "canceled" | "expired" | "none";
-export type PlanType = "FREE" | "PRO_MONTHLY" | "PRO_QUARTERLY" | "PRO_SEMI_ANNUAL";
+export type PlanType = "TRIAL" | "PRO_MONTHLY" | "PRO_QUARTERLY" | "PRO_SEMI_ANNUAL" | "FREE";
 
-const FREE_TRIAL_DAYS = 3;
 const CACHE_KEY = "linimpact_sub_cache";
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
@@ -60,6 +59,7 @@ interface UseSubscriptionReturn {
   daysRemaining: number | null;
   refetch: () => Promise<void>;
   userCreatedAt: string | null;
+  needsTrialPayment: boolean;
 }
 
 export function useSubscription(): UseSubscriptionReturn {
@@ -121,28 +121,43 @@ export function useSubscription(): UseSubscriptionReturn {
     fetchSubscription();
   }, [fetchSubscription]);
 
-  const hasPaidPlan = subscription?.status === "active" && subscription.plan !== "FREE";
-  
-  // Calculate trial status based on user creation date
+  // Paid Pro plan (monthly/quarterly/semi-annual with active status)
+  const hasPaidPlan = subscription?.status === "active" &&
+    subscription.plan !== "FREE" &&
+    subscription.plan !== "TRIAL";
+
+  // Trial: user has a TRIAL plan with active status and period not expired
   let isTrialing = false;
   let trialExpired = false;
   let trialDaysRemaining: number | null = null;
 
-  if (userCreatedAt && !hasPaidPlan) {
-    const createdDate = new Date(userCreatedAt);
-    const now = new Date();
-    const daysSinceCreation = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysSinceCreation < FREE_TRIAL_DAYS) {
-      isTrialing = true;
-      trialDaysRemaining = FREE_TRIAL_DAYS - daysSinceCreation;
-    } else {
-      trialExpired = true;
-      trialDaysRemaining = 0;
+  if (subscription?.plan === "TRIAL" && subscription.status === "active") {
+    if (subscription.current_period_end) {
+      const endDate = new Date(subscription.current_period_end);
+      const now = new Date();
+      const msRemaining = endDate.getTime() - now.getTime();
+      if (msRemaining > 0) {
+        isTrialing = true;
+        trialDaysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
+      } else {
+        trialExpired = true;
+        trialDaysRemaining = 0;
+      }
     }
+  } else if (!hasPaidPlan && subscription?.plan === "TRIAL" && subscription.status !== "active") {
+    trialExpired = true;
+    trialDaysRemaining = 0;
   }
 
-  // isPro is true if user has paid plan OR is in trial period
+  // User registered but never paid $1 trial — needs to pay
+  const needsTrialPayment = !!userCreatedAt && !subscription && !isLoading;
+
+  // If no subscription at all and user exists, trial is "expired" (they never started one)
+  if (userCreatedAt && !subscription && !isLoading) {
+    trialExpired = true;
+  }
+
+  // isPro is true if user has paid plan OR is in active trial period
   const isPro = hasPaidPlan || isTrialing;
   const plan = subscription?.plan || "FREE";
   const status = subscription?.status || "none";
@@ -152,6 +167,7 @@ export function useSubscription(): UseSubscriptionReturn {
     const endDate = new Date(subscription.current_period_end);
     const now = new Date();
     daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysRemaining < 0) daysRemaining = 0;
   }
 
   return {
@@ -166,5 +182,6 @@ export function useSubscription(): UseSubscriptionReturn {
     daysRemaining,
     refetch: fetchSubscription,
     userCreatedAt,
+    needsTrialPayment,
   };
 }

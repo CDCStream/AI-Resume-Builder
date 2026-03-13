@@ -29,8 +29,8 @@ import { trackAction } from "@/lib/activity-tracker";
 // Pricing FAQ data for SEO/AEO
 const pricingFaqs = [
   {
-    question: "Is the resume builder really free to try?",
-    answer: "Yes! We offer a full-featured 3-day free trial with no credit card required. You get access to all premium features including AI resume optimization, 14+ templates, cover letter generator, and ATS checker during the trial."
+    question: "How does the $1 trial work?",
+    answer: "Pay just $1 to get full Pro access for 7 days. You get all premium features including AI resume optimization, 14+ templates, no watermark, cover letter generator, and ATS checker. No auto-renewal — after 7 days, you choose a Pro plan to continue."
   },
   {
     question: "What's included in the Pro plans?",
@@ -53,8 +53,8 @@ const pricingFaqs = [
     answer: "Yes, you can upgrade or downgrade your plan at any time. When upgrading, the price difference will be prorated. When downgrading, the change takes effect at your next billing date."
   },
   {
-    question: "What happens when my free trial ends?",
-    answer: "After the 3-day free trial, you'll need to subscribe to a paid plan to continue accessing premium features. Don't worry - we'll send you a reminder before the trial ends, and your resume drafts will be saved."
+    question: "What happens when my trial ends?",
+    answer: "After your 7-day Pro trial, you'll need to subscribe to a paid plan to continue accessing premium features. Don't worry — we'll send you a reminder before the trial ends, and your resume drafts will be saved."
   },
   {
     question: "Which plan is best for job seekers?",
@@ -83,10 +83,10 @@ const pricingSchema = {
   "offers": [
     {
       "@type": "Offer",
-      "name": "Free Trial",
-      "price": "0",
+      "name": "7-Day Pro Trial",
+      "price": "1",
       "priceCurrency": "USD",
-      "description": "3-day free trial with all features",
+      "description": "7-day Pro trial with all features",
       "availability": "https://schema.org/InStock"
     },
     {
@@ -147,7 +147,7 @@ export default function PricingPage() {
   }, []);
 
   const planDetails: Record<string, { name: string; price: number }> = {
-    FREE: { name: "Free Trial", price: 0 },
+    TRIAL: { name: "7-Day Pro Trial", price: 1 },
     PRO_MONTHLY: { name: "Pro Monthly", price: 13.98 },
     PRO_QUARTERLY: { name: "Pro Quarterly", price: 27.75 },
     PRO_SEMI_ANNUAL: { name: "Pro Semi-Annual", price: 47.10 },
@@ -160,8 +160,12 @@ export default function PricingPage() {
       trackAction(user.id, "click_checkout", "/pricing", { plan, planName: details.name, price: details.price });
     }
 
-    if (plan === "FREE") {
-      router.push("/register");
+    if (plan === "TRIAL") {
+      if (!user) {
+        router.push("/register");
+      } else {
+        router.push("/trial-checkout");
+      }
       return;
     }
 
@@ -294,7 +298,7 @@ export default function PricingPage() {
               AI Resume Builder Plans & Pricing
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Create professional, ATS-friendly resumes with our AI-powered resume builder. Start with a free trial and upgrade when you need unlimited access to all features.
+              Create professional, ATS-friendly resumes with our AI-powered resume builder. Start your 7-day Pro trial for just $1 and upgrade when you need unlimited access.
             </p>
 
             {/* Trust badges */}
@@ -316,22 +320,24 @@ export default function PricingPage() {
 
           {/* Pricing Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto items-stretch">
-            {/* Free Trial */}
-            <div className="relative bg-white rounded-2xl border-2 border-amber-300 p-6 hover:shadow-lg transition-shadow">
+            {/* $1 Trial */}
+            <div className="relative bg-white rounded-2xl border-2 border-blue-300 p-6 hover:shadow-lg transition-shadow">
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 text-xs font-semibold text-amber-700 bg-amber-100 rounded-full mb-4">
-                  3-DAY FREE TRIAL
+                <span className="inline-block px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full mb-4">
+                  7-DAY PRO TRIAL
                 </span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-gray-900">$0</span>
+                  <span className="text-5xl font-bold text-gray-900">$1</span>
+                  <span className="text-gray-500 text-sm">one-time</span>
                 </div>
-                <p className="text-gray-500 mt-2">Full access for 3 days</p>
+                <p className="text-gray-500 mt-2">Full Pro access for 7 days</p>
               </div>
 
               <ul className="space-y-2 mb-8">
                 {[
                   "Unlimited resumes & covers",
-                  "All premium templates",
+                  "All 14+ premium templates",
+                  "No watermark on PDFs",
                   "AI-powered optimization",
                   "ATS score analysis",
                   "LinkedIn import",
@@ -339,21 +345,17 @@ export default function PricingPage() {
                   "6-second resume scan",
                 ].map((feature, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                     <span>{feature}</span>
                   </li>
                 ))}
-                <li className="flex items-start gap-2 text-sm text-gray-400 min-h-[24px]">
-                  <Info className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                  <span>PDF downloads with watermark</span>
-                </li>
               </ul>
 
               <Button
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                onClick={() => handleCheckout("FREE")}
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                onClick={() => handleCheckout("TRIAL")}
               >
-                Start Free Trial
+                Start $1 Trial
               </Button>
             </div>
 

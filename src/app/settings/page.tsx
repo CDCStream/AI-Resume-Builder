@@ -255,13 +255,14 @@ export default function SettingsPage() {
                             {plan === "PRO_MONTHLY" && "Pro Monthly"}
                             {plan === "PRO_QUARTERLY" && "Pro Quarterly"}
                             {plan === "PRO_SEMI_ANNUAL" && "Pro Semi-Annual"}
+                            {plan === "TRIAL" && isTrialing && "Pro Trial"}
                             {plan === "FREE" && isTrialing && "Free Trial"}
                           </span>
                         </>
                       ) : isTrialing ? (
                         <>
                           <Crown className="w-5 h-5 text-amber-500" />
-                          <span className="text-xl font-bold text-gray-900">Free Trial</span>
+                          <span className="text-xl font-bold text-gray-900">Pro Trial</span>
                           <span className="text-sm bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
                             {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} left
                           </span>

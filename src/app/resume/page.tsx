@@ -72,8 +72,8 @@ function ResumeEditorContent() {
   const previewRef = useRef<HTMLDivElement>(null);
   const paginatorRef = useRef<ResumePaginatorRef>(null);
 
-  const { isPro, isTrialing } = useSubscription();
-  const hasPaidPlan = isPro && !isTrialing;
+  const { isPro } = useSubscription();
+  const hasPaidPlan = isPro;
 
   const handleDownloadPDF = useCallback(async () => {
     if (!previewRef.current || isExportingPDF) return;
