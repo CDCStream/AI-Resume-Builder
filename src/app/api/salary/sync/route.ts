@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isFreeMode } from "@/lib/app-config";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const BLOG_ADMIN_SECRET =
   process.env.BLOG_ADMIN_SECRET || "linimpact-blog-admin-2026";
@@ -223,6 +225,8 @@ export async function POST(request: NextRequest) {
     const slugs: string[] = body.slugs || Object.keys(SALARY_KEYWORDS);
 
     const results: Record<string, { success?: boolean; error?: string; listings?: number }> = {};
+
+    const supabaseAdmin = getSupabaseAdmin();
 
     for (const slug of slugs) {
       const config = SALARY_KEYWORDS[slug];

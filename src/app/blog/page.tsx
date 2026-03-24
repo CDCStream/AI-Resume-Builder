@@ -4,10 +4,12 @@ import { ArrowRight, Calendar, Clock } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { parseBlogPost, type ParsedBlogPost } from "@/lib/blog-parser";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = {
   "Sarah Chen": {
@@ -51,6 +53,7 @@ export const metadata = {
 export const revalidate = 60;
 
 async function getPosts(): Promise<ParsedBlogPost[]> {
+  const supabase = getSupabase();
   const { data: rows, error } = await supabase
     .from("blog_posts")
     .select("*")

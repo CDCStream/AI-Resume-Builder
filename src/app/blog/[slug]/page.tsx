@@ -6,10 +6,12 @@ import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { parseBlogPost } from "@/lib/blog-parser";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const AUTHORS: Record<string, { name: string; role: string; avatar: string }> = {
   "Sarah Chen": {
@@ -51,6 +53,7 @@ interface Props {
 export const revalidate = 60;
 
 async function getPost(slug: string) {
+  const supabase = getSupabase();
   // First try exact slug match
   let { data: row, error } = await supabase
     .from("blog_posts")
@@ -82,6 +85,8 @@ async function getPost(slug: string) {
 }
 
 async function getAllPosts() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return [];
+  const supabase = getSupabase();
   const { data: rows } = await supabase
     .from("blog_posts")
     .select("*")

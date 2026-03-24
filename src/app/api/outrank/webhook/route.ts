@@ -3,12 +3,14 @@ import { createClient } from "@supabase/supabase-js";
 
 const WEBHOOK_SECRET = process.env.OUTRANK_WEBHOOK_SECRET;
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 const DEFAULT_AUTHOR = "Sarah Chen";
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 function generateSlug(title: string): string {
   return title
@@ -64,6 +66,8 @@ function findArray(obj: unknown, keys: string[]): string[] {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     if (WEBHOOK_SECRET) {
       const signature = request.headers.get("x-webhook-signature") || 
                        request.headers.get("x-outrank-signature") ||

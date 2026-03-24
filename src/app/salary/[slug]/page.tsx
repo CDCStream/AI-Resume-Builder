@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 interface SalaryPage {
   slug: string;
@@ -41,6 +43,7 @@ export async function generateStaticParams() {
 }
 
 async function getSalaryData(slug: string): Promise<SalaryPage | null> {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("salary_pages")
     .select("*")
