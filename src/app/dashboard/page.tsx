@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Pencil, Search, Sparkles, Loader2, LogOut, User, Settings } from "lucide-react";
+import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Clock, Pencil, Search, Sparkles, Loader2, LogOut, User, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 
