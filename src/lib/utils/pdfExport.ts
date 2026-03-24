@@ -19,7 +19,42 @@ export async function exportResumeToPDF(
 ): Promise<void> {
   const { filename = "resume.pdf" } = options;
 
-  // Temporarily remove any parent scale transforms that interfere with html2canvas
+  // Strategy: find the raw template content, capture it at full height,
+  // then slice into A4 pages. This avoids html2canvas issues with the
+  // paginator's nested overflow:hidden + transform clipping structure.
+
+  // In page mode, the paginator has a hidden measurement container with
+  // the full unclipped template content. In edit mode, the visible
+  // .resume-page div has the full content directly.
+
+  const measureContainer = previewElement.querySelector(
+    ".absolute.opacity-0"
+  ) as HTMLElement | null;
+
+  let contentToCapture: HTMLElement;
+  let tempVisible = false;
+
+  if (measureContainer) {
+    // Page mode: measurement container has the full raw content
+    const inner =
+      (measureContainer.querySelector(".resume-page") as HTMLElement) ||
+      measureContainer;
+    contentToCapture = inner;
+    tempVisible = true;
+
+    // Make it temporarily visible for html2canvas
+    measureContainer.style.cssText =
+      "position:fixed!important;left:0!important;top:0!important;" +
+      "opacity:1!important;pointer-events:none!important;z-index:-9999!important;" +
+      `width:${A4_WIDTH_PX}px!important;`;
+  } else {
+    // Edit mode: the visible .resume-page IS the content
+    const page = previewElement.querySelector(".resume-page") as HTMLElement;
+    if (!page) throw new Error("No resume content found");
+    contentToCapture = page;
+  }
+
+  // Remove parent scale transform temporarily
   let scaledParent: HTMLElement | null = previewElement.parentElement;
   let savedTransform = "";
   while (scaledParent) {
@@ -31,140 +66,99 @@ export async function exportResumeToPDF(
     scaledParent = scaledParent.parentElement;
   }
 
-  // Find top-level .resume-page elements only (skip nested template wrappers)
-  const allPages = previewElement.querySelectorAll(".resume-page");
-  const visiblePages: HTMLElement[] = [];
+  // Wait for layout to settle after visibility/transform changes
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-  for (const page of Array.from(allPages)) {
-    const el = page as HTMLElement;
-    // Skip pages inside hidden measurement container
-    if (el.closest(".absolute.opacity-0")) continue;
-    if (el.closest('[style*="left: -9999"]')) continue;
-    // Skip nested .resume-page — templates have their own .resume-page wrapper
-    // inside the paginator's .resume-page container; only capture the outermost
-    if (el.parentElement?.closest(".resume-page")) continue;
-    visiblePages.push(el);
-  }
+  const gradientFixes = fixGradientTextElements(contentToCapture);
 
-  if (visiblePages.length === 0) {
-    throw new Error("No resume pages found");
-  }
-
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-  // Check if we're in edit mode (single tall page without pagination)
-  const firstPage = visiblePages[0];
-  const isSingleTallPage =
-    visiblePages.length === 1 && firstPage.scrollHeight > A4_HEIGHT_PX + 20;
-
-  if (isSingleTallPage) {
-    await captureEditMode(firstPage, pdf);
-  } else {
-    await capturePaginatedMode(visiblePages, pdf);
-  }
-
-  // Restore parent scale transform
-  if (scaledParent && savedTransform) {
-    scaledParent.style.transform = savedTransform;
-  }
-
-  pdf.save(filename);
-}
-
-async function capturePaginatedMode(
-  pages: HTMLElement[],
-  pdf: jsPDF,
-): Promise<void> {
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i];
-
-    const gradientFixes = fixGradientTextElements(page);
-
-    const canvas = await html2canvas(page, {
+  try {
+    const fullCanvas = await html2canvas(contentToCapture, {
       scale: CAPTURE_SCALE,
       useCORS: true,
       allowTaint: true,
       backgroundColor: "#ffffff",
       width: A4_WIDTH_PX,
-      height: A4_HEIGHT_PX,
       logging: false,
-      windowWidth: A4_WIDTH_PX,
-      windowHeight: A4_HEIGHT_PX,
       scrollX: 0,
       scrollY: 0,
       x: 0,
       y: 0,
-      onclone: (_clonedDoc, clonedEl) => {
-        clonedEl.style.transform = "none";
-        clonedEl.style.width = `${A4_WIDTH_PX}px`;
-        clonedEl.style.height = `${A4_HEIGHT_PX}px`;
-        clonedEl.style.overflow = "hidden";
-        clonedEl.style.position = "relative";
+      onclone: (_doc, el) => {
+        el.style.transform = "none";
+        el.style.width = `${A4_WIDTH_PX}px`;
+        el.style.overflow = "visible";
+        el.style.opacity = "1";
       },
     });
 
     restoreGradientTextElements(gradientFixes);
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
-    if (i > 0) pdf.addPage();
-    pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
-  }
-}
-
-async function captureEditMode(
-  page: HTMLElement,
-  pdf: jsPDF,
-): Promise<void> {
-  const gradientFixes = fixGradientTextElements(page);
-
-  const fullCanvas = await html2canvas(page, {
-    scale: CAPTURE_SCALE,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: "#ffffff",
-    width: A4_WIDTH_PX,
-    logging: false,
-    windowWidth: A4_WIDTH_PX,
-    scrollX: 0,
-    scrollY: 0,
-    x: 0,
-    y: 0,
-    onclone: (_clonedDoc, clonedEl) => {
-      clonedEl.style.transform = "none";
-      clonedEl.style.width = `${A4_WIDTH_PX}px`;
-    },
-  });
-
-  restoreGradientTextElements(gradientFixes);
-
-  const numPages = Math.ceil(fullCanvas.height / (A4_HEIGHT_PX * CAPTURE_SCALE));
-
-  for (let i = 0; i < numPages; i++) {
-    const sliceCanvas = document.createElement("canvas");
-    sliceCanvas.width = A4_WIDTH_PX * CAPTURE_SCALE;
-    sliceCanvas.height = A4_HEIGHT_PX * CAPTURE_SCALE;
-    const ctx = sliceCanvas.getContext("2d");
-    if (!ctx) continue;
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-
-    const srcY = i * A4_HEIGHT_PX * CAPTURE_SCALE;
-    const srcH = Math.min(
-      A4_HEIGHT_PX * CAPTURE_SCALE,
-      fullCanvas.height - srcY
-    );
-    if (srcH > 0) {
-      ctx.drawImage(
-        fullCanvas,
-        0, srcY, fullCanvas.width, srcH,
-        0, 0, sliceCanvas.width, srcH
-      );
+    // Restore measurement container
+    if (tempVisible && measureContainer) {
+      measureContainer.style.cssText = "";
+      measureContainer.className = "absolute opacity-0 pointer-events-none";
+      measureContainer.style.width = `${A4_WIDTH_PX}px`;
+      measureContainer.style.left = "-9999px";
     }
 
-    const imgData = sliceCanvas.toDataURL("image/jpeg", 0.92);
-    if (i > 0) pdf.addPage();
-    pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
+    // Restore parent scale
+    if (scaledParent && savedTransform) {
+      scaledParent.style.transform = savedTransform;
+    }
+
+    // Slice full canvas into A4-sized pages
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const scaledPageH = A4_HEIGHT_PX * CAPTURE_SCALE;
+    const numPages = Math.max(1, Math.ceil(fullCanvas.height / scaledPageH));
+
+    for (let i = 0; i < numPages; i++) {
+      const slice = document.createElement("canvas");
+      slice.width = A4_WIDTH_PX * CAPTURE_SCALE;
+      slice.height = scaledPageH;
+      const ctx = slice.getContext("2d");
+      if (!ctx) continue;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, slice.width, slice.height);
+
+      const srcY = i * scaledPageH;
+      const srcH = Math.min(scaledPageH, fullCanvas.height - srcY);
+      if (srcH > 0) {
+        ctx.drawImage(
+          fullCanvas,
+          0,
+          srcY,
+          fullCanvas.width,
+          srcH,
+          0,
+          0,
+          slice.width,
+          srcH
+        );
+      }
+
+      const imgData = slice.toDataURL("image/jpeg", 0.92);
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
+    }
+
+    pdf.save(filename);
+  } catch (error) {
+    // Ensure cleanup on error
+    restoreGradientTextElements(gradientFixes);
+
+    if (tempVisible && measureContainer) {
+      measureContainer.style.cssText = "";
+      measureContainer.className = "absolute opacity-0 pointer-events-none";
+      measureContainer.style.width = `${A4_WIDTH_PX}px`;
+      measureContainer.style.left = "-9999px";
+    }
+
+    if (scaledParent && savedTransform) {
+      scaledParent.style.transform = savedTransform;
+    }
+
+    throw error;
   }
 }
 
@@ -185,7 +179,9 @@ function fixGradientTextElements(container: HTMLElement): GradientFix[] {
   for (const el of Array.from(allEls)) {
     const htmlEl = el as HTMLElement;
     const cs = window.getComputedStyle(htmlEl);
-    const clip = cs.backgroundClip || (cs as unknown as Record<string, string>).webkitBackgroundClip;
+    const clip =
+      cs.backgroundClip ||
+      (cs as unknown as Record<string, string>).webkitBackgroundClip;
     if (clip !== "text") continue;
 
     fixes.push({
@@ -198,7 +194,6 @@ function fixGradientTextElements(container: HTMLElement): GradientFix[] {
       wkFill: htmlEl.style.webkitTextFillColor,
     });
 
-    // Extract first color from gradient for a solid fallback
     let solidColor = "#22D3EE";
     const rgbMatch = cs.backgroundImage.match(/rgba?\([^)]+\)/);
     if (rgbMatch) solidColor = rgbMatch[0];
