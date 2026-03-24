@@ -19,60 +19,54 @@ export async function exportResumeToPDF(
 ): Promise<void> {
   const { filename = "resume.pdf" } = options;
 
-  // Strategy: find the raw template content, capture it at full height,
-  // then slice into A4 pages. This avoids html2canvas issues with the
-  // paginator's nested overflow:hidden + transform clipping structure.
-
-  // In page mode, the paginator has a hidden measurement container with
-  // the full unclipped template content. In edit mode, the visible
-  // .resume-page div has the full content directly.
-
+  // Find the raw template content.
+  // In page-mode the paginator keeps a hidden measurement copy;
+  // in edit-mode the visible .resume-page IS the content.
   const measureContainer = previewElement.querySelector(
     ".absolute.opacity-0"
   ) as HTMLElement | null;
 
-  let contentToCapture: HTMLElement;
-  let tempVisible = false;
+  let sourceElement: HTMLElement;
 
   if (measureContainer) {
-    // Page mode: measurement container has the full raw content
-    const inner =
+    sourceElement =
       (measureContainer.querySelector(".resume-page") as HTMLElement) ||
-      measureContainer;
-    contentToCapture = inner;
-    tempVisible = true;
-
-    // Make it temporarily visible for html2canvas
-    measureContainer.style.cssText =
-      "position:fixed!important;left:0!important;top:0!important;" +
-      "opacity:1!important;pointer-events:none!important;z-index:-9999!important;" +
-      `width:${A4_WIDTH_PX}px!important;`;
+      (measureContainer.firstElementChild as HTMLElement);
   } else {
-    // Edit mode: the visible .resume-page IS the content
-    const page = previewElement.querySelector(".resume-page") as HTMLElement;
-    if (!page) throw new Error("No resume content found");
-    contentToCapture = page;
+    sourceElement = previewElement.querySelector(
+      ".resume-page"
+    ) as HTMLElement;
   }
 
-  // Remove parent scale transform temporarily
-  let scaledParent: HTMLElement | null = previewElement.parentElement;
-  let savedTransform = "";
-  while (scaledParent) {
-    if (scaledParent.style.transform?.includes("scale")) {
-      savedTransform = scaledParent.style.transform;
-      scaledParent.style.transform = "none";
-      break;
-    }
-    scaledParent = scaledParent.parentElement;
+  if (!sourceElement) {
+    throw new Error("No resume content found");
   }
 
-  // Wait for layout to settle after visibility/transform changes
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  // Deep-clone the content into a fresh visible element on <body>.
+  // This sidesteps every parent opacity / transform / overflow issue.
+  const clone = sourceElement.cloneNode(true) as HTMLElement;
+  clone.style.cssText = [
+    "position:fixed",
+    "top:0",
+    "left:0",
+    `width:${A4_WIDTH_PX}px`,
+    "opacity:1",
+    "z-index:-99999",
+    "pointer-events:none",
+    "overflow:visible",
+    "transform:none",
+    "background:#ffffff",
+  ].join(";");
 
-  const gradientFixes = fixGradientTextElements(contentToCapture);
+  document.body.appendChild(clone);
+
+  // Let browser lay out the clone
+  await new Promise<void>((r) => setTimeout(r, 150));
+
+  const gradientFixes = fixGradientTextElements(clone);
 
   try {
-    const fullCanvas = await html2canvas(contentToCapture, {
+    const fullCanvas = await html2canvas(clone, {
       scale: CAPTURE_SCALE,
       useCORS: true,
       allowTaint: true,
@@ -83,30 +77,12 @@ export async function exportResumeToPDF(
       scrollY: 0,
       x: 0,
       y: 0,
-      onclone: (_doc, el) => {
-        el.style.transform = "none";
-        el.style.width = `${A4_WIDTH_PX}px`;
-        el.style.overflow = "visible";
-        el.style.opacity = "1";
-      },
     });
 
     restoreGradientTextElements(gradientFixes);
+    document.body.removeChild(clone);
 
-    // Restore measurement container
-    if (tempVisible && measureContainer) {
-      measureContainer.style.cssText = "";
-      measureContainer.className = "absolute opacity-0 pointer-events-none";
-      measureContainer.style.width = `${A4_WIDTH_PX}px`;
-      measureContainer.style.left = "-9999px";
-    }
-
-    // Restore parent scale
-    if (scaledParent && savedTransform) {
-      scaledParent.style.transform = savedTransform;
-    }
-
-    // Slice full canvas into A4-sized pages
+    // Slice the full-height canvas into A4-sized pages
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const scaledPageH = A4_HEIGHT_PX * CAPTURE_SCALE;
     const numPages = Math.max(1, Math.ceil(fullCanvas.height / scaledPageH));
@@ -144,20 +120,8 @@ export async function exportResumeToPDF(
 
     pdf.save(filename);
   } catch (error) {
-    // Ensure cleanup on error
     restoreGradientTextElements(gradientFixes);
-
-    if (tempVisible && measureContainer) {
-      measureContainer.style.cssText = "";
-      measureContainer.className = "absolute opacity-0 pointer-events-none";
-      measureContainer.style.width = `${A4_WIDTH_PX}px`;
-      measureContainer.style.left = "-9999px";
-    }
-
-    if (scaledParent && savedTransform) {
-      scaledParent.style.transform = savedTransform;
-    }
-
+    if (clone.parentNode) document.body.removeChild(clone);
     throw error;
   }
 }
