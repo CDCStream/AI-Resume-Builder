@@ -2,7 +2,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sign Up Free | LinImpact.ai - AI Resume Builder",
-  description: "Create your free account and start building ATS-optimized resumes with humanized AI. No credit card required.",
+  description: "Create your free account and start building ATS-optimized resumes with humanized AI. Just sign up and start.",
   alternates: { canonical: "https://www.linimpact.ai/register" },
 };
 

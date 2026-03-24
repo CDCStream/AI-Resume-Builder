@@ -93,11 +93,11 @@ const faqs = [
   },
   {
     question: "Is it worth paying for an AI resume builder?",
-    answer: "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story — not just fills in blanks. The result is indistinguishable from a $100 professional writer's work. Plus, features like ATS score analysis, 6-second recruiter heatmap simulation, and AI interview prep give you a measurable advantage. Try all Pro features for 7 days for just $1 and see the difference yourself."
+    answer: "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story — not just fills in blanks. The result is indistinguishable from a $100 professional writer's work. Plus, features like ATS score analysis, 6-second recruiter heatmap simulation, and AI interview prep give you a measurable advantage. Best of all — every feature is completely free. Just sign up and start building."
   },
   {
     question: "What is the best AI resume builder for competitive job markets?",
-    answer: "In competitive markets (tech, finance, healthcare), your resume needs to do more than look good — it must pass ATS filters and grab a recruiter's attention in 6 seconds. LinImpact.ai is built for this: 1) Humanized AI content that avoids the 'generic AI' red flag recruiters now watch for, 2) ATS optimization with real-time scoring, 3) AI-powered mock interviews with STAR method coaching, 4) Cover letter generator matched to specific job postings. Best of all — it's completely free with no credit card required."
+    answer: "In competitive markets (tech, finance, healthcare), your resume needs to do more than look good — it must pass ATS filters and grab a recruiter's attention in 6 seconds. LinImpact.ai is built for this: 1) Humanized AI content that avoids the 'generic AI' red flag recruiters now watch for, 2) ATS optimization with real-time scoring, 3) AI-powered mock interviews with STAR method coaching, 4) Cover letter generator matched to specific job postings. Best of all — it's completely free. Just sign up and start building."
   }
 ];
 
@@ -347,7 +347,7 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 justify-center lg:justify-start text-xs sm:text-sm text-gray-500">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
-                  <span>100% Free — No credit card required</span>
+                  <span>100% Free — Just sign up and start</span>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
@@ -915,7 +915,7 @@ export default function LandingPage() {
               100% Free
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Totally Free. No Credit Card Required.
+              Totally Free. Just Sign Up and Start.
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Every feature is completely free. Build unlimited resumes, cover letters, and more — no hidden costs, no paywalls.
@@ -932,7 +932,7 @@ export default function LandingPage() {
                   <span className="text-6xl font-bold text-gray-900">$0</span>
                   <span className="text-gray-500 text-lg">/forever</span>
                 </div>
-                <p className="text-green-600 font-medium mt-2">No credit card required</p>
+                <p className="text-green-600 font-medium mt-2">Just sign up and start</p>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -960,7 +960,7 @@ export default function LandingPage() {
               >
                 Get Started — It&apos;s Free
               </Button>
-              <p className="text-center text-sm text-gray-400 mt-3">No credit card. No trial. Free forever.</p>
+              <p className="text-center text-sm text-gray-400 mt-3">No catch. No trial. Free forever.</p>
             </div>
           </div>
         </div>
@@ -1078,7 +1078,7 @@ export default function LandingPage() {
             </Button>
           </div>
           <p className="text-sm text-blue-200 mt-6">
-            100% Free • No credit card required • Start building in seconds
+            100% Free • Just sign up and start • Build your resume in seconds
           </p>
         </div>
       </section>

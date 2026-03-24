@@ -224,7 +224,7 @@ export default function SettingsPage() {
                 <CheckCircle className="w-5 h-5" />
                 Your Plan
               </CardTitle>
-              <CardDescription>All features included — no credit card required</CardDescription>
+              <CardDescription>All features included — just sign up and start</CardDescription>
             </CardHeader>
             <CardContent className="py-6 bg-gradient-to-br from-blue-50/50 via-white/80 to-cyan-50/50">
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6">
@@ -235,7 +235,7 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  You have full access to all features including AI-powered resume building, cover letters, job search, and interview prep. Totally free, no credit card required.
+                  You have full access to all features including AI-powered resume building, cover letters, job search, and interview prep. Totally free — just sign up and start.
                 </p>
               </div>
             </CardContent>
