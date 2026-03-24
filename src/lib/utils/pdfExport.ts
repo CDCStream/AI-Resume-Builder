@@ -19,6 +19,18 @@ export async function exportResumeToPDF(
 ): Promise<void> {
   const { filename = "resume.pdf" } = options;
 
+  // Temporarily remove any parent scale transforms that interfere with html2canvas
+  let scaledParent: HTMLElement | null = previewElement.parentElement;
+  let savedTransform = "";
+  while (scaledParent) {
+    if (scaledParent.style.transform?.includes("scale")) {
+      savedTransform = scaledParent.style.transform;
+      scaledParent.style.transform = "none";
+      break;
+    }
+    scaledParent = scaledParent.parentElement;
+  }
+
   // Find top-level .resume-page elements only (skip nested template wrappers)
   const allPages = previewElement.querySelectorAll(".resume-page");
   const visiblePages: HTMLElement[] = [];
@@ -51,6 +63,11 @@ export async function exportResumeToPDF(
     await capturePaginatedMode(visiblePages, pdf);
   }
 
+  // Restore parent scale transform
+  if (scaledParent && savedTransform) {
+    scaledParent.style.transform = savedTransform;
+  }
+
   pdf.save(filename);
 }
 
@@ -71,6 +88,19 @@ async function capturePaginatedMode(
       width: A4_WIDTH_PX,
       height: A4_HEIGHT_PX,
       logging: false,
+      windowWidth: A4_WIDTH_PX,
+      windowHeight: A4_HEIGHT_PX,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      onclone: (_clonedDoc, clonedEl) => {
+        clonedEl.style.transform = "none";
+        clonedEl.style.width = `${A4_WIDTH_PX}px`;
+        clonedEl.style.height = `${A4_HEIGHT_PX}px`;
+        clonedEl.style.overflow = "hidden";
+        clonedEl.style.position = "relative";
+      },
     });
 
     restoreGradientTextElements(gradientFixes);
@@ -94,6 +124,15 @@ async function captureEditMode(
     backgroundColor: "#ffffff",
     width: A4_WIDTH_PX,
     logging: false,
+    windowWidth: A4_WIDTH_PX,
+    scrollX: 0,
+    scrollY: 0,
+    x: 0,
+    y: 0,
+    onclone: (_clonedDoc, clonedEl) => {
+      clonedEl.style.transform = "none";
+      clonedEl.style.width = `${A4_WIDTH_PX}px`;
+    },
   });
 
   restoreGradientTextElements(gradientFixes);
