@@ -14,8 +14,6 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: Error | null }>;
-  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -125,20 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabaseRef.current.auth.signOut();
   }, []);
 
-  const resetPassword = useCallback(async (email: string) => {
-    const { error } = await supabaseRef.current.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    return { error };
-  }, []);
-
-  const updatePassword = useCallback(async (newPassword: string) => {
-    const { error } = await supabaseRef.current.auth.updateUser({
-      password: newPassword,
-    });
-    return { error };
-  }, []);
-
   const value = {
     user,
     session,
@@ -149,8 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signInWithGoogle,
     signOut,
-    resetPassword,
-    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

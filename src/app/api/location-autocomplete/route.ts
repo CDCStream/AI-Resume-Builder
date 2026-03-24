@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isFreeMode } from "@/lib/app-config";
+import { fuzzySearchCities } from "@/lib/static-cities";
 
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 const ACTOR_ID = "scrapier~google-search-autocomplete-scraper";
 
 export async function POST(request: NextRequest) {
   try {
-    if (!APIFY_API_TOKEN) {
-      return NextResponse.json(
-        { error: "Apify API token not configured" },
-        { status: 500 }
-      );
-    }
-
     const body = await request.json();
     const { query } = body;
 
@@ -19,7 +14,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ suggestions: [] });
     }
 
-    // Add "jobs in" prefix to get location-relevant suggestions
+    // Free mode: use static city list with fuzzy search
+    if (isFreeMode) {
+      const suggestions = fuzzySearchCities(query);
+      return NextResponse.json({ suggestions });
+    }
+
+    // Premium mode: use Apify Google autocomplete
+    if (!APIFY_API_TOKEN) {
+      return NextResponse.json(
+        { error: "Apify API token not configured" },
+        { status: 500 }
+      );
+    }
+
     const searchQuery = `jobs in ${query}`;
 
     const input = {
@@ -53,22 +61,18 @@ export async function POST(request: NextRequest) {
 
     const results = await runResponse.json();
     
-    // Extract location names from suggestions
     const suggestions: string[] = [];
     
     if (Array.isArray(results) && results.length > 0) {
       const result = results[0];
       if (result.suggestions && Array.isArray(result.suggestions)) {
         for (const suggestion of result.suggestions) {
-          // Remove "jobs in " prefix and clean up the suggestion
           let location = suggestion.replace(/^jobs\s+in\s+/i, "").trim();
           
-          // Only add if it looks like a location (not a job title or company)
           if (location && !location.toLowerCase().includes("job") && 
               !location.toLowerCase().includes("career") &&
               !location.toLowerCase().includes("hiring") &&
               !location.toLowerCase().includes("work from home")) {
-            // Capitalize properly
             location = location
               .split(" ")
               .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())

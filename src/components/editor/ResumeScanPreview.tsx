@@ -26,14 +26,11 @@ import {
   LayoutList,
   Scan,
   Lightbulb,
-  Lock,
-  Crown,
   Briefcase,
   Link,
   X,
   TrendingUp,
 } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
 import HeatmapScanModal from "./HeatmapScanModal";
 import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
 
@@ -80,7 +77,6 @@ export default function ResumeScanPreview({
   onHighlightZone,
   selectedTemplate,
 }: ResumeScanPreviewProps) {
-  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ScanAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -296,30 +292,6 @@ export default function ResumeScanPreview({
   };
 
   if (!isExpanded) {
-    if (trialExpired && !subLoading) {
-      return (
-        <button
-          onClick={() => window.location.href = "/pricing"}
-          className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150 rounded-xl border border-gray-200 transition-all duration-200 group cursor-pointer"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-300 rounded-lg text-gray-500">
-              <Eye className="w-5 h-5" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-semibold text-gray-500 flex items-center gap-2">
-                6-Second Resume Scan Preview
-                <span className="inline-flex items-center text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                  <Crown className="w-3 h-3 mr-1" /> Pro
-                </span>
-              </h3>
-              <p className="text-xs text-gray-400">Trial expired - Upgrade to Pro to continue</p>
-            </div>
-          </div>
-          <ChevronDown className="w-5 h-5 text-gray-300" />
-        </button>
-      );
-    }
     return (
       <button
         onClick={onToggleExpand}

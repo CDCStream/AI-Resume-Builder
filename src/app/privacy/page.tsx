@@ -40,8 +40,8 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc list-inside text-white/70 space-y-2">
               <li><strong className="text-white">Account Information:</strong> Name, email address, and password when you create an account</li>
               <li><strong className="text-white">Resume Data:</strong> Professional information you enter including work experience, education, skills, and contact details</li>
-              <li><strong className="text-white">Payment Information:</strong> Billing details processed securely through our payment provider (Polar)</li>
-              <li><strong className="text-white">Usage Data:</strong> Information about how you interact with our service</li>
+              <li><strong className="text-white">Usage Data:</strong> Information about how you interact with our service, including features used and session duration</li>
+
               <li><strong className="text-white">LinkedIn Data:</strong> Professional information imported from LinkedIn when you use our import feature</li>
             </ul>
           </section>
@@ -53,7 +53,7 @@ export default function PrivacyPolicyPage() {
               <li>Provide, maintain, and improve our resume builder service</li>
               <li>Generate AI-powered resume suggestions and cover letters</li>
               <li>Calculate ATS compatibility scores</li>
-              <li>Process your transactions and send related information</li>
+              <li>Provide account management and user authentication</li>
               <li>Send you technical notices, updates, and support messages</li>
               <li>Respond to your comments and questions</li>
               <li>Analyze usage patterns to improve user experience</li>
@@ -71,7 +71,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-semibold text-white mb-4">5. Data Sharing and Disclosure</h2>
             <p className="text-white/70 leading-relaxed mb-4">We do not sell your personal information. We may share your information with:</p>
             <ul className="list-disc list-inside text-white/70 space-y-2">
-              <li><strong className="text-white">Service Providers:</strong> Third-party vendors who assist in providing our services (hosting, payment processing, analytics)</li>
+              <li><strong className="text-white">Service Providers:</strong> Third-party vendors who assist in providing our services (hosting, analytics)</li>
               <li><strong className="text-white">Legal Requirements:</strong> When required by law or to protect our rights</li>
               <li><strong className="text-white">Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
             </ul>

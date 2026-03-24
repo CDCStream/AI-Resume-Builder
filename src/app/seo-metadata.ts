@@ -6,7 +6,7 @@ import { Metadata } from "next";
 
 export const homeMetadata: Metadata = {
   title: "Humanized AI Resume & Cover Letter Builder + Interview Prep | LinImpact.ai",
-  description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, 7-day Pro trial for $1.",
+  description: "Not generic AI. Create ATS-optimized resumes, tailored cover letters & prep for interviews with humanized AI that sounds like a professional writer. 14+ templates, completely free.",
   keywords: [
     "resume builder",
     "ai resume builder",
@@ -57,7 +57,7 @@ export const homeMetadata: Metadata = {
     url: "https://www.linimpact.ai",
     siteName: "LinImpact.ai",
     title: "Humanized AI Resume, Cover Letter & Interview Prep | LinImpact.ai",
-    description: "Not generic AI. Build resumes, cover letters & prep for interviews with humanized AI that reads like a professional writer. 14+ templates, ATS optimization & more.",
+    description: "Not generic AI. Build resumes, cover letters & prep for interviews with humanized AI that reads like a professional writer. 14+ templates, ATS optimization & more. Completely free.",
     images: [
       {
         url: "https://www.linimpact.ai/og-image.png",
@@ -79,29 +79,6 @@ export const homeMetadata: Metadata = {
   },
   verification: {
     google: "your-google-verification-code",
-  },
-};
-
-export const pricingMetadata: Metadata = {
-  title: "Pricing | AI Resume & Cover Letter Builder Plans | LinImpact.ai",
-  description: "Choose the perfect plan for your job search. 7-day Pro trial for $1, Pro monthly, quarterly & semi-annual options. ATS-optimized resumes, tailored cover letters & interview prep included.",
-  keywords: [
-    "resume builder pricing",
-    "ai resume builder cost",
-    "best resume builder",
-    "professional resume service",
-    "resume writing service",
-    "cv builder pricing",
-    "cheap resume builder",
-    "resume builder subscription"
-  ],
-  openGraph: {
-    title: "Resume & Cover Letter Builder Pricing | LinImpact.ai",
-    description: "Affordable AI resume & cover letter builder plans. Professional resumes, tailored cover letters & more. Upgrade anytime.",
-    url: "https://www.linimpact.ai/pricing",
-  },
-  alternates: {
-    canonical: "https://www.linimpact.ai/pricing",
   },
 };
 
@@ -202,7 +179,7 @@ export const faqSchema = {
       "name": "Is it worth paying for an AI resume builder?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Most free AI resume builders produce generic, template-based content that recruiters can spot instantly. A quality AI resume builder like LinImpact.ai uses humanized AI that narrates your unique professional story. The result reads like a professional writer's work. Features like ATS scoring, recruiter heatmap simulation, and AI interview prep provide a measurable advantage. LinImpact.ai offers a 7-day Pro trial for just $1."
+        "text": "Most AI resume builders produce generic, template-based content that recruiters can spot instantly. LinImpact.ai uses humanized AI that narrates your unique professional story. The result reads like a professional writer's work. Features like ATS scoring, recruiter heatmap simulation, and AI interview prep provide a measurable advantage — and it's completely free."
       }
     },
     {
@@ -210,7 +187,7 @@ export const faqSchema = {
       "name": "What is the best AI resume builder for competitive job markets?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "In competitive markets, your resume must pass ATS filters and grab attention in 6 seconds. LinImpact.ai offers humanized AI content that avoids the generic AI red flag, ATS optimization with real-time scoring, AI mock interviews with STAR method coaching, and job-matched cover letters. Start your 7-day Pro trial for just $1."
+        "text": "In competitive markets, your resume must pass ATS filters and grab attention in 6 seconds. LinImpact.ai offers humanized AI content that avoids the generic AI red flag, ATS optimization with real-time scoring, AI mock interviews with STAR method coaching, and job-matched cover letters — all completely free."
       }
     }
   ]
@@ -245,9 +222,9 @@ export const softwareSchema = {
   "operatingSystem": "Web Browser",
   "offers": {
     "@type": "Offer",
-    "price": "1",
+    "price": "0",
     "priceCurrency": "USD",
-    "description": "7-day Pro trial with all features"
+    "description": "Free with all features"
   },
   "aggregateRating": {
     "@type": "AggregateRating",

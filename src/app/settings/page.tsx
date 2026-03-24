@@ -12,22 +12,17 @@ import {
   ArrowLeft, 
   User, 
   Mail, 
-  Lock, 
   Save, 
   Loader2,
-  CreditCard,
-  Crown,
   CheckCircle,
   Camera,
   Trash2
 } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
 import { updateProfile, uploadAvatar } from "@/lib/supabase/database";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user, avatarUrl, refreshProfile } = useAuth();
-  const { isPro, isTrialing, trialDaysRemaining, plan, subscription } = useSubscription();
   
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
   const [saving, setSaving] = useState(false);
@@ -222,134 +217,27 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Subscription / Billing */}
+          {/* Plan Info */}
           <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden !py-0 !gap-0">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100 pt-5 pb-5">
               <CardTitle className="flex items-center gap-2 text-blue-900">
-                <CreditCard className="w-5 h-5" />
-                Subscription & Billing
+                <CheckCircle className="w-5 h-5" />
+                Your Plan
               </CardTitle>
-              <CardDescription>Manage your subscription plan</CardDescription>
+              <CardDescription>All features included — no credit card required</CardDescription>
             </CardHeader>
             <CardContent className="py-6 bg-gradient-to-br from-blue-50/50 via-white/80 to-cyan-50/50">
-              {/* Current Plan Status */}
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Current Plan</p>
-                    <div className="flex items-center gap-2">
-                      {subscription?.status === "canceled" ? (
-                        <>
-                          <Crown className="w-5 h-5 text-gray-400" />
-                          <span className="text-xl font-bold text-gray-900">
-                            {plan === "PRO_MONTHLY" && "Pro Monthly"}
-                            {plan === "PRO_QUARTERLY" && "Pro Quarterly"}
-                            {plan === "PRO_SEMI_ANNUAL" && "Pro Semi-Annual"}
-                            {plan === "FREE" && "Free Plan"}
-                          </span>
-                        </>
-                      ) : isPro ? (
-                        <>
-                          <Crown className="w-5 h-5 text-amber-500" />
-                          <span className="text-xl font-bold text-gray-900">
-                            {plan === "PRO_MONTHLY" && "Pro Monthly"}
-                            {plan === "PRO_QUARTERLY" && "Pro Quarterly"}
-                            {plan === "PRO_SEMI_ANNUAL" && "Pro Semi-Annual"}
-                            {plan === "TRIAL" && isTrialing && "Pro Trial"}
-                            {plan === "FREE" && isTrialing && "Free Trial"}
-                          </span>
-                        </>
-                      ) : isTrialing ? (
-                        <>
-                          <Crown className="w-5 h-5 text-amber-500" />
-                          <span className="text-xl font-bold text-gray-900">Pro Trial</span>
-                          <span className="text-sm bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                            {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} left
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xl font-bold text-gray-900">Free Plan</span>
-                      )}
-                    </div>
-                  </div>
-                  {subscription?.status === "canceled" ? (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-700">
-                      Canceled
-                    </span>
-                  ) : isPro && !isTrialing ? (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Active
-                    </span>
-                  ) : null}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Free Forever
+                  </span>
                 </div>
-
-                {subscription?.status === "canceled" ? (
-                  <p className="text-sm text-gray-500">
-                    Your subscription has been canceled.{" "}
-                    {subscription.current_period_end && (
-                      <>Access continues until {new Date(subscription.current_period_end).toLocaleDateString()}.</>
-                    )}
-                  </p>
-                ) : isPro && !isTrialing ? (
-                  <p className="text-sm text-gray-500">
-                    Your subscription will automatically renew.
-                  </p>
-                ) : null}
+                <p className="text-sm text-gray-600">
+                  You have full access to all features including AI-powered resume building, cover letters, job search, and interview prep. Totally free, no credit card required.
+                </p>
               </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                {subscription?.status === "canceled" ? (
-                  <Button 
-                    onClick={() => router.push("/pricing")}
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                  >
-                    <Crown className="w-4 h-4 mr-2" />
-                    Resubscribe
-                  </Button>
-                ) : !isPro || isTrialing ? (
-                  <Button 
-                    onClick={() => router.push("/pricing")}
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                  >
-                    <Crown className="w-4 h-4 mr-2" />
-                    Upgrade to Pro
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={() => router.push("/billing")}
-                    variant="outline"
-                    className="border-blue-200 hover:bg-blue-50"
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Manage Billing
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Password Change */}
-          <Card className="border-blue-100 shadow-lg shadow-blue-500/5 overflow-hidden !py-0 !gap-0">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100 pt-5 pb-5">
-              <CardTitle className="flex items-center gap-2 text-blue-900">
-                <Lock className="w-5 h-5" />
-                Security
-              </CardTitle>
-              <CardDescription>Manage your password and security settings</CardDescription>
-            </CardHeader>
-            <CardContent className="py-6 bg-gradient-to-br from-blue-50/50 via-white/80 to-cyan-50/50">
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  // TODO: Implement password reset
-                  alert("Password reset email will be sent to your email address.");
-                }}
-              >
-                <Lock className="w-4 h-4 mr-2" />
-                Change Password
-              </Button>
             </CardContent>
           </Card>
         </div>

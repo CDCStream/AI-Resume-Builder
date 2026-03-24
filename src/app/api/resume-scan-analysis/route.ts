@@ -1,39 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 2000
-): Promise<T> {
-  let lastError: Error | unknown;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      const isRetryable = error instanceof Error && 
-        ('status' in error && ((error as { status: number }).status === 529 || (error as { status: number }).status === 503 || (error as { status: number }).status === 500));
-      
-      if (!isRetryable || attempt === maxRetries) {
-        throw error;
-      }
-      
-      const delay = baseDelay * Math.pow(2, attempt - 1);
-      console.log(`API overloaded (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
-      await sleep(delay);
-    }
-  }
-  
-  throw lastError;
-}
+import { generateText, cleanJsonResponse } from "@/lib/ai-provider";
 
 interface ResumeData {
   basics?: {
@@ -283,62 +249,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json(
-        { error: "API key not configured" },
-        { status: 500 }
-      );
-    }
-
     const resumeText = formatResumeForAnalysis(resume);
     const prompt = getScanAnalysisPrompt(resumeText, resume, jobDescription);
 
-    console.log("Calling Claude API for scan analysis...");
-    let message;
-    try {
-      message = await withRetry(() => anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      }));
-    } catch (err) {
-      const st = err instanceof Error && 'status' in err ? (err as { status: number }).status : 0;
-      if (st === 529 || st === 503) {
-        console.log("Primary model overloaded, trying claude-sonnet-4-5-20250514...");
-        message = await withRetry(() => anthropic.messages.create({
-          model: "claude-sonnet-4-5-20250514",
-          max_tokens: 4096,
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ]
-        }));
-      } else throw err;
-    }
-    console.log("Claude API response received, stop_reason:", message.stop_reason);
+    console.log("Calling AI for scan analysis...");
+    const { text: responseText } = await generateText({ user: prompt, maxTokens: 4096 });
+    console.log("AI response received");
 
-    const responseText = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map(block => block.text)
-      .join("");
-
-    let cleanedResponse = responseText.trim();
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.slice(7);
-    } else if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(3);
-    }
-    if (cleanedResponse.endsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(0, -3);
-    }
-    cleanedResponse = cleanedResponse.trim();
+    const cleanedResponse = cleanJsonResponse(responseText);
 
     let result: ScanAnalysisResponse;
     try {

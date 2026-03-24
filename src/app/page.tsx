@@ -97,7 +97,7 @@ const faqs = [
   },
   {
     question: "What is the best AI resume builder for competitive job markets?",
-    answer: "In competitive markets (tech, finance, healthcare), your resume needs to do more than look good — it must pass ATS filters and grab a recruiter's attention in 6 seconds. LinImpact.ai is built for this: 1) Humanized AI content that avoids the 'generic AI' red flag recruiters now watch for, 2) ATS optimization with real-time scoring, 3) AI-powered mock interviews with STAR method coaching, 4) Cover letter generator matched to specific job postings. Start your 7-day Pro trial for just $1 — try every feature before you decide."
+    answer: "In competitive markets (tech, finance, healthcare), your resume needs to do more than look good — it must pass ATS filters and grab a recruiter's attention in 6 seconds. LinImpact.ai is built for this: 1) Humanized AI content that avoids the 'generic AI' red flag recruiters now watch for, 2) ATS optimization with real-time scoring, 3) AI-powered mock interviews with STAR method coaching, 4) Cover letter generator matched to specific job postings. Best of all — it's completely free with no credit card required."
   }
 ];
 
@@ -186,7 +186,7 @@ export default function LandingPage() {
                 How It Works
               </a>
               <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                Pricing
+                Free Features
               </a>
               <a href="#faq" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                 FAQ
@@ -225,7 +225,7 @@ export default function LandingPage() {
                   How It Works
                 </a>
                 <a href="#pricing" className="px-3 py-2.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                  Pricing
+                  Free Features
                 </a>
                 <a href="#faq" className="px-3 py-2.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
                   FAQ
@@ -347,7 +347,7 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 justify-center lg:justify-start text-xs sm:text-sm text-gray-500">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
-                  <span>7-day Pro trial for $1</span>
+                  <span>100% Free — No credit card required</span>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
@@ -906,215 +906,62 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Free Section */}
       <section id="pricing" className="py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-700 text-sm font-medium mb-4">
               <Zap className="w-4 h-4" />
-              Simple Pricing
+              100% Free
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Choose your plan
+              Totally Free. No Credit Card Required.
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Simple pricing, powerful features. All plans include our core AI tools.
+              Every feature is completely free. Build unlimited resumes, cover letters, and more — no hidden costs, no paywalls.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto items-stretch">
-            {/* $1 Trial */}
-            <div className="relative bg-white rounded-2xl border-2 border-blue-300 p-6 hover:shadow-lg transition-shadow">
-              <div className="mb-6">
-                <span className="inline-block px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full mb-4">
-                  7-DAY PRO TRIAL
-                </span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-gray-900">$1</span>
-                  <span className="text-gray-500 text-sm">one-time</span>
+          <div className="max-w-lg mx-auto">
+            <div className="relative bg-white rounded-2xl border-2 border-green-400 p-8 shadow-xl shadow-green-500/10">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
+                FREE FOREVER
+              </div>
+              <div className="text-center mb-8">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-6xl font-bold text-gray-900">$0</span>
+                  <span className="text-gray-500 text-lg">/forever</span>
                 </div>
-                <p className="text-gray-500 mt-2">Full Pro access for 7 days</p>
+                <p className="text-green-600 font-medium mt-2">No credit card required</p>
               </div>
 
-              <ul className="space-y-2 mb-8">
+              <ul className="space-y-3 mb-8">
                 {[
-                  "Unlimited resumes & covers",
-                  "All 14+ premium templates",
-                  "No watermark on PDFs",
-                  "AI-powered optimization",
-                  "ATS score analysis",
-                  "LinkedIn import",
-                  "Interview prep AI",
-                  "6-second resume scan"
+                  "Unlimited resumes & cover letters",
+                  "All 14+ professional templates",
+                  "AI-powered content optimization",
+                  "ATS score analysis & optimization",
+                  "6-second recruiter resume scan",
+                  "AI interview preparation",
+                  "Job search across platforms",
+                  "PDF export — no watermark",
+                  "Portfolio & trust page",
                 ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
-                    <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                  <li key={i} className="flex items-start gap-3 text-gray-700">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                     <span>{feature}</span>
-              </li>
+                  </li>
                 ))}
               </ul>
 
               <Button
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                className="w-full h-12 text-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg shadow-green-500/25"
                 onClick={() => router.push("/register")}
               >
-                Start $1 Trial
+                Get Started — It&apos;s Free
               </Button>
+              <p className="text-center text-sm text-gray-400 mt-3">No credit card. No trial. Free forever.</p>
             </div>
-
-            {/* Pro Monthly */}
-            <div className="relative bg-white rounded-2xl border-2 border-gray-200 p-6 hover:shadow-lg transition-shadow flex flex-col">
-              <div className="mb-6 min-h-[140px]">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🥉</span>
-                  <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pro Monthly</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-gray-900">$13</span>
-                  <span className="text-xl text-gray-500">.98</span>
-                  <span className="text-gray-500">/mo</span>
-                </div>
-                <p className="text-gray-500 mt-2">Billed monthly</p>
-                <div className="mt-2 h-6"></div>
-              </div>
-
-              <ul className="space-y-2 mb-8">
-                {[
-                  "Unlimited resumes & covers",
-                  "All premium templates",
-                  "No watermark",
-                  "AI-powered suggestions",
-                  "ATS score optimization",
-                  "6-second resume scan",
-                  "LinkedIn profile import",
-                  "Job-specific cover letters",
-                  "Interview prep AI",
-                  "Priority support"
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                    <span className="leading-tight">{feature}</span>
-              </li>
-                ))}
-            </ul>
-
-              <div className="mt-auto">
-                <Button
-                  className="w-full bg-gray-900 hover:bg-gray-800"
-                  onClick={() => router.push("/register")}
-                >
-                  Get Pro Monthly
-                </Button>
-          </div>
-            </div>
-
-            {/* Pro Quarterly - Most Popular */}
-            <div className="relative bg-white rounded-2xl border-2 border-green-500 p-6 shadow-xl shadow-green-500/10 flex flex-col">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
-                MOST POPULAR
-              </div>
-              <div className="mb-6 min-h-[140px]">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🥈</span>
-                  <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Pro Quarterly</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-gray-900">$9</span>
-                  <span className="text-xl text-gray-500">.25</span>
-                  <span className="text-gray-500">/mo</span>
-                </div>
-                <p className="text-gray-500 mt-2">$27.75 billed every 3 months</p>
-                <div className="mt-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
-                  Save 34%
-                </div>
-              </div>
-
-              <ul className="space-y-2 mb-8">
-                {[
-                  "Unlimited resumes & covers",
-                  "All premium templates",
-                  "No watermark",
-                  "AI-powered suggestions",
-                  "ATS score optimization",
-                  "6-second resume scan",
-                  "LinkedIn profile import",
-                  "Job-specific cover letters",
-                  "Interview prep AI",
-                  "Priority support"
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                    <span className="leading-tight">{feature}</span>
-              </li>
-                ))}
-              </ul>
-
-              <div className="mt-auto">
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/25"
-                  onClick={() => router.push("/register")}
-                >
-                  Get Pro Quarterly
-                </Button>
-              </div>
-            </div>
-
-            {/* Pro Semi-Annual - Best Value */}
-            <div className="relative bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-400 p-6 shadow-lg flex flex-col">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">
-                BEST VALUE
-              </div>
-              <div className="mb-6 min-h-[140px]">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🥇</span>
-                  <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Pro Semi-Annual</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-gray-900">$7</span>
-                  <span className="text-xl text-gray-500">.85</span>
-                  <span className="text-gray-500">/mo</span>
-                </div>
-                <p className="text-gray-500 mt-2">$47.10 billed every 6 months</p>
-                <div className="mt-2 inline-block px-2 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded">
-                  Save 44%
-                </div>
-              </div>
-
-              <ul className="space-y-2 mb-8">
-                {[
-                  "Unlimited resumes & covers",
-                  "All premium templates",
-                  "No watermark",
-                  "AI-powered suggestions",
-                  "ATS score optimization",
-                  "6-second resume scan",
-                  "LinkedIn profile import",
-                  "Job-specific cover letters",
-                  "Interview prep AI",
-                  "Priority support"
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 min-h-[24px]">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-                    <span className="leading-tight">{feature}</span>
-              </li>
-                ))}
-            </ul>
-
-              <div className="mt-auto">
-                <Button
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25"
-                  onClick={() => router.push("/register")}
-                >
-                  Get Best Value
-                </Button>
-          </div>
-      </div>
-          </div>
-
-          <div className="text-center mt-12">
-            <p className="text-sm text-gray-500">
-              All Pro plans include a 7-day money-back guarantee. No questions asked.
-            </p>
           </div>
         </div>
       </section>
@@ -1231,7 +1078,7 @@ export default function LandingPage() {
             </Button>
           </div>
           <p className="text-sm text-blue-200 mt-6">
-            7-day Pro trial for just $1 • Start building in seconds
+            100% Free • No credit card required • Start building in seconds
           </p>
         </div>
       </section>
@@ -1267,7 +1114,7 @@ export default function LandingPage() {
                 <li><Link href="/register" className="hover:text-white transition-colors">Resume & Cover Letter Builder</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Cover Letter Generator</Link></li>
                 <li><Link href="/interview-prep" className="hover:text-white transition-colors">AI Interview Prep</Link></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="/register" className="hover:text-white transition-colors">Get Started Free</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">ATS Checker</Link></li>
               </ul>
             </div>

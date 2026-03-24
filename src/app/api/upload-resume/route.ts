@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resume } from "@/lib/types/resume";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText, generateWithVision, cleanJsonResponse } from "@/lib/ai-provider";
 import { PDFDocument, PDFName, PDFRawStream, PDFDict, PDFArray, PDFNumber } from "pdf-lib";
 import { inflateSync } from "zlib";
-
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 // Dynamic import for pdf-parse to avoid Edge runtime issues
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
@@ -239,22 +234,21 @@ async function extractAllImagesFromPDF(
   return images;
 }
 
-// Ask Claude which tile contains a human face — returns tile index or -1
-async function askClaudeWhichTileHasFace(
+// Ask AI which tile contains a human face — returns tile index or -1
+async function askAIWhichTileHasFace(
   tiles: Buffer[]
 ): Promise<number> {
   try {
-    const content: Anthropic.MessageCreateParams["messages"][0]["content"] = [];
+    const content: import("@/lib/ai-provider").VisionContentPart[] = [];
 
     for (let i = 0; i < tiles.length; i++) {
       content.push(
         { type: "text", text: `Tile ${i + 1}:` },
         {
           type: "image",
-          source: {
-            type: "base64",
-            media_type: "image/jpeg",
-            data: tiles[i].toString("base64"),
+          image: {
+            base64: tiles[i].toString("base64"),
+            mediaType: "image/jpeg",
           },
         }
       );
@@ -265,18 +259,10 @@ async function askClaudeWhichTileHasFace(
       text: "Which tile shows the MOST COMPLETE human face/portrait photo? The best tile shows the FULL head (hair, forehead, eyes, nose, mouth, chin) as the main subject. Do NOT pick a tile where the face is cut off (e.g. only chin/mouth area visible, or only forehead visible). Reply with ONLY the tile number (e.g. '1'). If none shows a complete face, reply 'none'.",
     });
 
-    const message = await anthropic.messages.create({
-      model: PRIMARY_MODEL,
-      max_tokens: 10,
-      messages: [{ role: "user", content }],
-    });
+    const { text } = await generateWithVision({ content, maxTokens: 10 });
+    const response = text.trim().toLowerCase();
 
-    const response =
-      message.content[0].type === "text"
-        ? message.content[0].text.trim().toLowerCase()
-        : "";
-
-    console.log("Claude tile detection response:", response);
+    console.log("AI tile detection response:", response);
 
     if (response === "none") return -1;
     const num = parseInt(response);
@@ -287,7 +273,7 @@ async function askClaudeWhichTileHasFace(
   }
 }
 
-// Pass 3: Ask Claude for exact profile photo bounds and crop tightly
+// Pass 3: Ask AI for exact profile photo bounds and crop tightly
 async function refineProfilePhotoCrop(
   imageBuffer: Buffer,
   imgWidth: number,
@@ -301,36 +287,25 @@ async function refineProfilePhotoCrop(
       .jpeg({ quality: 80 })
       .toBuffer();
 
-    const message = await anthropic.messages.create({
-      model: PRIMARY_MODEL,
-      max_tokens: 20,
-      system:
-        "You are a bounding box detector. Output ONLY numbers separated by spaces, no words.",
-      messages: [
+    const { text: responseText } = await generateWithVision({
+      system: "You are a bounding box detector. Output ONLY numbers separated by spaces, no words.",
+      content: [
         {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/jpeg",
-                data: previewBuf.toString("base64"),
-              },
-            },
-            {
-              type: "text",
-              text: "Profile photo bounding box as: left% top% width% height%",
-            },
-          ],
+          type: "image",
+          image: {
+            base64: previewBuf.toString("base64"),
+            mediaType: "image/jpeg",
+          },
+        },
+        {
+          type: "text",
+          text: "Profile photo bounding box as: left% top% width% height%",
         },
       ],
+      maxTokens: 20,
     });
 
-    const response =
-      message.content[0].type === "text"
-        ? message.content[0].text.trim()
-        : "";
+    const response = responseText.trim();
     console.log("Pass 3 refinement response:", response);
 
     const nums = response.match(/\d+/g);
@@ -397,7 +372,7 @@ async function findFaceByGrid(
   }
 
   console.log(`Pass 1: ${cols1}x${rows1} grid, tile ~${tileW}x${tileH}`);
-  const winner1 = await askClaudeWhichTileHasFace(tiles1);
+  const winner1 = await askAIWhichTileHasFace(tiles1);
   if (winner1 === -1) {
     console.log("Pass 1: No face found");
     return null;
@@ -435,7 +410,7 @@ async function findFaceByGrid(
   }
 
   console.log(`Pass 2: 3x3 overlapping grid, sub-tile ~${subW}x${subH}, step ${stepX}x${stepY}`);
-  const winner2 = await askClaudeWhichTileHasFace(tiles2);
+  const winner2 = await askAIWhichTileHasFace(tiles2);
 
   const finalArea = winner2 >= 0 ? coords2[winner2] : w1;
 
@@ -500,7 +475,7 @@ async function extractProfilePhotoFromPDF(
       // Verify it has a face
       const sharp = (await import("sharp")).default;
       const buf = Buffer.from(standalone.rawBase64, "base64");
-      const result = await askClaudeWhichTileHasFace([
+      const result = await askAIWhichTileHasFace([
         await sharp(buf)
           .resize(400, 400, { fit: "inside" })
           .jpeg({ quality: 80 })
@@ -541,44 +516,11 @@ async function extractProfilePhotoFromPDF(
   }
 }
 
-// Helper function to wait
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Retry wrapper for API calls
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 5,
-  baseDelay: number = 3000
-): Promise<T> {
-  let lastError: Error | unknown;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      const status = error instanceof Error && 'status' in error 
-        ? (error as { status: number }).status 
-        : 0;
-      const isRetryable = status === 529 || status === 503 || status === 500 || status === 429;
-      
-      if (!isRetryable || attempt === maxRetries) {
-        throw error;
-      }
-      
-      const jitter = Math.random() * 1000;
-      const delay = baseDelay * Math.pow(2, attempt - 1) + jitter;
-      console.log(`API error ${status} (attempt ${attempt}/${maxRetries}), retrying in ${Math.round(delay)}ms...`);
-      await sleep(delay);
-    }
-  }
-  
-  throw lastError;
-}
-
-const PRIMARY_MODEL = "claude-sonnet-4-6";
-const FALLBACK_MODEL = "claude-sonnet-4-20250514";
-const FINAL_FALLBACK_MODEL = "claude-sonnet-4-5-20250514";
+// Model constants kept for signature compatibility (actual model selection is in ai-provider)
+const PRIMARY_MODEL = "default";
+const FALLBACK_MODEL = "fallback";
+const FINAL_FALLBACK_MODEL = "final-fallback";
 
 const RESUME_PARSE_PROMPT = `You are an expert CV/Resume parser. Extract ALL information from this resume into structured JSON.
 
@@ -684,41 +626,27 @@ function cleanAIResponse(responseText: string): Resume {
 
 async function parseResumeFromPDFDocument(
   pdfBuffer: Buffer,
-  model: string = PRIMARY_MODEL
+  _model?: string
 ): Promise<Resume> {
-  console.log(`=== Starting PDF Document Parse (model: ${model}) ===`);
+  console.log("=== Starting PDF Document Parse ===");
   const base64PDF = pdfBuffer.toString("base64");
 
-  const message = await withRetry(() =>
-    anthropic.messages.create({
-      model,
-      max_tokens: 8192,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: base64PDF,
-              },
-            },
-            {
-              type: "text",
-              text: `${RESUME_PARSE_PROMPT}\n\nParse the resume from the PDF above and return the complete JSON object:`,
-            },
-          ],
+  const { text: responseText } = await generateWithVision({
+    content: [
+      {
+        type: "document",
+        document: {
+          base64: base64PDF,
+          mediaType: "application/pdf",
         },
-      ],
-    })
-  );
-
-  const responseText = message.content
-    .filter((block): block is Anthropic.TextBlock => block.type === "text")
-    .map((block) => block.text)
-    .join("");
+      },
+      {
+        type: "text",
+        text: `${RESUME_PARSE_PROMPT}\n\nParse the resume from the PDF above and return the complete JSON object:`,
+      },
+    ],
+    maxTokens: 8192,
+  });
 
   console.log("PDF Document parse response length:", responseText.length);
   const parsedResume = cleanAIResponse(responseText);
@@ -727,34 +655,19 @@ async function parseResumeFromPDFDocument(
   return parsedResume;
 }
 
-// Parse resume using Claude AI (text-based)
-async function parseResumeWithAI(text: string, model: string = PRIMARY_MODEL): Promise<Resume> {
-  console.log(`=== Starting AI Parse (model: ${model}) ===`);
+// Parse resume using AI (text-based)
+async function parseResumeWithAI(text: string, _model?: string): Promise<Resume> {
+  console.log("=== Starting AI Parse ===");
   console.log("Text length:", text.length);
   console.log("First 500 chars:", text.substring(0, 500));
 
   try {
-    const message = await withRetry(() => anthropic.messages.create({
-      model,
-      max_tokens: 8192,
-      messages: [
-        {
-          role: "user",
-          content: `${RESUME_PARSE_PROMPT}\n\nRESUME TEXT:\n"""\n${text}\n"""\n\nParse the above resume and return the complete JSON object:`
-        }
-      ]
-    }));
+    const { text: responseText } = await generateText({
+      user: `${RESUME_PARSE_PROMPT}\n\nRESUME TEXT:\n"""\n${text}\n"""\n\nParse the above resume and return the complete JSON object:`,
+      maxTokens: 8192,
+    });
 
-    console.log("Claude API response received");
-    console.log("Stop reason:", message.stop_reason);
-
-    const responseText = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map(block => block.text)
-      .join("");
-
-    console.log("Response length:", responseText.length);
-    console.log("Response preview:", responseText.substring(0, 500));
+    console.log("AI response received, length:", responseText.length);
 
     const parsedResume = cleanAIResponse(responseText);
     
@@ -767,27 +680,18 @@ async function parseResumeWithAI(text: string, model: string = PRIMARY_MODEL): P
     return parsedResume;
   } catch (error) {
     console.error("=== AI Parse Error ===");
-    console.error("Error type:", error instanceof Error ? error.constructor.name : typeof error);
-    console.error("Error message:", error instanceof Error ? error.message : String(error));
-    if (error instanceof Error && 'status' in error) {
-      console.error("Status:", (error as { status: number }).status);
-    }
+    console.error("Error:", error instanceof Error ? error.message : String(error));
     throw error;
   }
 }
 
 // Simpler AI parsing prompt for retry
-async function parseResumeWithAISimple(text: string, model: string = PRIMARY_MODEL): Promise<Resume> {
-  console.log(`=== Starting Simple AI Parse (model: ${model}) ===`);
+async function parseResumeWithAISimple(text: string, _model?: string): Promise<Resume> {
+  console.log("=== Starting Simple AI Parse ===");
 
   try {
-    const message = await withRetry(() => anthropic.messages.create({
-      model,
-      max_tokens: 8192,
-      messages: [
-        {
-          role: "user",
-          content: `Extract information from this CV/Resume text into JSON.
+    const { text: responseText } = await generateText({
+      user: `Extract information from this CV/Resume text into JSON.
 
 Return a JSON object with these fields (use empty string "" or empty array [] if not found):
 
@@ -809,24 +713,13 @@ For studyType use: "High School", "Associate", "Bachelor's Degree", "Master", or
 CV TEXT:
 ${text}
 
-JSON (no markdown, only the object):`
-        }
-      ]
-    }));
-
-    const responseText = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map(block => block.text)
-      .join("");
+JSON (no markdown, only the object):`,
+      maxTokens: 8192,
+    });
 
     console.log("Simple parse response length:", responseText.length);
 
-    let cleanedResponse = responseText.trim();
-    if (cleanedResponse.startsWith("```json")) cleanedResponse = cleanedResponse.slice(7);
-    else if (cleanedResponse.startsWith("```")) cleanedResponse = cleanedResponse.slice(3);
-    if (cleanedResponse.endsWith("```")) cleanedResponse = cleanedResponse.slice(0, -3);
-    cleanedResponse = cleanedResponse.trim();
-
+    const cleanedResponse = cleanJsonResponse(responseText);
     const parsedResume = JSON.parse(cleanedResponse) as Resume;
     
     console.log("Simple parse - Name:", parsedResume.basics?.name);

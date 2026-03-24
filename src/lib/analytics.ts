@@ -138,33 +138,6 @@ export const trackLinkedInImport = (success: boolean) => {
   trackEvent("LinkedIn Import", { success });
 };
 
-export const trackPricingPageViewed = (source?: string) => {
-  trackEvent("Pricing Page Viewed", { source });
-};
-
-export const trackPlanSelected = (planId: string, planName: string, price: number) => {
-  trackEvent("Plan Selected", { plan_id: planId, plan_name: planName, price });
-};
-
-export const trackCheckoutStarted = (planId: string, planName: string, price: number) => {
-  trackEvent("Checkout Started", { plan_id: planId, plan_name: planName, price });
-};
-
-export const trackSubscriptionActivated = (plan: string, price: number, billingPeriod: string) => {
-  setUserProperties({
-    plan,
-    subscription_price: price,
-    billing_period: billingPeriod,
-    subscription_date: new Date().toISOString(),
-  });
-  trackEvent("Subscription Activated", { plan, price, billing_period: billingPeriod });
-};
-
-export const trackSubscriptionCancelled = (plan: string, reason?: string) => {
-  setUserProperties({ plan: "cancelled", cancellation_date: new Date().toISOString() });
-  trackEvent("Subscription Cancelled", { plan, reason });
-};
-
 export const trackBlogPostViewed = (slug: string, title: string, author?: string) => {
   trackEvent("Blog Post Viewed", { slug, title, author });
 };

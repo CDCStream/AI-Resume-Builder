@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import ATSOptimizeModal from "./ATSOptimizeModal";
-import { Lock, Crown } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useSubscription } from "@/hooks/useSubscription";
 
 interface ATSOptimizeButtonsProps {
   field: "professionalTitle" | "professionalSummary" | "workExperience" | "education" | "project" | "skill" | "volunteer" | "award" | "certificate" | "skillsSuggestion";
@@ -37,8 +33,6 @@ export default function ATSOptimizeButtons({
   className = "",
   showOnlyTailored = false,
 }: ATSOptimizeButtonsProps) {
-  const router = useRouter();
-  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"quick" | "tailored">("quick");
 
@@ -51,40 +45,6 @@ export default function ATSOptimizeButtons({
     setModalType("tailored");
     setModalOpen(true);
   };
-
-  // If trial expired, show locked buttons
-  if (trialExpired && !subLoading) {
-    return (
-      <div className={`flex flex-col items-end gap-1 shrink-0 ${className}`}>
-        {!showOnlyTailored && (
-          <button
-            type="button"
-            onClick={() => router.push("/pricing")}
-            className="inline-flex items-center text-[10px] h-5 px-1.5 rounded border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed hover:bg-gray-100 transition-colors"
-            title="Upgrade to Pro for AI optimization"
-          >
-            <Lock className="w-3 h-3 mr-0.5" />
-            Quick
-            <Crown className="w-3 h-3 ml-0.5 text-amber-400" />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => router.push("/pricing")}
-          className={`inline-flex items-center rounded border transition-colors ${
-            showOnlyTailored
-              ? "text-sm h-8 px-3 font-medium border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed hover:bg-gray-100 shadow-sm"
-              : "text-[10px] h-5 px-1.5 border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed hover:bg-gray-100"
-          }`}
-          title="Upgrade to Pro for AI optimization"
-        >
-          <Lock className={showOnlyTailored ? "w-4 h-4 mr-1" : "w-3 h-3 mr-0.5"} />
-          {showOnlyTailored ? "AI Skills" : "Tailored"}
-          <Crown className={showOnlyTailored ? "w-4 h-4 ml-1 text-amber-400" : "w-3 h-3 ml-0.5 text-amber-400"} />
-        </button>
-      </div>
-    );
-  }
 
   return (
     <>

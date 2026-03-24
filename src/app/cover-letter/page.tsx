@@ -25,9 +25,8 @@ import {
 } from "@/components/ui/dialog";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
-import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Crown, Check, MessageSquare } from "lucide-react";
+import { ArrowLeft, Sparkles, FileText, Download, Save, Loader2, AlertCircle, Check, MessageSquare } from "lucide-react";
 import { ProfessionalCoverLetter } from "@/components/templates/cover-letter";
-import { useSubscription } from "@/hooks/useSubscription";
 import { hasUserGivenFeedback } from "@/lib/supabase/database";
 import FeedbackModal from "@/components/ui/FeedbackModal";
 import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
@@ -71,7 +70,6 @@ function CoverLetterPageContent() {
   const searchParams = useSearchParams();
   const documentId = searchParams.get("id");
 
-  const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
   const { user } = useAuth();
   const { resumes, loading: resumesLoading } = useResumes();
   const {
@@ -459,52 +457,13 @@ function CoverLetterPageContent() {
   }, [coverLetter.senderName, isExporting]);
 
   // Loading state
-  if (resumesLoading || coverLettersLoading || subscriptionLoading) {
+  if (resumesLoading || coverLettersLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           <span className="text-gray-600">Loading...</span>
         </div>
-      </div>
-    );
-  }
-
-  // Trial expired gate
-  if (trialExpired && !subscriptionLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-amber-200 shadow-lg shadow-amber-500/10">
-          <CardHeader className="text-center bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
-              <Crown className="h-8 w-8 text-amber-500" />
-            </div>
-            <CardTitle className="text-gray-900">
-              Your Trial Has Ended
-            </CardTitle>
-            <CardDescription>
-              Upgrade to Pro to continue using Cover Letter Generator
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="text-gray-600 text-center mb-6">
-              Your trial has expired. Upgrade to Pro to continue creating personalized, AI-powered cover letters.
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button 
-                onClick={() => router.push("/pricing")} 
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                Upgrade to Pro
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/dashboard")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }

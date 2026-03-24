@@ -33,7 +33,6 @@ import {
   ExternalLink,
   Lightbulb
 } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
 import { LinkedInUrlHowTo } from "@/components/ui/LinkedInUrlHowTo";
 
 interface WeakArea {
@@ -192,7 +191,6 @@ export default function ATSScorePanel({
   documentId,
   documentUpdatedAt,
 }: ATSScorePanelProps) {
-  const { isPro, trialExpired, isLoading: subLoading } = useSubscription();
   const [jobDescription, setJobDescription] = useState(globalSavedJobDescription.jobDescription);
   const [linkedinJobId, setLinkedinJobId] = useState("");
   const [linkedinJobUrl, setLinkedinJobUrl] = useState("");
@@ -749,30 +747,6 @@ export default function ATSScorePanel({
   };
 
   if (!isExpanded) {
-    if (trialExpired && !subLoading) {
-      return (
-        <button
-          onClick={() => window.location.href = "/pricing"}
-          className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150 rounded-xl border border-gray-200 transition-all duration-200 group cursor-not-allowed"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-300 rounded-lg text-gray-500">
-              <Target className="w-5 h-5" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-semibold text-gray-500 flex items-center gap-2">
-                ATS Score Analysis for Specific LinkedIn Job
-                <span className="inline-flex items-center text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                  <span className="mr-1">👑</span> Pro
-                </span>
-              </h3>
-              <p className="text-xs text-gray-400">Trial expired - Upgrade to Pro to continue</p>
-            </div>
-          </div>
-          <ChevronDown className="w-5 h-5 text-gray-300" />
-        </button>
-      );
-    }
     return (
       <button
         onClick={onToggleExpand}

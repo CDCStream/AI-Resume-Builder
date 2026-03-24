@@ -43,7 +43,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
 function getPageName(pathname: string): string {
   if (pathname === "/") return "Landing Page";
-  if (pathname === "/pricing") return "Pricing Page";
   if (pathname === "/login") return "Login Page";
   if (pathname === "/register") return "Register Page";
   if (pathname === "/dashboard") return "Dashboard";
@@ -52,7 +51,6 @@ function getPageName(pathname: string): string {
   if (pathname.startsWith("/editor")) return "Resume Editor";
   if (pathname.startsWith("/admin")) return "Admin Panel";
   if (pathname === "/settings") return "Settings";
-  if (pathname === "/billing") return "Billing";
 
   return pathname
     .split("/")

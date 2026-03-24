@@ -49,9 +49,7 @@ import {
   Filter,
   SortAsc,
   SortDesc,
-  Crown,
 } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
 
 interface LinkedInJob {
   id: string;
@@ -126,7 +124,6 @@ function FindJobsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locationInputRef = useRef<HTMLInputElement>(null);
-  const { trialExpired, isLoading: subscriptionLoading } = useSubscription();
 
   // Resume selection - now from Supabase
   const { resumes, loading: resumesLoading, createResume } = useResumes();
@@ -889,49 +886,10 @@ function FindJobsContent() {
     return "text-red-600 bg-red-100";
   };
 
-  if (subscriptionLoading || resumesLoading) {
+  if (resumesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  // Trial expired gate
-  if (trialExpired && !subscriptionLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-amber-200 shadow-lg shadow-amber-500/10">
-          <CardHeader className="text-center bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
-              <Crown className="h-8 w-8 text-amber-500" />
-            </div>
-            <CardTitle className="text-gray-900">
-              Your Trial Has Ended
-            </CardTitle>
-            <CardDescription>
-              Upgrade to Pro to continue using Find Jobs & ATS Optimizer
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="text-gray-600 text-center mb-6">
-              Your trial has expired. Upgrade to Pro to continue searching LinkedIn jobs and getting AI-powered ATS score analysis.
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button 
-                onClick={() => router.push("/pricing")} 
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                Upgrade to Pro
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/dashboard")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }

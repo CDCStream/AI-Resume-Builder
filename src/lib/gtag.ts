@@ -34,43 +34,6 @@ export const gaLogin = (method: string = "email") => {
   event("login", { method });
 };
 
-// E-commerce / Subscription Events
-export const gaBeginCheckout = (plan: string, price: number, currency: string = "USD") => {
-  event("begin_checkout", {
-    currency,
-    value: price,
-    items: [
-      {
-        item_id: plan,
-        item_name: `LinImpact Pro ${plan}`,
-        price,
-        quantity: 1,
-      },
-    ],
-  });
-};
-
-export const gaPurchase = (
-  transactionId: string,
-  plan: string,
-  price: number,
-  currency: string = "USD"
-) => {
-  event("purchase", {
-    transaction_id: transactionId,
-    currency,
-    value: price,
-    items: [
-      {
-        item_id: plan,
-        item_name: `LinImpact Pro ${plan}`,
-        price,
-        quantity: 1,
-      },
-    ],
-  });
-};
-
 // Resume Events
 export const gaResumeCreated = (templateId?: string) => {
   event("resume_created", {
@@ -185,17 +148,6 @@ export const gadsSignUpConversion = () => {
   const label = process.env.NEXT_PUBLIC_GADS_SIGNUP_LABEL;
   if (label) gadsConversion(label);
   event("sign_up_conversion", { source: getStoredUTMParams()?.utm_source || "direct" });
-};
-
-export const gadsPurchaseConversion = (value: number) => {
-  const label = process.env.NEXT_PUBLIC_GADS_PURCHASE_LABEL;
-  if (label) gadsConversion(label, value);
-  event("purchase_conversion", {
-    value,
-    currency: "USD",
-    source: getStoredUTMParams()?.utm_source || "direct",
-    campaign: getStoredUTMParams()?.utm_campaign || "none",
-  });
 };
 
 // ============================================

@@ -243,8 +243,7 @@ export default async function SalaryPageRoute({ params }: Props) {
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/blog" className="text-sm text-gray-600 hover:text-gray-900">Blog</Link>
-              <Link href="/pricing" className="text-sm text-gray-600 hover:text-gray-900">Pricing</Link>
-              <Link href="/register" className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">Build Resume</Link>
+              <Link href="/register" className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">Get Started Free</Link>
             </div>
           </div>
         </nav>
@@ -523,7 +522,6 @@ export default async function SalaryPageRoute({ params }: Props) {
                 <h4 className="text-white font-semibold text-sm mb-3">Product</h4>
                 <ul className="space-y-2 text-sm">
                   <li><Link href="/" className="hover:text-white transition-colors">Resume Builder</Link></li>
-                  <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                   <li><Link href="/register" className="hover:text-white transition-colors">Get Started Free</Link></li>
                 </ul>
               </div>

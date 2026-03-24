@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { generateText, cleanJsonResponse } from "@/lib/ai-provider";
 
 interface PortfolioItem {
   platform?: string;
@@ -67,14 +63,9 @@ Respond in this exact JSON format:
   ]
 }`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const text = message.content[0].type === "text" ? message.content[0].text : "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const { text } = await generateText({ user: prompt, maxTokens: 1024 });
+    const cleaned = cleanJsonResponse(text);
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
     }

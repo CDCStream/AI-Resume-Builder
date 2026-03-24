@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isFreeMode } from "@/lib/app-config";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -205,6 +206,10 @@ function aggregateListings(listings: IndeedListing[]) {
 
 export async function POST(request: NextRequest) {
   try {
+    if (isFreeMode) {
+      return NextResponse.json({ error: "Salary sync is disabled in free mode" }, { status: 403 });
+    }
+
     const authHeader = request.headers.get("x-admin-secret");
     if (authHeader !== BLOG_ADMIN_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

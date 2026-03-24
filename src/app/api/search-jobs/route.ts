@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isFreeMode } from "@/lib/app-config";
 
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 const ACTOR_ID = "fantastic-jobs~advanced-linkedin-job-search-api";
+const JSEARCH_API_KEY = process.env.JSEARCH_API_KEY;
 
 interface SearchJobsRequest {
   titleSearch?: string[];
@@ -49,16 +51,76 @@ interface LinkedInJob {
   skills?: string[];
 }
 
+async function searchWithJSearch(body: SearchJobsRequest): Promise<LinkedInJob[]> {
+  const query = [
+    ...(body.titleSearch || []),
+  ].join(" ") || "developer";
+  const location = body.locationSearch?.[0] || "";
+  const datePosted = body.timeRange === "24h" ? "today" : body.timeRange === "7d" ? "week" : body.timeRange === "30d" ? "month" : "all";
+
+  const params = new URLSearchParams({
+    query: `${query}${location ? ` in ${location}` : ""}`,
+    page: "1",
+    num_pages: "1",
+    date_posted: datePosted,
+    ...(body.remote ? { remote_jobs_only: "true" } : {}),
+    ...(body.employmentType?.length ? { employment_types: body.employmentType.join(",") } : {}),
+  });
+
+  const res = await fetch(`https://jsearch.p.rapidapi.com/search?${params}`, {
+    headers: {
+      "x-rapidapi-key": JSEARCH_API_KEY || "",
+      "x-rapidapi-host": "jsearch.p.rapidapi.com",
+    },
+  });
+
+  if (!res.ok) throw new Error(`JSearch API error: ${res.status}`);
+  const data = await res.json();
+  const items = data.data || [];
+
+  return items.map((job: Record<string, unknown>) => ({
+    id: (job.job_id || String(Math.random())) as string,
+    title: (job.job_title || "Unknown Position") as string,
+    company: (job.employer_name || "Unknown Company") as string,
+    companyLogo: job.employer_logo as string | undefined,
+    location: `${job.job_city || ""}${job.job_city && job.job_country ? ", " : ""}${job.job_country || "Unknown"}`,
+    description: (job.job_description || "") as string,
+    postedAt: (job.job_posted_at_datetime_utc || new Date().toISOString()) as string,
+    applicationsCount: 0,
+    url: (job.job_apply_link || job.job_google_link || "") as string,
+    easyApply: false,
+    remote: job.job_is_remote === true,
+    workArrangement: job.job_is_remote ? "Remote" : undefined,
+    employmentType: job.job_employment_type as string | undefined,
+    seniorityLevel: undefined,
+    industry: undefined,
+    companySize: undefined,
+    salary: job.job_min_salary && job.job_max_salary
+      ? `${job.job_salary_currency || "$"}${job.job_min_salary} - ${job.job_salary_currency || "$"}${job.job_max_salary}`
+      : undefined,
+    skills: [] as string[],
+  }));
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const body: SearchJobsRequest = await request.json();
+
+    if (isFreeMode) {
+      if (!JSEARCH_API_KEY) {
+        return NextResponse.json({ error: "Job search API key not configured" }, { status: 500 });
+      }
+      console.log("Using JSearch (free mode)...");
+      const jobs = await searchWithJSearch(body);
+      return NextResponse.json({ jobs, total: jobs.length });
+    }
+
     if (!APIFY_API_TOKEN) {
       return NextResponse.json(
         { error: "Apify API token not configured" },
         { status: 500 }
       );
     }
-
-    const body: SearchJobsRequest = await request.json();
 
     const input: Record<string, unknown> = {
       timeRange: body.timeRange || "7d",

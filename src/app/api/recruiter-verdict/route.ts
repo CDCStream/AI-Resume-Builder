@@ -1,33 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 2000
-): Promise<T> {
-  let lastError: Error | unknown;
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      const isRetryable = error instanceof Error &&
-        ("status" in error && ((error as { status: number }).status === 529 || (error as { status: number }).status === 503 || (error as { status: number }).status === 500));
-      if (!isRetryable || attempt === maxRetries) throw error;
-      const delay = baseDelay * Math.pow(2, attempt - 1);
-      console.log(`API overloaded (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
-      await sleep(delay);
-    }
-  }
-  throw lastError;
-}
+import { generateText, cleanJsonResponse } from "@/lib/ai-provider";
 
 interface ResumeData {
   basics?: {
@@ -36,7 +8,7 @@ interface ResumeData {
     summary?: string;
     email?: string;
     phone?: string;
-    location?: { city?: string; country?: string };
+    location?: { city?: string; country?: string; region?: string };
   };
   work?: Array<{
     position?: string;
@@ -104,10 +76,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Resume data is required" }, { status: 400 });
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ error: "API key not configured" }, { status: 500 });
-    }
-
     const resumeText = formatResume(resume);
     const hasJob = !!jobDescription?.trim();
 
@@ -148,34 +116,9 @@ Rules:
 - icon: Use one of the allowed values exactly.
 - Keep all text concise — max 1 sentence each.`;
 
-    let message;
-    try {
-      message = await withRetry(() => anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2048,
-        messages: [{ role: "user", content: prompt }],
-      }));
-    } catch (err) {
-      const st = err instanceof Error && "status" in err ? (err as { status: number }).status : 0;
-      if (st === 529 || st === 503) {
-        message = await withRetry(() => anthropic.messages.create({
-          model: "claude-sonnet-4-5-20250514",
-          max_tokens: 2048,
-          messages: [{ role: "user", content: prompt }],
-        }));
-      } else throw err;
-    }
+    const { text: responseText } = await generateText({ user: prompt, maxTokens: 2048 });
 
-    const responseText = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map(block => block.text)
-      .join("");
-
-    let cleaned = responseText.trim();
-    if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
-    else if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
-    if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
-    cleaned = cleaned.trim();
+    let cleaned = cleanJsonResponse(responseText);
 
     let result;
     try {

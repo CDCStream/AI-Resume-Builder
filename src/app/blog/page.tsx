@@ -83,9 +83,8 @@ export default async function BlogPage() {
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Home</Link>
-              <Link href="/pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Pricing</Link>
               <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                <Link href="/register">Get Started</Link>
+                <Link href="/register">Get Started Free</Link>
               </Button>
             </div>
           </div>
@@ -196,7 +195,6 @@ export default async function BlogPage() {
               <h4 className="text-white font-semibold text-sm mb-3">Product</h4>
               <ul className="space-y-2 text-sm">
                 <li><Link href="/" className="hover:text-white transition-colors">Resume Builder</Link></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Get Started Free</Link></li>
               </ul>
             </div>

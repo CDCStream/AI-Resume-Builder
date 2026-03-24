@@ -1,46 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const PRIMARY_MODEL = "claude-sonnet-4-6";
-const FALLBACK_MODEL = "claude-sonnet-4-20250514";
-const FINAL_FALLBACK_MODEL = "claude-sonnet-4-5-20250514";
-
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 5,
-  baseDelay: number = 3000
-): Promise<T> {
-  let lastError: Error | unknown;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      const status = error instanceof Error && 'status' in error
-        ? (error as { status: number }).status
-        : 0;
-      const isRetryable = status === 529 || status === 503 || status === 500 || status === 429;
-      
-      if (!isRetryable || attempt === maxRetries) {
-        throw error;
-      }
-      
-      const jitter = Math.random() * 1000;
-      const delay = baseDelay * Math.pow(2, attempt - 1) + jitter;
-      console.log(`API error ${status} (attempt ${attempt}/${maxRetries}), retrying in ${Math.round(delay)}ms...`);
-      await sleep(delay);
-    }
-  }
-  
-  throw lastError;
-}
+import { generateText, cleanJsonResponse } from "@/lib/ai-provider";
 
 export interface ATSScoreRequest {
   jobDescription: string;
@@ -117,73 +76,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json(
-        { error: "API key not configured" },
-        { status: 500 }
-      );
-    }
-
     const resumeText = formatResumeForAnalysis(resume);
     const prompt = getATSScorePrompt(jobDescription, resumeText, resume);
 
-    // Log current skills being analyzed
     const currentSkills = resume.skills?.map(s => s.name).filter(Boolean) || [];
     console.log("Analyzing with skills:", currentSkills.join(", ") || "None");
-    let message: Anthropic.Message;
-    try {
-      console.log(`Calling Claude API (${PRIMARY_MODEL}) for ATS Score analysis...`);
-      message = await withRetry(() => anthropic.messages.create({
-        model: PRIMARY_MODEL,
-        max_tokens: 8192,
-        messages: [{ role: "user", content: prompt }]
-      }));
-    } catch (primaryError) {
-      const status = primaryError instanceof Error && 'status' in primaryError
-        ? (primaryError as { status: number }).status : 0;
-      if (status === 529 || status === 503) {
-        console.log(`Primary model overloaded, trying fallback: ${FALLBACK_MODEL}...`);
-        try {
-          message = await withRetry(() => anthropic.messages.create({
-            model: FALLBACK_MODEL,
-            max_tokens: 8192,
-            messages: [{ role: "user", content: prompt }]
-          }));
-        } catch (fallbackError) {
-          const fbStatus = fallbackError instanceof Error && 'status' in fallbackError
-            ? (fallbackError as { status: number }).status : 0;
-          if (fbStatus === 529 || fbStatus === 503) {
-            console.log(`Fallback model also overloaded, trying final fallback: ${FINAL_FALLBACK_MODEL}...`);
-            message = await withRetry(() => anthropic.messages.create({
-              model: FINAL_FALLBACK_MODEL,
-              max_tokens: 8192,
-              messages: [{ role: "user", content: prompt }]
-            }));
-          } else {
-            throw fallbackError;
-          }
-        }
-      } else {
-        throw primaryError;
-      }
-    }
-    console.log("Claude API response received, stop_reason:", message.stop_reason);
+    console.log("Calling AI for ATS Score analysis...");
 
-    const responseText = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map(block => block.text)
-      .join("");
+    const { text: responseText } = await generateText({ user: prompt, maxTokens: 8192 });
+    console.log("AI response received");
 
-    let cleanedResponse = responseText.trim();
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.slice(7);
-    } else if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(3);
-    }
-    if (cleanedResponse.endsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(0, -3);
-    }
-    cleanedResponse = cleanedResponse.trim();
+    const cleanedResponse = cleanJsonResponse(responseText);
 
     let result: ATSScoreResponse;
     try {
@@ -536,28 +439,9 @@ Rules:
 - If someone has "Apache Spark", they likely know "PySpark" too`;
 
   try {
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }]
-    });
-
-    const responseText = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map(block => block.text)
-      .join("");
-
-    let cleanedResponse = responseText.trim();
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.slice(7);
-    } else if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(3);
-    }
-    if (cleanedResponse.endsWith("```")) {
-      cleanedResponse = cleanedResponse.slice(0, -3);
-    }
-
-    const result = JSON.parse(cleanedResponse.trim());
+    const { text: responseText } = await generateText({ user: prompt, maxTokens: 1024 });
+    const cleaned = cleanJsonResponse(responseText);
+    const result = JSON.parse(cleaned);
     
     // Log match reasons
     if (result.matchReasons) {

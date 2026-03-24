@@ -241,8 +241,8 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="border-t border-gray-200 pt-8 pb-4">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Explore More</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-            <Link href="/pricing" className="bg-gray-50 rounded-lg px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors text-center font-medium">
-              View Pricing →
+            <Link href="/register" className="bg-gray-50 rounded-lg px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors text-center font-medium">
+              Get Started Free →
             </Link>
             <Link href="/salary/software-engineer" className="bg-gray-50 rounded-lg px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors text-center font-medium">
               Software Engineer Salary →

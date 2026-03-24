@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resume } from "@/lib/types/resume";
+import { features } from "@/lib/app-config";
 
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 const APIFY_ACTOR_ID = "harvestapi~linkedin-profile-scraper";
@@ -473,6 +474,13 @@ export const maxDuration = 90;
 
 export async function POST(request: NextRequest) {
   try {
+    if (!features.linkedinProfileImport) {
+      return NextResponse.json(
+        { error: "LinkedIn profile import is not available in this version" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { linkedinUrl } = body;
 

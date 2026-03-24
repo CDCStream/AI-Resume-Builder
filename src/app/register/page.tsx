@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Mail, Lock, Eye, EyeOff, Loader2, FileText, User, Home, Shield } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, User, Home, Shield } from "lucide-react";
 import { trackSignUpStarted, trackSignUpCompleted, trackError } from "@/lib/analytics";
 import { gadsSignUpConversion, gaSignUp } from "@/lib/gtag";
 
@@ -16,7 +16,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
 
@@ -54,14 +53,7 @@ export default function RegisterPage() {
           gadsSignUpConversion();
         } catch {}
 
-        // Send welcome email in background
-        fetch("/api/send-welcome-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, name: fullName }),
-        }).catch(() => {});
-
-        router.push("/trial-checkout");
+        router.push("/dashboard");
         return;
       }
     } catch (err) {
@@ -81,47 +73,6 @@ export default function RegisterPage() {
       trackError("google_sign_up_failed", error.message);
     }
   };
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Almost there!</h2>
-            <p className="text-gray-500 mb-2">
-              We&apos;ve sent a confirmation link to <span className="text-gray-900 font-medium">{email}</span>.
-            </p>
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3 text-left">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 font-bold text-xs">1</span>
-                </div>
-                <p className="text-sm text-blue-800">Open your email and click the verification link</p>
-              </div>
-              <div className="flex items-start gap-3 text-left mt-2">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 font-bold text-xs">2</span>
-                </div>
-                <p className="text-sm text-blue-800">You&apos;ll be taken directly to the resume editor</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 mb-4">
-              Didn&apos;t receive it? Check your spam folder or try registering again.
-            </p>
-            <Link
-              href="/login"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition"
-            >
-              Already verified? Sign in
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-4">

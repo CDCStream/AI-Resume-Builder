@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
 import { useCoverLetters, SavedCoverLetter } from "@/hooks/useCoverLetters";
 import { Button } from "@/components/ui/button";
@@ -42,12 +42,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Clock, Pencil, Search, Sparkles, Loader2, LogOut, User, Settings, Crown, CreditCard } from "lucide-react";
+import { FileText, Mail, Plus, MoreVertical, Edit, Copy, Trash2, Pencil, Search, Sparkles, Loader2, LogOut, User, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
-import { gadsPurchaseConversion, gaPurchase } from "@/lib/gtag";
-import { trackSubscriptionActivated } from "@/lib/analytics";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -62,45 +59,7 @@ function formatDate(dateString: string): string {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, signOut, avatarUrl } = useAuth();
-  const { isTrialing, trialExpired, trialDaysRemaining, isLoading: subscriptionLoading, refetch } = useSubscription();
-
-  // Handle checkout success - verify and activate subscription
-  useEffect(() => {
-    const checkoutStatus = searchParams.get("checkout");
-    const sessionToken = searchParams.get("customer_session_token");
-
-    if (checkoutStatus === "success") {
-      fetch("/api/checkout/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerSessionToken: sessionToken }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            const priceMap: Record<string, number> = {
-              PRO_MONTHLY: 13.98,
-              PRO_QUARTERLY: 27.75,
-              PRO_SEMI_ANNUAL: 47.10,
-            };
-            const price = priceMap[data.plan] || 13.98;
-            gaPurchase(data.plan, data.plan, price);
-            gadsPurchaseConversion(price);
-            const billingMap: Record<string, string> = {
-              PRO_MONTHLY: "monthly",
-              PRO_QUARTERLY: "quarterly",
-              PRO_SEMI_ANNUAL: "semi-annual",
-            };
-            trackSubscriptionActivated(data.plan, price, billingMap[data.plan] || "monthly");
-            refetch();
-            router.replace("/dashboard");
-          }
-        })
-        .catch(console.error);
-    }
-  }, [searchParams]);
 
   const {
     resumes,
@@ -205,54 +164,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
-      {/* Trial Expired Modal */}
-      {trialExpired && !subscriptionLoading && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
-              <Crown className="h-10 w-10 text-amber-500" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Your Trial Has Ended</h2>
-            <p className="text-gray-600 mb-6">
-              Your 7-day Pro trial has expired. Upgrade to Pro to continue using all premium features and take your career to the next level.
-            </p>
-            <div className="space-y-3">
-              <Button
-                onClick={() => router.push("/pricing")}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg h-12 text-lg"
-              >
-                <Crown className="h-5 w-5 mr-2" />
-                Upgrade to Pro
-              </Button>
-              <p className="text-sm text-gray-500">
-                Starting at just $7.85/month
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Trial Banner */}
-      {isTrialing && trialDaysRemaining !== null && (
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5" />
-              <span className="font-medium">
-                Pro Trial: {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining
-              </span>
-            </div>
-            <Button
-              onClick={() => router.push("/pricing")}
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0 h-8 px-4"
-            >
-              Upgrade Now
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* Header with Logo */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -300,10 +211,6 @@ export default function DashboardPage() {
                 <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
                   <Settings className="w-4 h-4 mr-2" />
                   Account Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/billing")} className="cursor-pointer">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Billing
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">

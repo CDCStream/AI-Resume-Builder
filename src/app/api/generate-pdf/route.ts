@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium-min";
-import { createClient } from "@/lib/supabase/server";
 
 const CHROMIUM_PACK_URL =
   "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
@@ -36,26 +35,6 @@ export const maxDuration = 60;
 const A4_HEIGHT_PX = 1122;
 const LINE_SAFETY_PX = 5;
 
-async function checkIsPro(): Promise<boolean> {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-
-    // Only paid Pro subscribers get watermark-free PDFs
-
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("status, plan")
-      .eq("user_id", user.id)
-      .single();
-
-    return data?.status === "active" && data?.plan !== "FREE";
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: NextRequest) {
   let browser = null;
 
@@ -68,8 +47,6 @@ export async function POST(request: NextRequest) {
       backgroundColor = "#ffffff",
       backgroundInfo,
     } = body;
-
-    const isPro = await checkIsPro();
 
     if (!pagesData || pagesData.length === 0) {
       return NextResponse.json(
@@ -95,7 +72,7 @@ export async function POST(request: NextRequest) {
     const page = await browser.newPage();
     await page.setViewport({ width: 794, height: 1122 });
 
-    const cssBlock = buildCssBlock(styles, backgroundColor, !isPro);
+    const cssBlock = buildCssBlock(styles, backgroundColor);
 
     // Use client-side page breaks (from ResumePaginator) for pixel-perfect match with preview
     const clientBreaks = body.pageBreaks || [];
@@ -243,10 +220,9 @@ export async function POST(request: NextRequest) {
     console.log(`Breaks: [${finalBreaks.join(', ')}] (${finalBreaks.length + 1} pages, height: ${finalTotalHeight})`);
 
     // Build paginated HTML using the page breaks
-    const showWatermark = !isPro;
     const bodyHtml = finalBreaks.length > 0
-      ? buildPrePaginatedHtml(contentHtml, finalBreaks, finalTotalHeight, backgroundInfo, showWatermark)
-      : (showWatermark ? wrapSinglePageWithWatermark(contentHtml) : contentHtml);
+      ? buildPrePaginatedHtml(contentHtml, finalBreaks, finalTotalHeight, backgroundInfo)
+      : contentHtml;
 
     await page.evaluate((html) => {
       document.body.innerHTML = html;
@@ -287,50 +263,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildCssBlock(styles: string, backgroundColor: string, showWatermark: boolean = false): string {
-  const watermarkCss = showWatermark ? `
-    .pdf-watermark {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 999;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .pdf-watermark-text {
-      position: absolute;
-      top: 46%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-35deg);
-      font-family: 'Geist', 'Inter', Arial, sans-serif;
-      font-size: 60px;
-      font-weight: 700;
-      color: rgba(180, 180, 180, 0.18);
-      white-space: nowrap;
-      letter-spacing: 8px;
-      user-select: none;
-      text-transform: uppercase;
-    }
-
-    .pdf-watermark-sub {
-      position: absolute;
-      top: 54%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-35deg);
-      font-family: 'Geist', 'Inter', Arial, sans-serif;
-      font-size: 16px;
-      font-weight: 500;
-      color: rgba(180, 180, 180, 0.18);
-      white-space: nowrap;
-      letter-spacing: 2px;
-      user-select: none;
-    }
-
-  ` : '';
-
+function buildCssBlock(styles: string, backgroundColor: string): string {
   return `
     ${styles}
 
@@ -436,21 +369,7 @@ function buildCssBlock(styles: string, backgroundColor: string, showWatermark: b
       size: A4;
       margin: 0;
     }
-
-    ${watermarkCss}
   `;
-}
-
-const WATERMARK_HTML = `<div class="pdf-watermark">
-  <div class="pdf-watermark-text">LinImpact.ai</div>
-  <div class="pdf-watermark-sub">Upgrade to Pro to remove watermark</div>
-</div>`;
-
-function wrapSinglePageWithWatermark(contentHtml: string): string {
-  return `<div style="position:relative;width:794px;min-height:1122px;">
-    ${contentHtml}
-    ${WATERMARK_HTML}
-  </div>`;
 }
 
 function buildPrePaginatedHtml(
@@ -458,7 +377,6 @@ function buildPrePaginatedHtml(
   pageBreaks: number[],
   totalContentHeight: number,
   backgroundInfo?: BackgroundInfo,
-  showWatermark: boolean = false
 ): string {
   const numPages = pageBreaks.length + 1;
   const bg = backgroundInfo || { type: 'none' as const, bgColor: '#ffffff' };
@@ -490,7 +408,6 @@ function buildPrePaginatedHtml(
             ${contentHtml}
           </div>
         </div>
-        ${showWatermark ? WATERMARK_HTML : ''}
       </div>
     `);
   }

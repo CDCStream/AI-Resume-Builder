@@ -12,7 +12,6 @@ import { Resume, defaultResume, emptyResume } from "@/lib/types/resume";
 import { Edit3, Eye, Type, ChevronUp, ChevronDown, RotateCcw, X, Loader2, PanelLeft, FileText } from "lucide-react";
 import { exportResumeToPDF } from "@/lib/utils/pdfExport";
 import { useResumes, SavedResume } from "@/hooks/useResumes";
-import { useSubscription } from "@/hooks/useSubscription";
 import { hasUserGivenFeedback, syncCvPhotoToProfile } from "@/lib/supabase/database";
 import FeedbackModal from "@/components/ui/FeedbackModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,31 +71,6 @@ function ResumeEditorContent() {
   const previewRef = useRef<HTMLDivElement>(null);
   const paginatorRef = useRef<ResumePaginatorRef>(null);
 
-  const { isPro, refetch: refetchSubscription } = useSubscription();
-  const hasPaidPlan = isPro;
-
-  // Handle trial checkout success — verify and activate subscription
-  useEffect(() => {
-    const checkoutStatus = searchParams.get("checkout");
-    if (checkoutStatus === "trial-success") {
-      fetch("/api/checkout/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "TRIAL" }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            // Clear subscription cache so hook re-fetches
-            try { localStorage.removeItem("linimpact_sub_cache"); } catch {}
-            try { sessionStorage.removeItem("linimpact_sub_cache"); } catch {}
-            refetchSubscription();
-            router.replace("/resume", { scroll: false });
-          }
-        })
-        .catch(console.error);
-    }
-  }, [searchParams, refetchSubscription, router]);
 
   const handleDownloadPDF = useCallback(async () => {
     if (!previewRef.current || isExportingPDF) return;
@@ -108,11 +82,10 @@ function ResumeEditorContent() {
 
       await exportResumeToPDF(previewRef.current, {
         filename,
-        showWatermark: !hasPaidPlan,
       });
 
       if (user?.id) {
-        trackAction(user.id, "download_pdf", "/resume", { template: selectedTemplate, hasPaidPlan });
+        trackAction(user.id, "download_pdf", "/resume", { template: selectedTemplate });
       }
 
       const alreadyGiven = await hasUserGivenFeedback("resume_pdf");
@@ -124,7 +97,7 @@ function ResumeEditorContent() {
     } finally {
       setIsExportingPDF(false);
     }
-  }, [resume.basics?.name, isExportingPDF, hasPaidPlan]);
+  }, [resume.basics?.name, isExportingPDF]);
 
   useEffect(() => {
     const currentState = JSON.stringify({ resume, selectedTemplate });
