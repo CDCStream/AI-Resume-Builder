@@ -3,9 +3,9 @@ export const isFreeMode = APP_MODE === "free";
 export const isPremiumMode = APP_MODE === "premium";
 
 export const features = {
-  linkedinProfileImport: isPremiumMode,
+  linkedinProfileImport: true,
   linkedinJobSearch: true,
-  salaryPages: isPremiumMode,
+  salaryPages: true,
   interviewPrep: true,
   digitalPortfolio: true,
   paidTrial: false,
